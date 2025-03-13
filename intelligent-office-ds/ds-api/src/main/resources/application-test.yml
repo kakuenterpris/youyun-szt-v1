@@ -1,0 +1,129 @@
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    dynamic:
+      primary: primary
+      strict: false
+      datasource:
+        primary:
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          url: jdbc:mysql://10.10.93.81:3306/intelligent_office?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
+          username: root
+          password: TTKNOA@cnki.net2025
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 10.10.93.81:8848
+        # gateway 与对应的后端服务应该在相同的namespace下
+        namespace: 33125179-fe3d-4c48-84f9-157e298d40b4
+        username: nacos
+        password: nacos@ttknoa
+        config:
+          server-addr: 10.10.93.81:8848
+          file-extension: yaml
+          namespace: 33125179-fe3d-4c48-84f9-157e298d40b4
+          username: nacos
+          password: nacos@ttknoa
+        #      username: nacos
+        #      password: nacos
+  data:
+    redis:
+      host: 10.10.93.81
+      port: 6379
+      database: 0
+      timeout: 1800s # 使用时间格式化
+      password: redis@ttknoa
+      lettuce:
+        pool:
+          max-active: 20  # 最大连接数
+          max-wait: -1    # 最大阻塞等待时间(负数表示没限制)
+          max-idle: 5     # 最大空闲
+          min-idle: 0     # 最小空闲
+  task:
+    execution:
+      shutdown:
+        await-termination: true
+        await-termination-period: 60s
+
+  main:
+    allow-bean-definition-overriding: true
+    jackson:
+      date-format: yyyy/MM/dd HH:mm:ss
+      time-zone: GMT+8
+
+
+
+
+
+# 登录token拦截
+platform:
+  interceptor:
+    configs:
+      exclude-login-urls: # 非不需要登录接口
+        - /api/v1/chat/login
+        - /api/v1/chat/login/captcha
+        - /api/v1/chat/login/verifyIdentityFromTfoa
+#        - /api/v1/chat/*
+#        - /api/v1/resource/*
+#        - /api/v1/historyChat/*
+
+      exclude-statistic-urls: # 不需要统计接口
+        - /static/**
+        - /icon/**
+        - /css/**
+
+  # 请求认证接口配置
+  auth:
+    configs:
+      enable: true
+      verify-url: https://kmoa.test.oa.cnki.net/api/auth/api/v1/authentication?token=   # token 验证接口
+
+ai:
+  answer-api: http://10.10.252.220:8090/v1/chat-messages
+  recommend-list-api: http://10.10.252.220:8090/v1/messages/%s/suggested
+  history-chat-api: http://10.10.252.220:8090/v1/messages
+  conversations-chat-api: http://10.10.252.220:8090/v1/conversations
+  delete-conversations-api: http://10.10.252.220:8090/v1/conversations
+  person-datasets-create-api: http://10.10.252.220:8090/v1/datasets
+  vector-query-api: http://10.10.252.220:8090/v1/datasets/%s/retrieve
+  cnki-vector-query-api: https://maas.cnki.net/maas-gateway/cnkisearch
+  upload-file-api: http://10.10.252.220:8090/v1/files/upload
+  datasets-document-segment-api: http://10.10.252.220:8090/v1/datasets/%s/documents/%s/segments
+  datasets-delete-document-api: http://10.10.252.220:8090/v1/datasets/%s/documents/%s
+  datasets-document-indexing-status-api: http://10.10.252.220:8090/v1/datasets/%s/documents/%s/indexing-status
+  rename-conversation-api: http://10.10.252.220:8090/v1/conversations/%s/name
+  stop-conversation-api: http://10.10.252.220:8090/v1/chat-messages/%s/stop
+  chat-net-search-api: http://10.10.252.220:8090/v1/workflows/run
+  data-center-chat-api: http://10.10.252.220:8090/v1/chat-messages
+
+datasets:
+  unit-id: e811be65-ef5c-4cec-aa83-8f0401fa6947
+  #  dep-id: f6456a92-2497-4abd-bdbc-9e58f21bf7e7
+  dep-id: 09c749d3-7dca-435c-bb84-3610921ef3ed
+
+integration:
+  ppt:
+    api-key: 67caa0869255a
+    secret-key: v6kBne1Kl1vQVlvuK3ck1tEsVD8lbSZs
+    token-string-to-sign: GET@/api/grant/token/@
+    token-api: https://co.aippt.cn/api/grant/token?uid=%s&channel=%s
+    code-string-to-sign: GET@/api/grant/code/@
+    code-api: https://co.aippt.cn/api/grant/code?uid=%s&channel=%s
+
+cnki:
+  vector:
+    access-key: bc3e6f71963f430bab868284062ab9bd
+    secret-key: cd182fb37ff34effaec1424e6c65482b
+
+# 必填项
+spring.ai.openai.api-key: you-apikey
+spring.ai.openai.base-url: https://api.deepseek.com
+# 模型选择（示例使用对话模型）
+spring.ai.openai.chat.options.model: deepseek-chat
+
+
+thtf:
+  ldap:
+    server: ldap://thtf.com:389
+    domain: thtf.com
+    enable: false

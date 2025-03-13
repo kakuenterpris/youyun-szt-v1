@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thtf.chat.mapper.BusUserInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.thtf.chat.entity.BusUserInfoEntity">
+            <id property="id" column="id" />
+            <result property="userId" column="user_id" />
+            <result property="userNum" column="user_num" />
+            <result property="logInId" column="log_in_id" />
+            <result property="userName" column="user_name" />
+            <result property="depNum" column="dep_num" />
+            <result property="depName" column="dep_name" />
+            <result property="postNum" column="post_num" />
+            <result property="post" column="post" />
+            <result property="mobilePhone" column="mobile_phone" />
+            <result property="phone" column="phone" />
+            <result property="email" column="email" />
+            <result property="createTime" column="create_time" />
+            <result property="lastLogInTime" column="last_log_in_time" />
+            <result property="isDeleted" column="is_deleted" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_id,user_num,log_in_id,user_name,dep_num,
+        dep_name,post_num,post,mobile_phone,phone,
+        email,create_time,last_log_in_time,is_deleted
+    </sql>
+</mapper>

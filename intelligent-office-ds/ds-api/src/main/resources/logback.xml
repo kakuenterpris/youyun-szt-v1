@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <contextName>logback</contextName>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{env}@%X{startTime}] [%-5level] - PID:[${PID}] - [%20.25t] -%X{traceId} [%X{httpMethod}] %logger{36} %msg%n"></property>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./app-logs/chat-api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>./app-logs/chat-api.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+    
+    <logger name="com.alibaba" level="INFO"/>
+    <logger name="jdbc.sqltiming" level="INFO"/>
+    <logger name="com.ibatis" level="INFO" />
+    <logger name="com.ibatis.common.jdbc.SimpleDataSource" level="INFO" />
+    <logger name="com.ibatis.common.jdbc.ScriptRunner" level="INFO" />
+    <logger name="com.ibatis.sqlmap.engine.impl.SqlMapClientDelegate" level="INFO" />
+    <logger name="java.sql.Connection" level="INFO" />
+    <logger name="java.sql.Statement" level="INFO" />
+    <logger name="java.sql.PreparedStatement" level="INFO" />
+    <logger name="java.sql.ResultSet" level="INFO" />
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/><!-- 在本地开发时，需要打开注释 -->
+        <appender-ref ref="FILE"/>
+    </root>
+    
+    <!-- Rest接口性能监测BEGIN -->
+    <appender name="Perf4JStatisticsFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./app-logs/chat-api-perf.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>./app-logs/chat-api-perf.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="coalescingStatisticsAppender" class="org.perf4j.logback.AsyncCoalescingStatisticsAppender">
+        <timeSlice>3600000</timeSlice><!-- 每小时汇总一次 -->
+        <appender-ref ref="Perf4JStatisticsFile"/>
+    </appender>
+	<logger name="org.perf4j.TimingLogger" level="info" additivity="false">
+        <appender-ref ref="coalescingStatisticsAppender" />
+    </logger>
+    <!-- Rest接口性能监测END -->
+    
+</configuration>

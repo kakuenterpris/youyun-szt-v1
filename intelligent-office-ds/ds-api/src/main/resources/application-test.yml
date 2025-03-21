@@ -7,19 +7,19 @@ spring:
       datasource:
         primary:
           driver-class-name: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://10.10.93.81:3306/intelligent_office?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
+          url: jdbc:mysql://119.254.155.108:3306/intelligent_office?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
           username: root
-          password: TTKNOA@cnki.net2025
+          password: yyccYOUyun
   cloud:
     nacos:
       discovery:
-        server-addr: 10.10.93.81:8848
+        server-addr: 119.254.155.108:8848
         # gateway 与对应的后端服务应该在相同的namespace下
         namespace: 33125179-fe3d-4c48-84f9-157e298d40b4
         username: nacos
         password: nacos@ttknoa
         config:
-          server-addr: 10.10.93.81:8848
+          server-addr: 119.254.155.108:8848
           file-extension: yaml
           namespace: 33125179-fe3d-4c48-84f9-157e298d40b4
           username: nacos
@@ -28,11 +28,11 @@ spring:
         #      password: nacos
   data:
     redis:
-      host: 10.10.93.81
+      host: 119.254.155.108
       port: 6379
       database: 0
       timeout: 1800s # 使用时间格式化
-      password: redis@ttknoa
+#      password: redis@ttknoa
       lettuce:
         pool:
           max-active: 20  # 最大连接数

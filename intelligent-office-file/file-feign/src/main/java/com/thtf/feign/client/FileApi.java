@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @Date: 2025-02-20 10:11
  */
 //@FeignClient(name = "file-api", url = "http://localhost:40000/", configuration = FileFeignAutoconfiguration.class)
-@FeignClient(name = "file-api", url = "http://10.10.93.81/file-api/", configuration = FileFeignAutoconfiguration.class)
+@FeignClient(name = "file-api", url = "http://119.254.155.108/file-api/", configuration = FileFeignAutoconfiguration.class)
 public interface FileApi {
 
     /**

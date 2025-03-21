@@ -7,9 +7,9 @@ spring:
       datasource:
         primary:
           driver-class-name: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://10.10.93.81:3306/intelligent_office?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
+          url: jdbc:mysql://119.254.155.108:3306/intelligent_office?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
           username: root
-          password: TTKNOA@cnki.net2025
+          password: yyccYOUyun
   cloud:
     nacos:
       discovery:
@@ -17,11 +17,11 @@ spring:
         server-addr: localhost:8848
   data:
     redis:
-      host: 10.10.93.81
+      host: 119.254.155.108
       port: 6379
       database: 0
       timeout: 1800s # 使用时间格式化
-      password: redis@ttknoa
+#      password: redis@ttknoa
       lettuce:
         pool:
           max-active: 20  # 最大连接数

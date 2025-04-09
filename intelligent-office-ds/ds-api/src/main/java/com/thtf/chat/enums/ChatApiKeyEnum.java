@@ -27,7 +27,7 @@ public enum ChatApiKeyEnum {
     // 智能研报
     intellreport("intellreport", "app-yWYyVMfDmq0us7al5bg7JVYG"),
     // 个人知识库
-    customvector("customvector", "dataset-dezUJfSWgpETM8niLddTZboD"),
+    customvector("customvector", "dataset-kNfh2qv11cCdKv1yg9JjEctT"),
     //联网搜索
     netsearch("netsearch", "app-fosI5MnjkkHQJzwRJDveAa3O"),
     //数据中台

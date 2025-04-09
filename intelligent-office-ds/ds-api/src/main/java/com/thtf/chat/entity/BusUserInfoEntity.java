@@ -51,6 +51,11 @@ public class BusUserInfoEntity {
     private String userName;
 
     /**
+     * 用户密码
+     */
+    @TableField(value = "password")
+    private String password;
+    /**
      * 同方部门编码
      */
     @TableField(value = "dep_code")
@@ -121,4 +126,19 @@ public class BusUserInfoEntity {
      */
     @TableField(value = "is_deleted")
     private Boolean isDeleted;
+
+    @Override
+    public String toString() {
+//        返回json格式的字符串
+
+        return "{"
+                + "\"id\":" + (id != null ? id : "null") + ","
+                + "\"userId\":\"" + (userId != null ? userId.replace("\"", "\\\"") : "") + "\","
+                + "\"userNum\":\"" + (userNum != null ? userNum.replace("\"", "\\\"") : "") + "\","
+                + "\"loginId\":\"" + (loginId != null ? loginId.replace("\"", "\\\"") : "") + "\","
+                + "\"userName\":\"" + (userName != null ? userName.replace("\"", "\\\"") : "") + "\","
+                + "\"depCode\":\"" + (depCode != null ? depCode.replace("\"", "\\\"") : "") + "\","
+                + "\"depName\":\"" + (depName != null ? depName.replace("\"", "\\\"") : "") + "\""
+                + "}";
+    }
 }

@@ -27,6 +27,7 @@ public enum DefaultErrorCode implements ErrorCode {
     DELETE_ERROR(503,"删除失败"),
     GET_ERROR(504,"查询失败"),
     CHAT_ERROR(701,"对话失败"),
+    NAME_ERROR(401,"用户不存在")
 
     ;
 

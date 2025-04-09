@@ -67,21 +67,23 @@ public class HistoryChatServiceImpl implements HistoryChatService {
         for (ChatApiKeyEnum chatApiKeyEnum : ChatApiKeyEnum.values()) {
             String apiType = chatApiKeyEnum.getType();
             apiKey = chatApiKeyEnum.getKey();
-            log.info("【历史会话列表】请求地址：【{}】，api-key为：【{}】", url, apiKey);
-            String response = HttpUtils.doGet(url, apiKey);
-//            log.info("【{}】：会话列表响应结果：{}", apiType, response);
-            if (StringUtils.isNotBlank(response)) {
-                Gson gson = new Gson();
-                Map map = gson.fromJson(response, Map.class);
-                List<Map> dataList = map.get("data") != null ? (List<Map>) map.get("data") : null;
-                if (null == dataList || dataList.isEmpty()) {
-                    continue;
+            if (!apiType.equals("recommendList")){
+                log.info("【历史会话列表】请求地址：【{}】，api-key为：【{}】", url, apiKey);
+                String response = HttpUtils.doGet(url, apiKey);
+    //            log.info("【{}】：会话列表响应结果：{}", apiType, response);
+                if (StringUtils.isNotBlank(response)) {
+                    Gson gson = new Gson();
+                    Map map = gson.fromJson(response, Map.class);
+                    List<Map> dataList = map.get("data") != null ? (List<Map>) map.get("data") : null;
+                    if (null == dataList || dataList.isEmpty()) {
+                        continue;
+                    }
+                    // 新增key为场景字段
+                    for (Map map1 : dataList) {
+                        map1.put("sceneType", apiType);
+                    }
+                    list.addAll(dataList);
                 }
-                // 新增key为场景字段
-                for (Map map1 : dataList) {
-                    map1.put("sceneType", apiType);
-                }
-                list.addAll(dataList);
             }
         }
         // 按照修改时间降序排列

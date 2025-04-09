@@ -308,7 +308,7 @@ public class LoginServiceImpl implements LoginService {
         }
         // 创建session
         TokenDTO token = getTokenDTO(request, response, userInfo);
-        redisUtil.set("token:" + token.getToken(), JsonUtil.toJson(userInfo), SESSION_TIME_OUT);
+        redisUtil.set("token_" + token.getToken(), JsonUtil.toJson(userInfo), SESSION_TIME_OUT);
         return RestResponse.success(token);
     }
 
@@ -356,7 +356,7 @@ public class LoginServiceImpl implements LoginService {
         if (Objects.isNull(token)) {
             return RestResponse.fail(DefaultErrorCode.INVALID_TOKEN);
         }
-        String userInfoStr = (String) redisUtil.get("token:" + token);
+        String userInfoStr = (String) redisUtil.get("token_" + token);
         if (StringUtils.isEmpty(userInfoStr)){
             return RestResponse.fail(DefaultErrorCode.INVALID_TOKEN);
         }
@@ -385,7 +385,7 @@ public class LoginServiceImpl implements LoginService {
             SystemUser userInfo = userInfoMapping.bs2User(userInfoDTO);
             // 创建session
             TokenDTO token = getTokenDTO(request, response, userInfo);
-            redisUtil.set("token:" + token.getToken(), JsonUtil.toJson(userInfo), SESSION_TIME_OUT);
+            redisUtil.set("token_" + token.getToken(), JsonUtil.toJson(userInfo), SESSION_TIME_OUT);
             map.put("url", "https://ai.thtf.com.cn/chat/index");
             map.put("x-auth-key", token.getToken());
         } else {

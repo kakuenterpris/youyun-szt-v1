@@ -1,6 +1,7 @@
 package com.thtf.chat.controller;
 
 import cn.hutool.core.util.IdUtil;
+import com.thtf.chat.service.BusUserInfoService;
 import com.thtf.chat.service.LoginService;
 import com.thtf.chat.util.VerifyCodeUtil;
 import com.thtf.chat.utils.RedisUtil;
@@ -12,6 +13,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
@@ -36,6 +40,9 @@ public class LoginController {
 
     private final LoginService service;
     private final RedisUtil redisUtil;
+    @Autowired
+    @Lazy
+    private  BusUserInfoService busUserInfoService;
 
     /**
      * 同步同方OA用户信息
@@ -67,15 +74,27 @@ public class LoginController {
     }
 
     /**
-     * 登录
+     * 登录(弃用)
      * @param request
      * @param response
      * @param param
      * @return
      */
-    @PostMapping("")
-    public RestResponse login(HttpServletRequest request, HttpServletResponse response, @RequestBody LoginDTO param) {
+    @PostMapping("/login")
+    public RestResponse login1(HttpServletRequest request, HttpServletResponse response, @RequestBody LoginDTO param) {
         return service.login(request, response, param);
+    }
+
+    /**
+     * 登录
+     * @param request
+     * @param response
+     * @param loginDTO
+     * @return
+     */
+    @RequestMapping(path = "", method = RequestMethod.POST)
+    public RestResponse login(HttpServletRequest request, HttpServletResponse response, @RequestBody LoginDTO loginDTO) {
+        return  busUserInfoService.login(request, response,loginDTO);
     }
 
     @GetMapping("/captcha")

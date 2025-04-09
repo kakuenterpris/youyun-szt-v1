@@ -7,33 +7,33 @@ import java.util.Objects;
  */
 public enum ChatApiKeyEnum {
     // 智能助手
-    common("common", "app-mBU2dqQpwlwMgylRty7SNU0M"),
+    common("common", "app-3P4HVPVeoNl6L1ZhUZl2evQl"),
     // 智能代码
-    intellcode("intellcode", "app-Kw0lumNGR0yBkaJ0Kgj7FBn9"),
+    intellcode("intellcode", "app-MF0v0yXl3s33wPVaepsvBVMc"),
     // ppt大纲
-    pptoutline("pptoutline", "app-dhDXmBniGUWOkn6P0QFFgCJq"),
+    pptoutline("pptoutline", "app-KWgDvVooc0zskI0eY7DyrbIU"),
     // 新闻稿
-    newsmanuscript("newsmanuscript", "app-X9RZ4ABstSsuOqOhFm5FIsqD"),
+    newsmanuscript("newsmanuscript", "app-oSzsdmDdC3O9g6zBR6yhuORK"),
     // 智能公文
-    intelldoc("intelldoc", "app-av7ppMFMyOxLJPL1eUZxoQAo"),
+    intelldoc("intelldoc", "app-z1ev8jWWWq0VOpCIFkHCsSEc"),
     // 智能审校
-    intellproofread("intellproofread", "app-seq0v7KskSKWYdrjnqXQEN4y"),
+    intellproofread("intellproofread", "app-z8Hrj4mj3X3uGVnGIjcrU1pb"),
     // 发言稿
-    speechscript("speechscript", "app-5hjYrcTXn6Fqe8Ds4w42G8ST"),
+    speechscript("speechscript", "app-uZ0x3XaSyB0D4yaxS4iraOhS"),
     // 会议纪要
-    meetingsammary("meetingsammary", "app-Ek6PsrqarcupEesPLIqeypdj"),
+    meetingsammary("meetingsammary", "app-0rboba0jQweVfdES4dmt3JJw"),
     //数据挖掘处理
-    dm("dm", "app-vdUnKScMsEKymWUVPSn8ICbJ"),
+    dm("dm", "app-7MlA0qIGe9CZUIXKP8JHyiBH"),
     // 智能研报
-    intellreport("intellreport", "app-CF27WxWJ7xcTGE3ECCYJfUvo"),
+    intellreport("intellreport", "app-yWYyVMfDmq0us7al5bg7JVYG"),
     // 个人知识库
     customvector("customvector", "dataset-dezUJfSWgpETM8niLddTZboD"),
     //联网搜索
-    netsearch("netsearch", "app-q6PgQfNd13N26n5d2Rckjt4k"),
+    netsearch("netsearch", "app-fosI5MnjkkHQJzwRJDveAa3O"),
     //数据中台
     dataCenter("dataCenter", "app-TQ4J8MMGB2iQmF3infBr14cp"),
     //推荐列表key
-    recommendList("recommendList", "app-wloDympdu1wXygqiG83V0V8q"),
+    recommendList("recommendList", "app-ONOtPOsaMB2Gzdmj8eBVhEKH"),
     ;
 
     private String type;

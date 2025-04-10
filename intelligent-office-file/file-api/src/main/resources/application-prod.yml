@@ -68,8 +68,8 @@ spring.ai.openai.api-key: you-apikey
 spring.ai.openai.base-url: https://api.deepseek.com
 # 模型选择（示例使用对话模型）
 spring.ai.openai.chat.options.model: deepseek-chat
-file.base.path: /data
-file.temp.path: /data/temp/
+file.base.path: /data/project/intelligent-office/backend/data
+file.temp.path: /data/project/intelligent-office/backend/data/temp/
 
 youyun.doc.apikey: dataset-dezUJfSWgpETM8niLddTZboD
 youyun.doc.create: http://10.10.252.220:8090/v1/datasets/%s/document/create-by-file   # datasetsId

@@ -5,9 +5,9 @@ import com.alibaba.nacos.shaded.com.google.gson.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.thtf.chat.enums.ChatApiKeyEnum;
 import com.thtf.chat.properties.AiConfigProperties;
+import com.thtf.chat.properties.ApikeyConfigProperties;
 import com.thtf.chat.repo.RelUserResourceRepo;
 import com.thtf.chat.util.HttpUtils;
-import com.thtf.resource.constants.ServiceConstants;
 import com.thtf.resource.dto.IndexingStatusDTO;
 import com.thtf.resource.dto.RelUserResourceDTO;
 import com.thtf.resource.enums.IndexingStatusEnum;
@@ -18,7 +18,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +30,7 @@ import java.util.Map;
 public class AsyncScheduledTasks {
     private final AiConfigProperties aiConfigProperties;
     private final RelUserResourceRepo relUserResourceRepo;
+    private final ApikeyConfigProperties apikeyConfigProperties;
 
     /**
      * 同步文件知识化状态（向量化状态）
@@ -38,7 +38,7 @@ public class AsyncScheduledTasks {
     @Async("asyncTaskExecutor") // 指定自定义线程池
     @Scheduled(cron = "0 0/1 * * * ?") // 每1分钟执行一次
     public void syncIndexingStatus() {
-        log.info("开始处理数据，线程: " , Thread.currentThread().getName());
+        log.info("开始处理数据，线程: {}" , Thread.currentThread().getName());
         try {
             List<RelUserResourceDTO> resourceList = relUserResourceRepo.getIndexingList();
             if (CollUtil.isNotEmpty(resourceList)){
@@ -69,7 +69,9 @@ public class AsyncScheduledTasks {
         url = String.format(url, datasetsId, batch);
         Map map = new HashMap<>();
         List<IndexingStatusDTO> result = new ArrayList<>();
-        String response = HttpUtils.doGet(url, ChatApiKeyEnum.customvector.getKey());
+        String apikey = apikeyConfigProperties.getCustomvector();
+        String response = HttpUtils.doGet(url, apikey);
+//        String response = HttpUtils.doGet(url, ChatApiKeyEnum.customvector.getKey());
         //log.info("同步知识化状态响应：{}, 知识库id：{}，批次号：{}", response, datasetsId, batch);
         if (StringUtils.isNotBlank(response)) {
             Gson gson = new Gson();

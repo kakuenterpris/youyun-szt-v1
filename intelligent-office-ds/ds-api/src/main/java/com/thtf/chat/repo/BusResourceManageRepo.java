@@ -48,6 +48,10 @@ public interface BusResourceManageRepo extends IService<BusResourceManageEntity>
 
     List<BusResourceManageDTO> listByParentId(Integer parentId);
 
+    List<BusResourceManageDTO> listByParentIdAndName(Integer parentId, List<String> nameList);
+
+    List<BusResourceManageDTO> listByParentIdAndResourceType(Long parentId, Integer resourceType);
+
     BusResourceManageEntity resourceTypeById(Integer id);
 
     BusResourceManageEntity getById(Long id);

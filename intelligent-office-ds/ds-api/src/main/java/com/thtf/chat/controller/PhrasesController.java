@@ -1,11 +1,10 @@
 package com.thtf.chat.controller;
 
-import com.thtf.chat.config.validation.ValidGroup;
 import com.thtf.chat.service.PhrasesService;
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.global.common.validation.ValidGroup;
 import com.thtf.phrases.dto.PhrasesDTO;
 import com.thtf.phrases.dto.PhrasesUseLogDTO;
-import com.thtf.test.TableTestDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;

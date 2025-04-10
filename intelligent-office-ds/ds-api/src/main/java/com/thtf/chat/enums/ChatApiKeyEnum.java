@@ -34,6 +34,10 @@ public enum ChatApiKeyEnum {
     dataCenter("dataCenter", "app-TQ4J8MMGB2iQmF3infBr14cp"),
     //推荐列表key
     recommendList("recommendList", "app-ONOtPOsaMB2Gzdmj8eBVhEKH"),
+    // 意图识别
+    intent("intent", "app-54K1PS8gEItlpsVDL99IML7R"),
+    // 新联网搜索
+    newNetSearch("newNetSearch", "app-fosI5MnjkkHQJzwRJDveAa3O"),
     ;
 
     private String type;

@@ -37,7 +37,9 @@ public interface FileProcessRuleConstants {
 
         String separator = "###";
 
-        Long max_tokens = 1200L;
+        Integer max_tokens = 1200;
+
+        Integer chunk_overlap  = 200;
 
     }
 

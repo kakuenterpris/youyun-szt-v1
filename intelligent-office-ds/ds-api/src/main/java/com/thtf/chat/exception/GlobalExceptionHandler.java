@@ -6,6 +6,7 @@ import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.DefaultErrorCode;
 import com.thtf.global.common.rest.RestResponse;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  * @ClassName: GlobalExceptionHandler
  * @Date: 2023-12-19 16:01
  */
+@Hidden
 @RestControllerAdvice
 @Order
 public class GlobalExceptionHandler {

@@ -3,6 +3,8 @@ package com.thtf.chat.controller;
 import com.thtf.chat.service.HistoryChatService;
 import com.thtf.dto.HistoryChatDTO;
 import com.thtf.global.common.rest.RestResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "历史会话接口", description = "历史会话相关操作")
 public class HistoryChatController {
 
     private final HistoryChatService historyChatService;
@@ -31,6 +34,7 @@ public class HistoryChatController {
      * @return
      */
     @PostMapping("/historyChatList")
+    @Operation(summary = "获取历史会话列表")
     public RestResponse historyChatList(@RequestBody HistoryChatDTO historyChatDTO) {
         return historyChatService.historyChatList(historyChatDTO);
     }
@@ -42,6 +46,7 @@ public class HistoryChatController {
      * @return
      */
     @GetMapping("/historyChatListDetail")
+    @Operation(summary = "历史会话消息详情")
     public RestResponse historyChatListDetail(HistoryChatDTO historyChatDTO) {
         return historyChatService.historyChatListDetail(historyChatDTO);
     }
@@ -52,6 +57,7 @@ public class HistoryChatController {
      * @return
      */
     @PostMapping("/deleteConversations")
+    @Operation(summary = "删除单条会话")
     public RestResponse deleteConversations(@RequestBody HistoryChatDTO historyChatDTO) {
         return historyChatService.deleteConversations(historyChatDTO);
     }

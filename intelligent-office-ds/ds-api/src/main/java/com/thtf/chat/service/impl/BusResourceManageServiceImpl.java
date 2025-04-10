@@ -5,12 +5,12 @@ import com.google.gson.Gson;
 import com.thtf.chat.entity.BusResourceManageEntity;
 import com.thtf.chat.entity.RelUserResourceEntity;
 import com.thtf.chat.enums.ChatApiKeyEnum;
+import com.thtf.chat.mappings.BusResourceEmbeddingMapping;
 import com.thtf.chat.mappings.BusResourceManageMapping;
 import com.thtf.chat.properties.AiConfigProperties;
+import com.thtf.chat.properties.ApikeyConfigProperties;
 import com.thtf.chat.properties.DatasetsConfigProperties;
-import com.thtf.chat.repo.BusDepInfoRepo;
-import com.thtf.chat.repo.BusResourceManageRepo;
-import com.thtf.chat.repo.RelUserResourceRepo;
+import com.thtf.chat.repo.*;
 import com.thtf.chat.service.BusResourceManageService;
 import com.thtf.chat.util.HttpUtils;
 import com.thtf.feign.client.FileApi;
@@ -23,8 +23,7 @@ import com.thtf.global.common.utils.Linq;
 import com.thtf.login.dto.BusDepInfoDTO;
 import com.thtf.login.enums.UserSpecialAuthEnum;
 import com.thtf.resource.constants.ServiceConstants;
-import com.thtf.resource.dto.BusResourceManageDTO;
-import com.thtf.resource.dto.RelUserResourceDTO;
+import com.thtf.resource.dto.*;
 import com.thtf.resource.enums.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +31,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java.io.IOException;
 import java.util.*;
@@ -48,14 +50,19 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
     @Autowired
     private AiConfigProperties aiConfigProperties;
 
+    private final ApikeyConfigProperties apikeyConfigProperties;
+
     private final FileApi fileApi;
 
     private final BusResourceManageRepo busResourceManageRepo;
     private final RelUserResourceRepo relUserResourceRepo;
     private final BusDepInfoRepo depInfoRepo;
+    private final FileEmbeddingConfigRepo embeddingConfigRepo;
+    private final BusResourceEmbeddingRepo embeddingRepo;
+    private final BusResourceDatasetRepo datasetRepo;
     private final DatasetsConfigProperties datasetsConfigProperties;
-    @Autowired
-    private BusResourceManageMapping busResourceManageMapping;
+    private final BusResourceManageMapping busResourceManageMapping;
+    private final BusResourceEmbeddingMapping embeddingMapping;
 
     @Override
     public RestResponse resourceTreeListLeft() {
@@ -65,10 +72,9 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         List<BusResourceManageDTO> list = busResourceManageRepo.list(userId);
         list.addAll(fixedList);
         list.addAll(busResourceManageRepo.listUnit(ResourceTypeEnum.RESOURCE_FLODER.getCode()));
-        List<String> depNumList = new ArrayList<>();
-//        List<String> depNumList = Linq.select(depInfoRepo.listAllSup(currentUser.getDepNum()), BusDepInfoDTO::getDepNum);
-//        depNumList.add(currentUser.getDepNum());
-//        depNumList.addAll(Linq.select(depInfoRepo.listAllChild(currentUser.getDepNum()), BusDepInfoDTO::getDepNum));
+        List<String> depNumList = Linq.select(depInfoRepo.listAllSup(currentUser.getDepNum()), BusDepInfoDTO::getDepNum);
+        depNumList.add(currentUser.getDepNum());
+        depNumList.addAll(Linq.select(depInfoRepo.listAllChild(currentUser.getDepNum()), BusDepInfoDTO::getDepNum));
         list.addAll(busResourceManageRepo.listDep(ResourceTypeEnum.RESOURCE_FLODER.getCode(), depNumList));
         List<BusResourceManageDTO> busResourceManageDTOS = TreeNodeServiceImpl.assembleTree(list);
         return RestResponse.success(busResourceManageDTOS);
@@ -83,14 +89,13 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         List<BusResourceManageDTO> list = new ArrayList<>();
         list.add(first);
 
-        if (ResourceCategoryEnum.PERSONAL.getName().equals(category)){
+        if (ResourceCategoryEnum.USER.getName().equals(category)){
             list.addAll(busResourceManageRepo.list(userId));
         }
         if (ResourceCategoryEnum.DEP.getName().equals(category)){
-            List<String> depNumList = new ArrayList<>();
-//            List<String> depNumList = Linq.select(depInfoRepo.listAllSup(currentUser.getDepNum()), BusDepInfoDTO::getDepNum);
-//            depNumList.add(currentUser.getDepNum());
-//            depNumList.addAll(Linq.select(depInfoRepo.listAllChild(currentUser.getDepNum()), BusDepInfoDTO::getDepNum));
+            List<String> depNumList = Linq.select(depInfoRepo.listAllSup(currentUser.getDepNum()), BusDepInfoDTO::getDepNum);
+            depNumList.add(currentUser.getDepNum());
+            depNumList.addAll(Linq.select(depInfoRepo.listAllChild(currentUser.getDepNum()), BusDepInfoDTO::getDepNum));
             list.addAll(busResourceManageRepo.listDep(ResourceTypeEnum.RESOURCE_FLODER.getCode(), depNumList));
         }
         if (ResourceCategoryEnum.UNIT.getName().equals(category)){
@@ -111,21 +116,71 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         String userId = StringUtils.isBlank(ContextUtil.getUserId()) ? ServiceConstants.DEFAULT_USER_ID : ContextUtil.getUserId();
         List<BusResourceManageDTO> busResourceManageDTOS = busResourceManageRepo.resourceListRight(userId, name, parentId, entity.getCategory());
 
-//        if (ResourceCategoryEnum.DEP.getName().equals(entity.getCategory()) && !entity.getFixed()){
-//            List<String> depNumList = Linq.select(depInfoRepo.listAllSup(currentUser.getDepNum()), BusDepInfoDTO::getDepNum);
-//            depNumList.add(currentUser.getDepNum());
-//            depNumList.addAll(Linq.select(depInfoRepo.listAllChild(currentUser.getDepNum()), BusDepInfoDTO::getDepNum));
-//            if (!depNumList.contains(entity.getDepNum())){
-//                return RestResponse.fail(ResourceErrorCode.NO_VIEW_AUTH.getCode(), "无查看权限");
-//            }
-//            busResourceManageDTOS = Linq.find(busResourceManageDTOS, x -> depNumList.contains(x.getDepNum()));
-//        }
+        if (ResourceCategoryEnum.DEP.getName().equals(entity.getCategory())){
+            List<String> supDepNumList = Linq.select(depInfoRepo.listAllSup(currentUser.getDepNum()), BusDepInfoDTO::getDepNum);
+            List<String> authDepNumList = Linq.select(depInfoRepo.listAllChild(currentUser.getDepNum()), BusDepInfoDTO::getDepNum);
+            authDepNumList.add(currentUser.getDepNum());
+            if (!supDepNumList.contains(entity.getDepNum()) && !authDepNumList.contains(entity.getDepNum()) && !entity.getFixed()){
+                return RestResponse.fail(ResourceErrorCode.NO_VIEW_AUTH.getCode(), "无查看权限");
+            }
+            busResourceManageDTOS = Linq.find(busResourceManageDTOS, x -> authDepNumList.contains(x.getDepNum()));
+        }
         return RestResponse.success(busResourceManageDTOS, busResourceManageDTOS.size());
+    }
+
+    @Override
+    public RestResponse checkUploadAuth(Integer id) {
+        SystemUser currentUser = ContextUtil.currentUser();
+        BusResourceManageEntity entity = busResourceManageRepo.getById(id);
+        if (null == entity) {
+            return RestResponse.success(false);
+        }
+        if (ResourceCategoryEnum.UNIT.getName().equals(entity.getCategory())){
+            return RestResponse.success(this.checkEditUnitAuth());
+        }
+        if (ResourceCategoryEnum.DEP.getName().equals(entity.getCategory())){
+            List<String> authDepNumList = new ArrayList<>();
+//            authDepNumList = Linq.select(depInfoRepo.listAllChild(currentUser.getDepNum()), BusDepInfoDTO::getDepNum);
+            authDepNumList.add(currentUser.getDepNum());
+            return RestResponse.success(authDepNumList.contains(entity.getDepNum()));
+        } else {
+            return RestResponse.success(entity.getCreateUserId().equals(currentUser.getUserId())
+                    || (ResourceCategoryEnum.USER.getName().equals(entity.getCategory()) && entity.getFixed()));
+        }
     }
 
     private Boolean checkEditUnitAuth(){
         SystemUser currentUser = ContextUtil.currentUser();
         return currentUser.getSpecialAuth().contains(UserSpecialAuthEnum.UNIT_FILE_MANAGE.getAuthCode());
+    }
+
+    private String checkResourceName(Integer parentId, BusResourceManageDTO resourceManageDTO){
+        return "";
+    }
+
+    /**
+     * 生成唯一的基础文件名（不含扩展名）
+     */
+    public String generateUniqueName(String originalName, List<String> existingNames) {
+        // 提取文件名中的数字部分（如果文件名已经包含类似 (1) 的结构）
+        Pattern pattern = Pattern.compile("(.*)\\((\\d+)\\)$");
+        Matcher matcher = pattern.matcher(originalName);
+        int counter = 1;
+
+        if (matcher.find()) {
+            // 如果文件名已经包含类似 (1) 的结构，提取数字并递增
+            originalName = matcher.group(1);
+            counter = Integer.parseInt(matcher.group(2)) + 1;
+        }
+
+        // 生成新的文件名，直到找到一个不冲突的
+        String newName;
+        do {
+            newName = String.format("%s(%d)", originalName, counter);
+            counter++;
+        } while (existingNames.contains(newName));
+
+        return newName;
     }
 
     @Override
@@ -155,30 +210,49 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         // 查父ID文件类型
         BusResourceManageEntity parent = busResourceManageRepo.resourceTypeById(resourceManageDTO.getParentId());
         if (null == parent) {
-            return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "父文件未找到");
+            return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "上级文件夹未找到");
         }
         resourceManageDTO.setParentGuid(parent.getGuid());
         resourceManageDTO.setCategory(parent.getCategory());
         //判断权限
+        BusDepInfoDTO dep = depInfoRepo.getByDepNum(parent.getDepNum());
         if (ResourceCategoryEnum.DEP.getName().equals(parent.getCategory())){
-            if (StringUtils.isNotEmpty(parent.getDepNum()) && !parent.getDepNum().equals(currentUser.getDepNum())){
-                return RestResponse.fail(ResourceErrorCode.NO_AUTH);
+            if (null == dep && !"".equals(parent.getDepNum())) {
+                return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "上级文件夹所属部门已失效");
+            }
+            if (!currentUser.getDepNum().equals(parent.getDepNum())){
+                return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
             }
             resourceManageDTO.setDepNum(currentUser.getDepNum());
             resourceManageDTO.setDepName(currentUser.getDepName());
         }
         if (ResourceCategoryEnum.UNIT.getName().equals(parent.getCategory()) && !this.checkEditUnitAuth()){
-            return RestResponse.fail(ResourceErrorCode.NO_AUTH);
+            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
         }
+
+        FileEmbeddingConfigDTO embeddingConfig;
+        String fileEmbeddingConfigCode = StringUtils.isEmpty(resourceManageDTO.getEmbeddingConfigCode()) ? "" : resourceManageDTO.getEmbeddingConfigCode();
+        embeddingConfig = this.getEmbeddingConfigByConfigCode(fileEmbeddingConfigCode, resourceManageDTO.getEmbeddingConfig());
 
         String userId = StringUtils.isBlank(ContextUtil.getUserId()) ? ServiceConstants.DEFAULT_USER_ID : ContextUtil.getUserId();
         resourceManageDTO.setCreateUserId(userId); // 填充默认值
         List<SyncFileDTO> syncFileDTOS = new ArrayList<>(); // 用于给文件同步知识库id与文件ID
         // 文件夹上传
         if (resourceManageDTO.getResourceType().equals(ResourceTypeEnum.RESOURCE_FLODER.getCode())) {
+            //处理重复名字
+            List<BusResourceManageDTO> otherCode = busResourceManageRepo.listByParentIdAndResourceType(parent.getId(), ResourceTypeEnum.RESOURCE_FLODER.getCode());
+            if (CollUtil.isNotEmpty(otherCode)) {
+                List<String> existNameList = Linq.select(otherCode, BusResourceManageDTO::getName);
+                if (existNameList.contains(resourceManageDTO.getName())) {
+                    resourceManageDTO.setName(this.generateUniqueName(resourceManageDTO.getName(), existNameList));
+                }
+            }
             resourceManageDTO.setSort(busResourceManageRepo.maxSort() + 1);
             Long resourceId = busResourceManageRepo.add(resourceManageDTO);
             reBool = resourceId != null;
+            BusResourceEmbeddingDTO busResourceEmbeddingDTO = embeddingMapping.configDto2Dto(embeddingConfig);
+            busResourceEmbeddingDTO.setResourceId(Math.toIntExact(resourceId));
+            embeddingRepo.add(busResourceEmbeddingDTO);
         }
         // 文件上传
         else if (resourceManageDTO.getResourceType().equals(ResourceTypeEnum.RESOURCE_FILE.getCode())) {
@@ -204,34 +278,47 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
                     return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "文件下不能创建节点");
                 }
                 List<Long> resourceIds = new ArrayList<>();
+                //处理重复名字
+                List<BusResourceManageDTO> otherCode = busResourceManageRepo.listByParentIdAndResourceType(parent.getId(), ResourceTypeEnum.RESOURCE_FILE.getCode());
                 for (Map<String, Object> stringObjectMap : fileList) {
                     resourceManageDTO.setSort(busResourceManageRepo.maxSort() + 1);
-                    resourceManageDTO.setName(stringObjectMap.get(ServiceConstants.RESOURCE_FILE_NAME) + "");
                     resourceManageDTO.setFileId(stringObjectMap.get(ServiceConstants.RESOURCE_FILE_ID) + "");
                     resourceManageDTO.setFileType(stringObjectMap.get(ServiceConstants.RESOURCE_FILE_TYPE) + "");
                     resourceManageDTO.setSize(stringObjectMap.get(ServiceConstants.RESOURCE_FILE_SIZE) + "");
+                    resourceManageDTO.setName(stringObjectMap.get(ServiceConstants.RESOURCE_FILE_NAME) + "");
+                    //处理重复名字
+                    String fileType = resourceManageDTO.getFileType();
+                    List<BusResourceManageDTO> subCodeList = Linq.find(otherCode, x -> x.getFileType().equals(fileType));
+                    if (CollUtil.isNotEmpty(subCodeList)) {
+                        List<String> existNameList = Linq.select(subCodeList, BusResourceManageDTO::getName);
+                        if (existNameList.contains(resourceManageDTO.getName())) {
+                            resourceManageDTO.setName(this.generateUniqueName(resourceManageDTO.getName(), existNameList));
+                        }
+                    }
+                    otherCode.add(resourceManageDTO);
                     Long resourceId = busResourceManageRepo.add(resourceManageDTO);
                     resourceIds.add(resourceId);
+                    BusResourceEmbeddingDTO busResourceEmbeddingDTO = embeddingMapping.configDto2Dto(embeddingConfig);
+                    busResourceEmbeddingDTO.setResourceId(Math.toIntExact(resourceId));
+                    embeddingRepo.add(busResourceEmbeddingDTO);
+
                 }
                 // TODO 该段逻辑后续可能更改，当前设置为一个用户仅一个个人知识库
                 String datasetsId = "";
-                if (ResourceCategoryEnum.DEP.getName().equals(parent.getCategory())){
-                    datasetsId = datasetsConfigProperties.getDepId();
-                }
                 if (ResourceCategoryEnum.UNIT.getName().equals(parent.getCategory())){
                     datasetsId = datasetsConfigProperties.getUnitId();
                 }
-                if (ResourceCategoryEnum.PERSONAL.getName().equals(parent.getCategory())){
+                if (ResourceCategoryEnum.DEP.getName().equals(parent.getCategory())){
+                    BusResourceDatasetDTO datasetDTO = datasetRepo.getByCode(parent.getDepNum());
+                    datasetsId = null != datasetDTO ? datasetDTO.getDatasetsId() : this.createDatasets(dep.getDepName(), parent.getDepNum());
+                    datasetRepo.add(ResourceCategoryEnum.DEP.getCode(), parent.getDepNum(), datasetsId);
+                }
+                if (ResourceCategoryEnum.USER.getName().equals(parent.getCategory())){
                     //根据用户查是否存在个人知识库
-                    List<RelUserResourceEntity> relUserResourceDTOS = relUserResourceRepo.listByUserId(userId);
-                    if (relUserResourceDTOS != null && !relUserResourceDTOS.isEmpty()) {
-                        // 存在个人知识库，直接insert个人与文件的关联
-                        datasetsId = relUserResourceDTOS.get(0).getDatasetsId();
-                    } else {
-                        // 不存在个人知识库，新建知识库
-                        // 调用有云创建空知识库
-                        datasetsId = this.createDatasets(currentUser, userId);
-                    }
+                    BusResourceDatasetDTO datasetDTO = datasetRepo.getByCode(currentUser.getUserId());
+                    // 不存在个人知识库，新建知识库  调用有云创建空知识库
+                    datasetsId = null != datasetDTO ? datasetDTO.getDatasetsId() : this.createDatasets(currentUser.getUserName(), currentUser.getLoginId());
+                    datasetRepo.add(ResourceCategoryEnum.USER.getCode(), currentUser.getUserId(), datasetsId);
                 }
                 for (Long resourceId : resourceIds) {
                     // 根据资源ID查fileId
@@ -245,8 +332,12 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
                     relUserResourceRepo.add(relUserResourceDTO);
 
                     SyncFileDTO syncFileDTO = new SyncFileDTO();
+                    syncFileDTO.setFileName(manageEntity.getName() + "." + manageEntity.getFileType());
                     syncFileDTO.setFileId(manageEntity.getFileId());
                     syncFileDTO.setDatasetId(datasetsId);
+                    syncFileDTO.setFileEmbeddingConfigCode(fileEmbeddingConfigCode);
+                    syncFileDTO.setFileEmbeddingConfigName(resourceManageDTO.getEmbeddingConfigName());
+                    syncFileDTO.setEmbeddingConfig(embeddingConfig);
                     syncFileDTOS.add(syncFileDTO);
                 }
                 reBool = true;
@@ -262,9 +353,9 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         return reBool ? RestResponse.success(busResourceManageRepo.list(ContextUtil.getUserId())) : RestResponse.fail(ResourceErrorCode.ADD_FAIL);
     }
 
-    private String createDatasets(SystemUser currentUser, String userId){
-        String datasetsName = ServiceConstants.CUS_DATASETS_DEFAULT_NAME + "-" + currentUser.getUserName() + "(" + currentUser.getLoginId() + ")";
-        String datasetsId = this.createDatasetsId(userId, datasetsName);
+    private String createDatasets(String name, String id){
+        String datasetsName = ServiceConstants.CUS_DATASETS_DEFAULT_NAME + "-" + name + "(" + id + ")";
+        String datasetsId = this.createDatasetsId(datasetsName);
         log.info("知识库创建成功!返回知识库ID为：{}", datasetsId);
         return datasetsId;
     }
@@ -300,11 +391,25 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         }
     }
 
+    private FileEmbeddingConfigDTO getEmbeddingConfigByConfigCode(String configCode, FileEmbeddingConfigDTO configDTO) {
+        FileEmbeddingConfigDTO result;
+        if (StringUtils.isEmpty(configCode) && null != configDTO){
+            result = configDTO;
+        } else {
+            List<FileEmbeddingConfigDTO> embeddingConfigList = embeddingConfigRepo.listAll();
+            result = Linq.first(embeddingConfigList, x -> configCode.equals(x.getConfigCode()));
+            result = null == result ? Linq.first(embeddingConfigList, x -> FileEmbeddingConfigEnum.GENERAL_CONFIG.getCode().equals(x.getConfigCode()))
+                    : result;
+        }
+        return result;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RestResponse updateResource(BusResourceManageDTO resourceManageDTO) {
         SystemUser currentUser = ContextUtil.currentUser();
         BusResourceManageEntity entity = busResourceManageRepo.getById(resourceManageDTO.getId());
+        RelUserResourceDTO relUserResourceDTO = relUserResourceRepo.getOneByFileId(entity.getFileId());
         if (null == entity) {
             return RestResponse.fail(DefaultErrorCode.UPDATE_ERROR);
         }
@@ -312,15 +417,15 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         if (entity.getFixed()){
             return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
         }
-        if (ResourceCategoryEnum.PERSONAL.getName().equals(entity.getCategory()) && !entity.getCreateUserId().equals(currentUser.getUserId())){
+        if (ResourceCategoryEnum.USER.getName().equals(entity.getCategory()) && !entity.getCreateUserId().equals(currentUser.getUserId())){
             return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
         }
-//        if (ResourceCategoryEnum.DEP.getName().equals(entity.getCategory()) && !entity.getDepNum().equals(currentUser.getDepNum())){
-//            return RestResponse.fail(ResourceErrorCode.NO_AUTH);
-//        }
-//        if (ResourceCategoryEnum.UNIT.getName().equals(entity.getCategory()) && !this.checkEditUnitAuth()){
-//            return RestResponse.fail(ResourceErrorCode.NO_AUTH);
-//        }
+        if (ResourceCategoryEnum.DEP.getName().equals(entity.getCategory()) && !entity.getDepNum().equals(currentUser.getDepNum())){
+            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
+        }
+        if (ResourceCategoryEnum.UNIT.getName().equals(entity.getCategory()) && !this.checkEditUnitAuth()){
+            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
+        }
         if (!entity.getParentId().equals(resourceManageDTO.getParentId())){
             BusResourceManageEntity newParent = busResourceManageRepo.getById(resourceManageDTO.getParentId());
             //检查循环
@@ -339,6 +444,40 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         }
         String userId = StringUtils.isBlank(ContextUtil.getUserId()) ? ServiceConstants.DEFAULT_USER_ID : ContextUtil.getUserId();
         resourceManageDTO.setUpdateUserId(userId);
+        if (!entity.getName().equals(resourceManageDTO.getName())){
+            //处理重复名字
+            List<BusResourceManageDTO> otherCode = busResourceManageRepo.listByParentIdAndResourceType(Long.valueOf(resourceManageDTO.getParentId()), entity.getResourceType());
+            if (CollUtil.isNotEmpty(otherCode)) {
+                List<String> existNameList = Linq.select(otherCode, BusResourceManageDTO::getName);
+                if (existNameList.contains(resourceManageDTO.getName())) {
+                    resourceManageDTO.setName(this.generateUniqueName(resourceManageDTO.getName(), existNameList));
+                }
+            }
+        }
+        if (!entity.getEmbeddingConfigCode().equals(resourceManageDTO.getEmbeddingConfigCode()) || entity.getEmbeddingConfigCode().isEmpty()){
+            FileEmbeddingConfigDTO embeddingConfig;
+            String fileEmbeddingConfigCode = StringUtils.isEmpty(resourceManageDTO.getEmbeddingConfigCode()) ? "" : resourceManageDTO.getEmbeddingConfigCode();
+            embeddingConfig = this.getEmbeddingConfigByConfigCode(fileEmbeddingConfigCode, resourceManageDTO.getEmbeddingConfig());
+
+            BusResourceEmbeddingDTO busResourceEmbeddingDTO = embeddingMapping.configDto2Dto(embeddingConfig);
+            busResourceEmbeddingDTO.setResourceId(resourceManageDTO.getId());
+            embeddingRepo.delete(resourceManageDTO.getId());
+            embeddingRepo.add(busResourceEmbeddingDTO);
+            resourceManageDTO.setEmbeddingConfigCode(embeddingConfig.getConfigCode());
+            resourceManageDTO.setEmbeddingConfigName(embeddingConfig.getConfigName());
+
+            if (null != relUserResourceDTO){
+                SyncFileDTO syncFileDTO = new SyncFileDTO();
+                syncFileDTO.setFileName(resourceManageDTO.getName() + "." + entity.getFileType());
+                syncFileDTO.setFileId(relUserResourceDTO.getFileId());
+                syncFileDTO.setDatasetId(relUserResourceDTO.getDatasetsId());
+                syncFileDTO.setFileEmbeddingConfigCode(fileEmbeddingConfigCode);
+                syncFileDTO.setFileEmbeddingConfigName(resourceManageDTO.getEmbeddingConfigName());
+                syncFileDTO.setEmbeddingConfig(embeddingConfig);
+                //同步文件到dify知识库并更新documentId和batch
+                this.syncFileToDify(List.of(syncFileDTO));
+            }
+        }
         boolean b = busResourceManageRepo.update(resourceManageDTO);
         return b ? RestResponse.success(busResourceManageRepo.list(ContextUtil.getUserId())) : RestResponse.fail(ResourceErrorCode.EDIT_FAIL);
     }
@@ -355,15 +494,15 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         if (entity.getFixed()){
             return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
         }
-        if (ResourceCategoryEnum.PERSONAL.getName().equals(entity.getCategory()) && !entity.getCreateUserId().equals(currentUser.getUserId())){
+        if (ResourceCategoryEnum.USER.getName().equals(entity.getCategory()) && !entity.getCreateUserId().equals(currentUser.getUserId())){
             return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
         }
-//        if (ResourceCategoryEnum.DEP.getName().equals(entity.getCategory()) && !entity.getDepNum().equals(currentUser.getDepNum())){
-//            return RestResponse.fail(ResourceErrorCode.NO_AUTH);
-//        }
-//        if (ResourceCategoryEnum.UNIT.getName().equals(entity.getCategory()) && !this.checkEditUnitAuth()){
-//            return RestResponse.fail(ResourceErrorCode.NO_AUTH);
-//        }
+        if (ResourceCategoryEnum.DEP.getName().equals(entity.getCategory()) && !entity.getDepNum().equals(currentUser.getDepNum())){
+            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
+        }
+        if (ResourceCategoryEnum.UNIT.getName().equals(entity.getCategory()) && !this.checkEditUnitAuth()){
+            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
+        }
         boolean success = busResourceManageRepo.delete(id);
         if (ResourceTypeEnum.RESOURCE_FILE.getCode() == entity.getResourceType()){
             RelUserResourceDTO document = relUserResourceRepo.getOneByFileId(entity.getFileId());
@@ -371,6 +510,7 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
                 this.deleteDocument(document.getDatasetsId(), document.getDocumentId());
             }
             relUserResourceRepo.deleteByFileId(entity.getFileId());
+            fileApi.deleteFileCommon(entity.getFileId());
         }
         return success ? RestResponse.success(busResourceManageRepo.list(ContextUtil.getUserId())) : RestResponse.fail(ResourceErrorCode.DELETE_FAIL);
     }
@@ -482,11 +622,10 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
     /**
      * 创建空的个人知识库
      *
-     * @param userId       用户ID
      * @param datasetsName 知识库名称
      * @return 知识库ID
      */
-    private String createDatasetsId(String userId, String datasetsName) {
+    private String createDatasetsId(String datasetsName) {
         String datasetsId = "";
         String url = aiConfigProperties.getPersonDatasetsCreateApi();
         Map<String, Object> map = new HashMap<>();
@@ -526,7 +665,7 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         map.put("external_knowledge_id", "");
 
         try {
-            String string = HttpUtils.doPost(url, map, ChatApiKeyEnum.customvector.getKey(), "");
+            String string = HttpUtils.doPost(url, map, apikeyConfigProperties.getCustomvector(), "");
             log.info("创建知识库响应结果：" + string);
             if (StringUtils.isNotBlank(string)) {
                 Gson gson = new Gson();
@@ -565,7 +704,7 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         String url = aiConfigProperties.getDatasetsDocumentSegmentApi();
         url = String.format(url, datasetId, documentId);
         Map map = new HashMap<>();
-        String response = HttpUtils.doGet(url, ChatApiKeyEnum.customvector.getKey());
+        String response = HttpUtils.doGet(url, apikeyConfigProperties.getCustomvector());
         if (StringUtils.isNotBlank(response)) {
             Gson gson = new Gson();
             map = gson.fromJson(response, Map.class);
@@ -584,7 +723,7 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
         String url = aiConfigProperties.getDatasetsDeleteDocumentApi();
         url = String.format(url, datasetId, documentId);
         Map map = new HashMap<>();
-        String response = HttpUtils.doDelete(url, ChatApiKeyEnum.customvector.getKey());
+        String response = HttpUtils.doDelete(url, apikeyConfigProperties.getCustomvector());
         if (StringUtils.isNotBlank(response)) {
             Gson gson = new Gson();
             map = gson.fromJson(response, Map.class);
@@ -593,16 +732,16 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
     }
 
     /**
-     * 根据知识库ID和文档ID删除文档
+     * 根据知识库ID查询知识库文档列表
      *
      * @param datasetId  知识库ID
      * @return
      */
-    private Map syncDifyDocumentByDatasetId(String datasetId) {
-        String url = "http://10.10.252.220:8090/v1/datasets/%s/documents?page=1&limit=80";
+    private Map syncDifyDocumentByDatasetId(String datasetId, Integer page) {
+        String url = aiConfigProperties.getDatasetsDocumentListApi() + "?page=" + page + "&limit=100";
         url = String.format(url, datasetId);
         Map map = new HashMap<>();
-        String response = HttpUtils.doGet(url, ChatApiKeyEnum.customvector.getKey());
+        String response = HttpUtils.doGet(url, apikeyConfigProperties.getCustomvector());
         if (StringUtils.isNotBlank(response)) {
             Gson gson = new Gson();
             map = gson.fromJson(response, Map.class);
@@ -613,44 +752,66 @@ public class BusResourceManageServiceImpl implements BusResourceManageService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RestResponse syncDifyDocument(String datasetId) {
+    public RestResponse syncDifyDocument(String datasetId, Integer parentId) {
+        BusResourceManageEntity parent = busResourceManageRepo.getById(parentId);
         SystemUser currentUser = ContextUtil.currentUser();
-        Map map = this.syncDifyDocumentByDatasetId(datasetId);
-        List<Map> dataList = (List<Map>) map.get("data");
-        for (Map subData : dataList){
-            Map file = (Map) subData.get("data_source_detail_dict");
-            Map fileInfo = (Map) file.get("upload_file");
+        List<BusResourceManageDTO> otherCode = busResourceManageRepo.listByParentIdAndResourceType(parent.getId(), ResourceTypeEnum.RESOURCE_FILE.getCode());
+        List<String> existNameList = CollUtil.isEmpty(otherCode) ? new ArrayList<>() : Linq.select(otherCode, BusResourceManageDTO::getName);
 
-            BusResourceManageDTO dto = new BusResourceManageDTO();
-            dto.setParentId(360);
-            dto.setParentGuid("84fe5af0-f973-11ef-a61f-fa163e8439de");
-            dto.setResourceType(2);
-            dto.setCategory("部门");
-            dto.setDepNum("3760");
-            dto.setDepName("科技与数字化部（系统工程部）");
-            dto.setName((String) fileInfo.get("name"));
-            dto.setFileId((String) fileInfo.get("id"));
-            dto.setSize(String.valueOf((Double) fileInfo.get("size")));
-            dto.setFileType((String) fileInfo.get("extension"));
-            Long resourceId = busResourceManageRepo.add(dto);
+        for (int i = 1; i < 9; i++) {
+            Map map = this.syncDifyDocumentByDatasetId(datasetId, i);
+            List<Map> dataList = (List<Map>) map.get("data");
+            for (Map subData : dataList){
+                Map file = (Map) subData.get("data_source_detail_dict");
+                Map fileInfo = (Map) file.get("upload_file");
 
-            RelUserResourceEntity relEntity = new RelUserResourceEntity();
-            relEntity.setResourceId(Math.toIntExact(resourceId));
-            relEntity.setUserId(currentUser.getUserId());
-            relEntity.setFileId(dto.getFileId());
-            relEntity.setDatasetsId(datasetId);
-            relEntity.setDocumentId((String) subData.get("id"));
-            relEntity.setBatch((String) fileInfo.get("created_by"));
-            relEntity.setIndexingStatus("completed");
-            relEntity.setIndexingStatusName("完成");
-            relUserResourceRepo.save(relEntity);
+                BusResourceManageDTO dto = new BusResourceManageDTO();
+                dto.setParentId(Math.toIntExact(parent.getId()));
+                dto.setParentGuid(parent.getGuid());
+                dto.setResourceType(2);
+                dto.setCategory(parent.getCategory());
+                dto.setDepNum(parent.getDepNum());
+                dto.setDepName(parent.getDepName());
+                dto.setName((String) fileInfo.get("name"));
+                dto.setFileId((String) fileInfo.get("id"));
+                dto.setSize(String.valueOf((Double) fileInfo.get("size")));
+                dto.setFileType((String) fileInfo.get("extension"));
+
+                if (existNameList.contains(dto.getName())){
+                    continue;
+                }
+                Long resourceId = busResourceManageRepo.add(dto);
+
+                RelUserResourceEntity relEntity = new RelUserResourceEntity();
+                relEntity.setResourceId(Math.toIntExact(resourceId));
+                relEntity.setUserId(currentUser.getUserId());
+                relEntity.setFileId(dto.getFileId());
+                relEntity.setDatasetsId(datasetId);
+                relEntity.setDocumentId((String) subData.get("id"));
+                relEntity.setBatch((String) fileInfo.get("created_by"));
+                String indexingStatus = (String) subData.get("indexing_status");
+                IndexingStatusEnum indexingStatusEnum = IndexingStatusEnum.fromIndexingStatus(indexingStatus);
+                relEntity.setIndexingStatus(indexingStatus);
+                relEntity.setIndexingStatusName(null == indexingStatusEnum ? "完成" : indexingStatusEnum.getIndexingStatusName());
+                relUserResourceRepo.save(relEntity);
+            }
         }
 
         return RestResponse.SUCCESS;
     }
+
+    @Override
+    public RestResponse listEmbedConfig() {
+        return RestResponse.success(embeddingConfigRepo.listAll());
+    }
+
+    @Override
+    public RestResponse getEmbedConfig(String configCode) {
+        return RestResponse.success(embeddingConfigRepo.getByCode(configCode));
+    }
+
+    @Override
+    public RestResponse getResourceEmbedInfo(Integer resourceId) {
+        return RestResponse.success(embeddingRepo.getByResourceId(resourceId));
+    }
 }
-
-
-
-
-

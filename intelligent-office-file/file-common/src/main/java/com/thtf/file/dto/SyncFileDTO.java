@@ -1,7 +1,10 @@
 package com.thtf.file.dto;
 
 import com.thtf.file.dto.knowledgeLab.SyncFileDataDTO;
+import com.thtf.resource.dto.FileEmbeddingConfigDTO;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * @Description: TODO
@@ -23,8 +26,28 @@ public class SyncFileDTO {
     private String fileId;
 
     /**
+     * 文件名
+     */
+    private String fileName;
+
+    /**
+     * 文件向量化配置编码
+     */
+    private String fileEmbeddingConfigCode;
+
+    /**
+     * 文件向量化配置
+     */
+    private String fileEmbeddingConfigName;
+
+    /**
      * 文件向量化配置
      */
     private SyncFileDataDTO config;
+
+    /**
+     * 文件向量化配置
+     */
+    private FileEmbeddingConfigDTO embeddingConfig;
 
 }

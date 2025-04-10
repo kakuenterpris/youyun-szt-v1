@@ -75,8 +75,8 @@ file.temp.path: /data/temp/
 
 
 youyun.doc.apikey: dataset-dezUJfSWgpETM8niLddTZboD
-youyun.doc.create: http://10.10.252.220:8090/v1/datasets/%s/document/create-by-file   # datasetsId
-youyun.doc.delete: http://10.10.252.220:8090/v1/datasets/%s/documents/%s              # datasetsId , documentId
+youyun.doc.create: http://119.254.155.240:18090/v1/datasets/%s/document/create-by-file   # datasetsId
+youyun.doc.delete: http://119.254.155.240:18090/v1/datasets/%s/documents/%s              # datasetsId , documentId
 
 
 

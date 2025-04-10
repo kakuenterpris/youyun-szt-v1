@@ -6,24 +6,23 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +37,16 @@ import java.util.*;
  */
 @Slf4j
 public class HttpUtils {
+    private static final String UTF8 = "UTF-8";
+    private static CloseableHttpClient httpClient;
 
+    static {
+        // 听见服务、流控组件连接池
+        PoolingHttpClientConnectionManager pool = new PoolingHttpClientConnectionManager();
+        pool.setMaxTotal(600);//客户端总并行链接最大数
+        pool.setDefaultMaxPerRoute(200);//每个主机的最大并行链接数
+        httpClient = HttpClients.createMinimal(pool);
+    }
     public static String doGet(String url, String token) {
 
         // 创建Httpclient对象
@@ -308,5 +316,90 @@ public class HttpUtils {
         return result;
     }
 
+    public static String parseMapToPathParam(Map<String, Object> param) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            Set<Map.Entry<String, Object>> entryset = param.entrySet();
+            boolean isFirst = true;
+            for (Map.Entry<String, Object> entry : entryset) {
+                if (!isFirst) {
+                    sb.append("&");
+                } else {
+                    isFirst = false;
+                }
+                sb.append(URLEncoder.encode(entry.getKey(), UTF8));
+                sb.append("=");
+                sb.append(URLEncoder.encode(entry.getValue().toString(), UTF8));
+            }
+        } catch (UnsupportedEncodingException e) {
+            log.error("HttpUtil parseMapToPathParam Exception!", e);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 请求的upload接口, 发送音频创建转写订单
+     *
+     * @param url       请求地址
+     * @param in        需要转写的音频流
+     * @return 返回结果
+     */
+    public static String iflyrecUpload(String url,  InputStream in) {
+        // 1、准备参数
+        HttpPost httpPost = new HttpPost(url);
+        // 设置超时时间, 防止504的时候会耗时30分钟
+        RequestConfig requestConfig = RequestConfig.custom()
+                //从连接池中获取连接的超时时间
+                .setConnectionRequestTimeout(5000)
+                //与服务器连接超时时间, 指的是连接一个url的连接等待时间
+                .setConnectTimeout(600000)
+                // 读取超时, 指的是连接上一个url，获取response的返回等待时间
+                .setSocketTimeout(600000).build();
+        httpPost.setConfig(requestConfig);
+        HttpEntity requestEntity = new InputStreamEntity(in, ContentType.APPLICATION_JSON);
+        //System.out.println("---"+requestEntity);
+        httpPost.setEntity(requestEntity);
+
+        // 2、执行请求
+        return doExecute(httpPost, null);
+    }
+
+    /**
+     * 请求听见的获取结果接口
+     *
+     * @param url       请求路径
+     * @return 返回结果
+     */
+    public static String iflyrecGet(String url) {
+        // 1、准备参数
+        HttpGet httpget = new HttpGet(url);
+        // 2、执行请求
+        return doExecute(httpget, UTF8);
+    }
+    /**
+     * 执行网络请求
+     *
+     * @param requestBase http请求对象
+     * @param charset     字符集
+     * @return 返回结果
+     */
+    private static String doExecute(HttpRequestBase requestBase, String charset) {
+        String result = null;
+        try (CloseableHttpResponse response = httpClient.execute(requestBase)) {
+            // 3、检查结果状态
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK) {
+                log.error("网络异常");
+                return null;
+            }
+            // 4、获取结果
+            result = charset == null
+                    ? EntityUtils.toString(response.getEntity())
+                    : EntityUtils.toString(response.getEntity(), charset);
+        } catch (Exception e) {
+            log.error("网络异常", e);
+        }
+        return result;
+    }
 
 }

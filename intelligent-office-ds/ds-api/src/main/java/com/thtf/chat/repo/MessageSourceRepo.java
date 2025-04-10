@@ -1,7 +1,9 @@
 package com.thtf.chat.repo;
 
-import com.thtf.chat.entity.MessageSourceEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.thtf.chat.entity.MessageSourceEntity;
+
+import java.util.List;
 
 /**
 * @author 86187
@@ -10,4 +12,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface MessageSourceRepo extends IService<MessageSourceEntity> {
 
+    int batchInsert(List<MessageSourceEntity> entities);
 }

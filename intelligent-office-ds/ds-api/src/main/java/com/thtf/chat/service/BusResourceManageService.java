@@ -18,6 +18,8 @@ public interface BusResourceManageService {
 
     RestResponse resourceListRight(String name, Integer parentId);
 
+    RestResponse checkUploadAuth(Integer id);
+
     RestResponse saveResource(BusResourceManageDTO resourceManageDTO);
 
     RestResponse updateResource(BusResourceManageDTO resourceManageDTO);
@@ -36,6 +38,12 @@ public interface BusResourceManageService {
 
     RestResponse updateSort(List<BusResourceManageDTO> list);
 
-    RestResponse syncDifyDocument(String datasetId);
+    RestResponse syncDifyDocument(String datasetId, Integer parentId);
+
+    RestResponse listEmbedConfig();
+
+    RestResponse getEmbedConfig(String configCode);
+
+    RestResponse getResourceEmbedInfo(Integer resourceId);
 
 }

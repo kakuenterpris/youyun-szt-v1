@@ -43,6 +43,11 @@ public class BusDepInfoDTO {
     private String subCompanyId;
 
     /**
+     * 排序
+     */
+    private String showorder;
+
+    /**
      * 封存标志，1 封存，其他为未封存
      */
     private String canceled;

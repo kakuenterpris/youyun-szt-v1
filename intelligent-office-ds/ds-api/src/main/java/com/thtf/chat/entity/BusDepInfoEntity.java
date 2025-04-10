@@ -57,6 +57,12 @@ public class BusDepInfoEntity {
     private String subCompanyId;
 
     /**
+     * 排序
+     */
+    @TableField(value = "showorder")
+    private String showorder;
+
+    /**
      * 封存标志，1 封存，其他为未封存
      */
     @TableField(value = "canceled")

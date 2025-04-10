@@ -1,16 +1,14 @@
 package com.thtf.chat.controller;
 
 import cn.hutool.core.io.file.FileNameUtil;
-import com.thtf.chat.enums.ChatApiKeyEnum;
 import com.thtf.chat.properties.AiConfigProperties;
 import com.thtf.chat.service.ChatService;
 import com.thtf.dto.*;
-import com.thtf.file.enums.ErrorCodeEnum;
 import com.thtf.global.common.rest.RestResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Response;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -18,9 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * 对话接口
@@ -33,6 +29,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "智能对话", description = "智能对话相关操作")
 public class ChatController {
 
     private final ChatService questionAnswerService;
@@ -59,6 +56,7 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/common", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "智能问答接口")
     public SseEmitter common(@RequestBody ChatRequestDto chatRequestDto) {
         if (null != chatRequestDto.getFiles() && chatRequestDto.getFiles().size() > 5) {
             throw new RuntimeException("可上传文件个数不能超过5个");
@@ -73,15 +71,18 @@ public class ChatController {
      * @return
      */
     @PostMapping("/recommendList")
+    @Operation(summary = "推荐问答接口")
     public RestResponse recommendList(@RequestBody RecommendChatDto recommendChatDto) {
         return questionAnswerService.recommendList(recommendChatDto);
     }
     @PostMapping("/rename")
+    @Operation(summary = "重命名会话接口")
     public RestResponse rename(@RequestBody RenameChatDto recommendChatDto) {
         return questionAnswerService.renameConversation(recommendChatDto);
     }
 
     @PostMapping("/stop")
+    @Operation(summary = "停止会话接口")
     public RestResponse stopConversation(@RequestBody StopChatDto stopChatDto) {
         return questionAnswerService.stopConversation(stopChatDto);
     }
@@ -94,6 +95,7 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/upload")
+    @Operation(summary = "上传文件接口")
     public RestResponse upload(@RequestParam(value = "file") MultipartFile file,
                                @RequestParam(value = "sceneType") String sceneType) {
         String suffix = FileNameUtil.getSuffix(file.getOriginalFilename());

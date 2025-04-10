@@ -40,10 +40,10 @@ public class FileApiApplication {
         MultipartConfigFactory factory = new MultipartConfigFactory();
         // spring boot 上传需要一个临时目录
         factory.setLocation(tempPath);
-        // 每次可上传的最大文件 100mb
-        factory.setMaxFileSize(DataSize.ofMegabytes(50));
-        // 每次可接受的请求体大小 200mb
-        factory.setMaxRequestSize(DataSize.ofMegabytes(100));
+        // 每次可上传的最大文件 300mb
+        factory.setMaxFileSize(DataSize.ofMegabytes(300));
+        // 每次可接受的请求体大小 300mb
+        factory.setMaxRequestSize(DataSize.ofMegabytes(300));
         return factory.createMultipartConfig();
     }
 

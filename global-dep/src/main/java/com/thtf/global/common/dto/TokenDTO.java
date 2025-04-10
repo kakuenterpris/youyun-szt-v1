@@ -3,9 +3,9 @@ package com.thtf.global.common.dto;
 import lombok.Data;
 
 /**
- * @Description: 用户信息
+ * @Description: Token信息
  * @author：linxin
- * @ClassName: UserInfoDTO
+ * @ClassName: TokenDTO
  * @Date: 2023-01-31 13:58
  */
 @Data

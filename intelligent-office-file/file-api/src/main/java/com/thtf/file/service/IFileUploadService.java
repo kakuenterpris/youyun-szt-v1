@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -124,6 +125,16 @@ public interface IFileUploadService {
      * @date 2025/2/20 14:51
      */
     RestResponse syncDocument(SyncFileDTO dto);
+
+
+    /**
+     *
+     * @param: dto
+     * @author linxin
+     * @return RestResponse
+     * @date 2025/2/20 14:51
+     */
+    RestResponse checkCanUpload(SyncFileDTO dto) throws IOException;
 
     /**
      * 删除文档

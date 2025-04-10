@@ -16,7 +16,7 @@ mybatis-plus:
     #打印 sql
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     call-setters-on-nulls: true
-    typeEnumsPackage: com.thtf.enums
+    typeEnumsPackage: com.thtf.file.enums
   global-config:
     default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
     banner: false
@@ -102,7 +102,10 @@ spring:
           config:
             multi-statement-allow: true
 
-
-
+  # 限制上传文件最大不超过300MB
+  servlet:
+    multipart:
+      max-file-size: 300MB
+      max-request-size: 300MB
 
 

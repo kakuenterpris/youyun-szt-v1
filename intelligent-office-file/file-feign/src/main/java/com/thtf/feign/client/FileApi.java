@@ -1,6 +1,7 @@
 package com.thtf.feign.client;
 
 import com.thtf.feign.config.FileFeignAutoconfiguration;
+import com.thtf.file.dto.FileUploadRecordBaseDTO;
 import com.thtf.file.dto.SyncFileDTO;
 import com.thtf.global.common.rest.RestResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @Date: 2025-02-20 10:11
  */
 //@FeignClient(name = "file-api", url = "http://localhost:40000/", configuration = FileFeignAutoconfiguration.class)
-@FeignClient(name = "file-api", url = "http://119.254.155.108/file-api/", configuration = FileFeignAutoconfiguration.class)
+@FeignClient(name = "file-api", configuration = FileFeignAutoconfiguration.class)
 public interface FileApi {
 
     /**
@@ -42,10 +43,30 @@ public interface FileApi {
 
     /**
      * 根据fileId获取文件信息
+     *
      * @param fileId
      * @return
      */
     @PostMapping("/api/v1/file/getByFileId")
     RestResponse getByFileId(@RequestParam String fileId);
+
+    /**
+     * 获取文件
+     *
+     * @param fileId
+     * @return
+     */
+    @PostMapping("/api/v1/file/getAudioFileByFileId")
+    RestResponse getAudioFileByFileId(@RequestParam String fileId);
+
+    /**
+     * 删除服务器文件-上传记录表文件
+     *
+     * @param fileId
+     * @return
+     */
+    @PostMapping("/api/v1/file/deleteFileCommon")
+    RestResponse deleteFileCommon(@RequestParam String fileId);
+
 
 }

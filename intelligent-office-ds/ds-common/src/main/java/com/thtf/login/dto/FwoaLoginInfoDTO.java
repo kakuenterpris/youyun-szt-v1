@@ -1,5 +1,6 @@
 package com.thtf.login.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 /**
@@ -14,10 +15,11 @@ public class FwoaLoginInfoDTO {
     /**
      * 同方泛微OA登录名-对应loginId
      */
+    @JsonProperty("userName")
     private String userName;
 
     /**
-     * key-没有实际用处
+     * verify-没有实际用处
      */
-    private String key;
+    private String verify;
 }

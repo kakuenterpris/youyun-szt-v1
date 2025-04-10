@@ -100,6 +100,16 @@ public class BusResourceManageDTO extends BaseTreeNodeVO {
     private String depName;
 
     /**
+     * 文件向量化配置编码
+     */
+    private String embeddingConfigCode;
+
+    /**
+     * 文件向量化配置
+     */
+    private String embeddingConfigName;
+
+    /**
      * 创建人
      */
     private String createUser;
@@ -140,6 +150,11 @@ public class BusResourceManageDTO extends BaseTreeNodeVO {
      * 前端是否可选取
      */
     private Boolean disabled;
+
+    /**
+     * 文件向量化配置
+     */
+    private FileEmbeddingConfigDTO embeddingConfig;
 
     public Boolean getDisabled(){
         return (null != fixed && fixed) && (0 == parentId || StringUtils.isEmpty(category));

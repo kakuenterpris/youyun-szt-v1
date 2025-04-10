@@ -7,25 +7,34 @@ import com.cnki.maas.http.ApiClient;
 import com.cnki.maas.model.ApiRequest;
 import com.github.pagehelper.util.StringUtil;
 import com.google.gson.Gson;
+import com.thtf.chat.entity.LikeOrDislikeEntity;
 import com.thtf.chat.entity.MessageSourceEntity;
 import com.thtf.chat.enums.ChatApiKeyEnum;
 import com.thtf.chat.properties.AiConfigProperties;
+import com.thtf.chat.properties.ApikeyConfigProperties;
 import com.thtf.chat.properties.DatasetsConfigProperties;
+import com.thtf.chat.repo.LikeOrDislikeRepo;
+import com.thtf.chat.repo.BusResourceDatasetRepo;
 import com.thtf.chat.repo.MessageSourceRepo;
 import com.thtf.chat.service.ChatService;
+import com.thtf.chat.service.HistoryChatService;
 import com.thtf.chat.service.RelUserResourceService;
+import com.thtf.chat.util.CheckUtil;
 import com.thtf.dto.*;
 import com.thtf.global.common.exception.CustomException;
 import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.DefaultErrorCode;
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.global.common.utils.JsonUtil;
+import com.thtf.resource.dto.BusResourceDatasetDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import okio.BufferedSource;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,15 +42,16 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 /**
  * @author zhangwei
@@ -69,6 +79,21 @@ public class ChatServiceImpl implements ChatService {
     @Autowired
     private DatasetsConfigProperties datasetsConfigProperties;
 
+    @Autowired
+    @Qualifier("queryExecutorService")
+    private ExecutorService queryExecutorService;
+    private final BusResourceDatasetRepo datasetRepo;
+
+    @Autowired
+    private LikeOrDislikeRepo likeOrDislikeRepo;
+
+    @Autowired
+    private ApikeyConfigProperties apikeyConfigProperties;
+
+    @Autowired
+    private HistoryChatService historyChatService;
+
+    private final CheckUtil checkUtil;
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json");
     private static String userId = "abc-123"; // Consider moving to configuration
@@ -81,8 +106,12 @@ public class ChatServiceImpl implements ChatService {
      */
     @Override
     public SseEmitter common(ChatRequestDto chatRequestDto) {
+        if (chatRequestDto.getQuestion() == null||chatRequestDto.getQuestion().trim().isEmpty()) {
+            throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "参数错误");
+        }
         // 根据场景类型获取api-key
-        String apiKey = ChatApiKeyEnum.getKey(chatRequestDto.getSceneType());
+        String apiKey = checkUtil.getApiKey(chatRequestDto.getSceneType());
+        //String apiKey = ChatApiKeyEnum.getKey(chatRequestDto.getSceneType());
         List<MessageSourceEntity> messageSourceEntities = new ArrayList<>();
         if (StringUtil.isEmpty(apiKey)) {
             throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "场景类型错误");
@@ -93,44 +122,147 @@ public class ChatServiceImpl implements ChatService {
         List<ModelFileChatDto> modelFileChatDtoList = inputFileHandler(chatRequestDto.getFiles());
 
         SseEmitter emitter = new SseEmitter((long) Integer.MAX_VALUE); // 设置超时时间
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            Response response = this.chatQuery(chatRequestDto, apiKey, modelInputChatDto, modelFileChatDtoList);
-            BufferedSource source = response.body().source();
+        CompletableFuture.runAsync(() -> {
+            Response response = null;
             try {
-                Boolean available = true;
-                while (!source.exhausted()) {
-                    String line = source.readUtf8Line();
-                    if(available){
-                        available= false;
-                        Map<String, Object> linemap = JSONUtil.toBean( "{"+line+"}", Map.class);
-                        Map linemap1 = (Map) linemap.get("data");
-//                        Map<String, String> linemap2 = JSONUtil.toBean( linemap1, Map.class);
-                        String conversation_id = (String) linemap1.get("conversation_id");
-                        String message_id = (String) linemap1.get("message_id");
-                        for (MessageSourceEntity messageSourceEntity : messageSourceEntities) {
-                            messageSourceEntity.setMessageId(message_id);
-                            messageSourceEntity.setConversationId(conversation_id);
-                            messageSourceRepo.save(messageSourceEntity);
-                        }
-                        emitter.send(SseEmitter.event().data(messageSourceEntities));
-                    }
-                    //  发送来源
-                    if (line != null && !line.isEmpty()) {
+                response = this.chatQuery(chatRequestDto, apiKey, modelInputChatDto, modelFileChatDtoList);
+                if (response != null) {
 
-                        emitter.send(SseEmitter.event().data(line));
+                    BufferedSource source = response.body().source();
+
+                    Boolean available = true;
+                    while (!source.exhausted()) {
+                        String line = source.readUtf8Line();
+                        if(available){
+                            available= false;
+                            Map<String, Object> linemap = JSONUtil.toBean( "{"+line+"}", Map.class);
+                            Map linemap1 = (Map) linemap.get("data");
+//                        Map<String, String> linemap2 = JSONUtil.toBean( linemap1, Map.class);
+                            String conversation_id = (String) linemap1.get("conversation_id");
+                            String message_id = (String) linemap1.get("message_id");
+                            // 将会话id和消息id存入数据库，用于点赞点踩的初始化
+                            LikeOrDislikeEntity likeOrDislikeEntity = new LikeOrDislikeEntity();
+                            likeOrDislikeEntity.setConversationId(conversation_id);
+                            likeOrDislikeEntity.setMessageId(message_id);
+                            likeOrDislikeEntity.setUserId(ContextUtil.getUserId());
+                            likeOrDislikeEntity.setLikeStatus(0);
+                            likeOrDislikeRepo.save(likeOrDislikeEntity);
+                            for (MessageSourceEntity messageSourceEntity : messageSourceEntities) {
+                                messageSourceEntity.setMessageId(message_id);
+                                messageSourceEntity.setConversationId(conversation_id);
+                            }
+                            // 批量插入
+                            messageSourceRepo.batchInsert(messageSourceEntities);
+                            // 合并相同messageId的context（新增合并逻辑）
+                            List<MessageSourceEntity> mergedList = messageSourceEntities.stream()
+                                    .filter(e -> e.getMessageId() != null)
+                                    .collect(Collectors.groupingBy(
+                                            MessageSourceEntity::getTitle,
+                                            Collectors.collectingAndThen(
+                                                    Collectors.toList(),
+                                                    group -> {
+                                                        MessageSourceEntity merged = new MessageSourceEntity();
+                                                        // 复制第一个实体的基础信息
+                                                        MessageSourceEntity first = group.get(0);
+                                                        merged.setMessageId(first.getMessageId());
+                                                        merged.setConversationId(first.getConversationId());
+                                                        merged.setSource(first.getSource());
+                                                        merged.setSegmentId(first.getSegmentId());
+                                                        merged.setDocumentId(first.getDocumentId());
+                                                        merged.setKeyword(first.getKeyword());
+                                                        merged.setTitle(first.getTitle());
+
+                                                        // 拼接上下文内容
+                                                        String combinedContext = group.stream()
+                                                                .map(MessageSourceEntity::getContext)
+                                                                .filter(Objects::nonNull)
+                                                                .collect(Collectors.joining("=##="));
+                                                        merged.setContext(combinedContext);
+                                                        return merged;
+                                                    }
+                                            )
+                                    ))
+                                    .values().stream().collect(Collectors.toList());
+                            // 发送来源
+                            emitter.send(SseEmitter.event().data(convertChineseToUnicode(JsonUtil.toJson(mergedList))));
+                        }
+                        //  发送对话内容
+                        if (line != null && !line.isEmpty()) {
+                            emitter.send(SseEmitter.event().data(line));
+                        }
                     }
+                }else {
+                    String errorMessage = "大模型未响应!!!";
+                    emitter.send(SseEmitter.event().data(errorMessage));
                 }
             } catch (IOException e) {
                 emitter.completeWithError(e);
                 throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "对话中断或错误");
             } finally {
                 emitter.complete();
-                response.close();
+                if (response!= null) {
+                    response.close();
+                }
             }
-        });
+        }, queryExecutorService);
+
+//        ExecutorService executor = Executors.newSingleThreadExecutor();
+//        executor.execute(() -> {
+//            Response response = this.chatQuery(chatRequestDto, apiKey, modelInputChatDto, modelFileChatDtoList);
+//            BufferedSource source = response.body().source();
+//            try {
+//                Boolean available = true;
+//                while (!source.exhausted()) {
+//                    String line = source.readUtf8Line();
+//                    if(available){
+//                        available= false;
+//                        Map<String, Object> linemap = JSONUtil.toBean( "{"+line+"}", Map.class);
+//                        Map linemap1 = (Map) linemap.get("data");
+////                        Map<String, String> linemap2 = JSONUtil.toBean( linemap1, Map.class);
+//                        String conversation_id = (String) linemap1.get("conversation_id");
+//                        String message_id = (String) linemap1.get("message_id");
+//                        for (MessageSourceEntity messageSourceEntity : messageSourceEntities) {
+//                            messageSourceEntity.setMessageId(message_id);
+//                            messageSourceEntity.setConversationId(conversation_id);
+//                            messageSourceRepo.save(messageSourceEntity);
+//                        }
+//                        emitter.send(SseEmitter.event().data(messageSourceEntities));
+//                    }
+//                    //  发送来源
+//                    if (line != null && !line.isEmpty()) {
+//
+//                        emitter.send(SseEmitter.event().data(line));
+//                    }
+//                }
+//            } catch (IOException e) {
+//                emitter.completeWithError(e);
+//                throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "对话中断或错误");
+//            } finally {
+//                emitter.complete();
+//                response.close();
+//            }
+//        });
 
         return emitter;
+    }
+
+    private String convertChineseToUnicode(String toString) {
+        StringBuilder resultBuilder = new StringBuilder();
+        for (char c : toString.toCharArray()) {
+            if (isChinese(c)) {
+                // 如果是中文字符，转换为 Unicode 转义序列
+                resultBuilder.append(String.format("\\u%04x", (int) c));
+            } else {
+                // 否则直接添加字符
+                resultBuilder.append(c);
+            }
+        }
+        return resultBuilder.toString();
+    }
+
+    public static boolean isChinese(char c) {
+        // 中文字符通常在 \u4E00 到 \u9FFF 范围内
+        return c >= '\u4E00' && c <= '\u9FFF';
     }
 
     /**
@@ -163,6 +295,13 @@ public class ChatServiceImpl implements ChatService {
     private ModelInputChatDto prepareModelInput(ChatRequestDto chatRequestDto, List<MessageSourceEntity> messageSourceEntities) {
         ModelInputChatDto modelInputChatDto = new ModelInputChatDto();
 
+        // 新增意图识别方法
+        String result = resultIntentionRecognition(chatRequestDto, messageSourceEntities);
+        log.info("意图识别方法返回值: {}", result);
+        if (StringUtils.isNotEmpty(result)) {
+            chatRequestDto.setQuestion(result);
+        }
+
         // 查询个人向量库
         if (chatRequestDto.getIsUseCustom()) {
             String customVectorContent = this.queryCustomVector(chatRequestDto.getQuestion(),messageSourceEntities,3);
@@ -182,13 +321,23 @@ public class ChatServiceImpl implements ChatService {
         // 联网搜索
         if (chatRequestDto.getNetworking()) {
             modelInputChatDto.setNetworking(1);
-            String netWorkContent = queryNetWorkVector(chatRequestDto.getQuestion(),messageSourceEntities);
-            log.info("netWorkContent: {}", netWorkContent);
-            modelInputChatDto.setNetworking_knowledge(netWorkContent);
+//            String netWorkContent = queryNetWorkVector(chatRequestDto.getQuestion(),messageSourceEntities);
+//            log.info("netWorkContent: {}", netWorkContent);
+//            modelInputChatDto.setNetworking_knowledge(netWorkContent);
+            Map resultMap = queryNetWorkVector1(chatRequestDto.getQuestion(), messageSourceEntities);
+            if (resultMap != null ) {
+                if (200 != (Integer) resultMap.get("code")){
+//                    String netWorkContent = queryNetWorkVector(chatRequestDto.getQuestion(),messageSourceEntities);
+//                    log.info("netWorkContent: {}", netWorkContent);
+//                    modelInputChatDto.setNetworking_knowledge(netWorkContent);
+                }
+                log.info("netWorkContent-新联网: {}", resultMap.get("message"));
+                modelInputChatDto.setNetworking_knowledge((String) resultMap.get("message"));
+            }
         }
 
 //         查询机构知识库
-        if (chatRequestDto.getIsUseOrg()) {
+        if (chatRequestDto.getIsUseTtkn()) {
 
 //            // 先去查询数据中台的向量库
 //            String queryDataCenterVector = this.queryDataCenterVector(chatRequestDto.getQuestion(),
@@ -215,7 +364,7 @@ public class ChatServiceImpl implements ChatService {
 //            }
 
             String customVectorContent = this.queryCustomVector(chatRequestDto.getQuestion(),messageSourceEntities,1);
-            log.info("OrganizationVectorContent: {}", customVectorContent);
+            log.info("TtknVectorContent: {}", customVectorContent);
         }
         // 查询部门知识库
         if (chatRequestDto.getIsUseDept()) {
@@ -226,6 +375,257 @@ public class ChatServiceImpl implements ChatService {
 
         return modelInputChatDto;
     }
+
+
+    /**
+     * 新的联网查询
+     * @param question
+     * @param messageSourceEntities
+     * @return
+     */
+    private Map queryNetWorkVector1(String question, List<MessageSourceEntity> messageSourceEntities) {
+        // 查询联网向量库
+        String url = aiConfigProperties.getNewNetworkSearchApi();
+
+        Map paramMap = new HashMap<>();
+        paramMap.put("query", question);
+        paramMap.put("freshness", "noLimit");
+        paramMap.put("summary", true);
+        paramMap.put("count", 10);
+        Gson gson = new Gson();
+        String json = gson.toJson(paramMap);
+        MediaType mediaType = MediaType.parse("application/json");
+        RequestBody body = RequestBody.create(mediaType, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Authorization", "Bearer "+apikeyConfigProperties.getNewNetSearch())
+                .build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(300, TimeUnit.SECONDS)
+                .readTimeout(300, TimeUnit.SECONDS)
+                .writeTimeout(300, TimeUnit.SECONDS)
+                .build();
+
+        Response response = null;
+
+        Map resultMap = new HashMap();
+
+        try {
+            response = client.newCall(request).execute();
+            byte[] responseBytes = response.body().bytes();
+            String jsonString = new String(responseBytes);
+            log.info("调用联网响应：{}", jsonString);
+            if (StringUtils.isEmpty(jsonString)) {
+                resultMap.put("code", 500);
+                resultMap.put("message", "调用联网响应为空");
+                return resultMap;
+            }
+            Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
+            Integer code = (Integer) map.get("code");
+            resultMap.put("code", code);
+            if (200 != code) {
+                resultMap.put("code", code);
+                resultMap.put("message", map.get("msg").toString());
+                return resultMap;
+            }
+            Map data = (Map) map.get("data");
+            Map jsonArray = (Map) data.get("webPages");
+            List<Map> jsonArray1 = (List) jsonArray.get("value");
+
+            StringBuffer textBuffer = new StringBuffer();
+
+            // 先将数据记录到数据库
+            for (int i = 0; i < jsonArray1.size(); i++) {
+                MessageSourceEntity messageSourceEntity = new MessageSourceEntity();
+                messageSourceEntity.setTitle((String) jsonArray1.get(i).get("name"));
+                messageSourceEntity.setSource("netVector");
+                String url1 = (String) jsonArray1.get(i).get("url");
+                messageSourceEntity.setContext(url1);
+                messageSourceEntities.add(messageSourceEntity);
+            }
+            // 如果数据量较大的化，只展示2000个字符
+            for (int i = 0; i < jsonArray1.size(); i++) {
+                if (textBuffer.length() > 2000) {
+                    resultMap.put("code", 200);
+                    resultMap.put("message", textBuffer.toString());
+                    break;
+                }
+                String text = (String) jsonArray1.get(i).get("summary");
+                if (textBuffer.length() > 0) {
+                    textBuffer.append("\\r\\n");
+                }
+                textBuffer.append(text);
+                if (textBuffer.length() > 2000) {
+                    String textBufferSubString = textBuffer.substring(0, textBuffer.lastIndexOf("\\r\\n"));
+                    resultMap.put("code", 200);
+                    resultMap.put("message", textBufferSubString);
+                    break;
+                }
+            }
+            return resultMap;
+        } catch (Exception e) {
+            log.error("请求联网失败，失败原因：" + e.getMessage());
+            e.getMessage();
+            return null;
+        } finally {
+            response.close();
+        }
+    }
+
+
+    /**
+     * 查询意图识别集成
+     *
+     * @param question
+     * @return
+     */
+    private Map queryIntentionRecognition(String question, List<MessageSourceEntity> messageSourceEntities) {
+        //  查询意图识别集成
+        String url = aiConfigProperties.getAnswerApi();
+        if (null != ContextUtil.getUserId()) {
+            userId = ContextUtil.getUserId();
+        }
+
+        Map paramMap = new HashMap<>();
+        paramMap.put("inputs", new HashMap<>());
+        paramMap.put("query", question);
+        paramMap.put("response_mode", "blocking");
+        paramMap.put("conversation_id", "");
+        paramMap.put("user", userId);
+        Gson gson = new Gson();
+        String json = gson.toJson(paramMap);
+        log.info("调用查询意图识别集成请求：{}", json);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        String apiKey = apikeyConfigProperties.getIntent();
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Authorization", "Bearer "+apiKey)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(300, TimeUnit.SECONDS)
+                .readTimeout(300, TimeUnit.SECONDS)
+                .writeTimeout(300, TimeUnit.SECONDS)
+                .build();
+
+        Response response = null;
+        try {
+            response = client.newCall(request).execute();
+            byte[] responseBytes = response.body().bytes();
+            String jsonString = new String(responseBytes);
+            log.info("调用查询意图识别集成响应：{}", jsonString);
+            if (StringUtils.isEmpty(jsonString)) {
+                return null;
+            }
+            Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
+            String data = (String) map.get("answer");
+            if (StringUtils.isEmpty(data)) {
+                return null;
+            }
+            Map<String, Object> dataMap = JSONUtil.toBean(data, Map.class);
+            return dataMap;
+        } catch (Exception e) {
+            log.error("请求查询意图识别集成失败，失败原因：" + e.getMessage());
+            e.getMessage();
+            return null;
+        } finally {
+            response.close();
+        }
+    }
+
+
+    /**
+     * 意图识别方法
+     * @param chatRequestDto
+     * @param messageSourceEntities
+     * @return
+     */
+    private String resultIntentionRecognition(ChatRequestDto chatRequestDto,List<MessageSourceEntity> messageSourceEntities) {
+
+        // 第一次问答不走意图识别
+        if(chatRequestDto !=null && StringUtils.isNotEmpty(chatRequestDto.getConversationId())){
+            // 查询历史会话
+            HistoryChatDTO historyChatDTO = new HistoryChatDTO();
+            historyChatDTO.setConversationId(chatRequestDto.getConversationId());
+            historyChatDTO.setSceneType(chatRequestDto.getSceneType());
+            RestResponse restResponse = historyChatService.historyChatListDetail(historyChatDTO);
+            Map data = (Map) restResponse.getData();
+            List data1 = (List) data.get("data");
+            StringBuffer sb = new StringBuffer();
+            // 取历史会话最新的4条问题和当前问题问题拼接
+            if (data1.size() > 4) {
+                int j =1;
+                for (int i = data1.size()-4; i < data1.size(); i++) {
+                    Map map = (Map) data1.get(i);
+                    sb.append(j++).append(": ").append(map.get("query")).append("\n");
+                }
+                sb.append("最新输入:").append(chatRequestDto.getQuestion());
+            }else{
+                for (int i = 0; i < data1.size(); i++) {
+                    Map map = (Map) data1.get(i);
+                    sb.append(i+1).append(": ").append(map.get("query")).append("\n");
+                }
+                sb.append("最新输入:").append(chatRequestDto.getQuestion());
+            }
+            String newQuestion = sb.toString();
+            log.info("newQuestion: {}", newQuestion);
+            // 意图识别
+            Boolean checkField = checkField(chatRequestDto);
+            Map queryMap = new HashMap();
+            String type ="";
+            String query = "";
+            if (checkField){
+                queryMap = queryIntentionRecognition(newQuestion, messageSourceEntities);
+            }
+            if (queryMap!= null && queryMap.size()>0 ) {
+                log.info("queried: {}", queryMap.toString());
+                type = (String) queryMap.get("type");
+                query = (String) queryMap.get("query");
+            }
+            // 根据返回的type进行判断
+            if("查询".equals(type)){
+                if (StringUtils.isNotEmpty(query) && query.length() < 20){
+                    return query;
+                }else {
+                    return chatRequestDto.getQuestion();
+                }
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * 检查是否有字段为true
+     * @param chatRequestDto
+     * @return
+     */
+    private Boolean checkField(ChatRequestDto chatRequestDto){
+        if (chatRequestDto.getIsUseCnki()){
+            return true;
+        }
+        if (chatRequestDto.getIsUseCustom()){
+            return true;
+        }
+        if (chatRequestDto.getIsUseDept()){
+            return true;
+        }
+        if (chatRequestDto.getIsUseOrg()){
+            return true;
+        }
+        if (chatRequestDto.getIsUseTtkn()){
+            return true;
+        }
+        if (chatRequestDto.getNetworking()){
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * 检索知网向量库
@@ -326,19 +726,21 @@ public class ChatServiceImpl implements ChatService {
             userId = ContextUtil.getUserId();
         }
         String dataset_id = "";
-        // "机构"
+        // "企业"
         if (1==flag){
             dataset_id = datasetsConfigProperties.getUnitId();
-            log.info("机构知识库id：{}", dataset_id);
+            log.info("企业知识库id：{}", dataset_id);
         }
         // "部门"
         if (2==flag){
-            dataset_id = datasetsConfigProperties.getDepId();
+            BusResourceDatasetDTO datasetDTO = datasetRepo.getByCode(ContextUtil.currentUser().getDepNum());
+            dataset_id = null == datasetDTO ? null : datasetDTO.getDatasetsId();
             log.info("部门知识库id：{}", dataset_id);
         }
         // "个人"
         if (3==flag){
-            dataset_id = relUserResourceService.getDatasetIdByUserId(userId);
+            BusResourceDatasetDTO datasetDTO = datasetRepo.getByCode(userId);
+            dataset_id = null == datasetDTO ? null : datasetDTO.getDatasetsId();
             log.info("个人知识库id：{}", dataset_id);
         }
 
@@ -351,7 +753,7 @@ public class ChatServiceImpl implements ChatService {
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
-                .addHeader("Authorization", "Bearer " + ChatApiKeyEnum.customvector.getKey())
+                .addHeader("Authorization", "Bearer " + apikeyConfigProperties.getCustomvector())
                 .build();
         Response response = null;
         try {
@@ -419,7 +821,7 @@ public class ChatServiceImpl implements ChatService {
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
-                .addHeader("Authorization", "Bearer " + ChatApiKeyEnum.netsearch.getKey())
+                .addHeader("Authorization", "Bearer " + apikeyConfigProperties.getNetsearch())
                 .addHeader("Content-Type", "application/json;charset=utf-8")
                 .build();
 
@@ -531,7 +933,8 @@ public class ChatServiceImpl implements ChatService {
         if (null != ContextUtil.getUserId()) {
             userId = ContextUtil.getUserId();
         }
-        String apiKey = ChatApiKeyEnum.getKey(type);
+        String apiKey = checkUtil.getApiKey(type);
+//        String apiKey = ChatApiKeyEnum.getKey(type);
         if (StringUtil.isEmpty(apiKey)) {
             throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "场景类型错误");
         }
@@ -584,7 +987,7 @@ public class ChatServiceImpl implements ChatService {
                 .readTimeout(300, TimeUnit.SECONDS)
                 .writeTimeout(300, TimeUnit.SECONDS)
                 .build();
-        String apiKey = ChatApiKeyEnum.recommendList.getKey();
+        String apiKey = apikeyConfigProperties.getRecommendList();
         if (StringUtil.isEmpty(apiKey)) {
             throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "场景类型错误");
         }
@@ -609,10 +1012,13 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         Response response = null;
         try {
+            StopWatch watch = new StopWatch("请求推荐接口");
+            watch.start();
             response = client.newCall(request).execute();
             byte[] responseBytes = response.body().bytes();
             String jsonString = new String(responseBytes);
-            log.info("请求推荐接口响应：{}", jsonString);
+            watch.stop();
+            log.info("请求推荐接口响应：{}, 耗时：{} ms", jsonString, watch.getTime(TimeUnit.MILLISECONDS));
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
             return RestResponse.success(map);
         } catch (IOException e) {
@@ -674,9 +1080,23 @@ public class ChatServiceImpl implements ChatService {
         Response response = null;
         try {
             response = client.newCall(request).execute();
+            if (!response.isSuccessful()) {
+                // 提取错误信息
+                String errorBody = response.body().string();
+                Map<String, Object> errorMap = gson.fromJson(errorBody, HashMap.class);
+                String status = String.valueOf(errorMap.get("status"));
+                String outputs = String.valueOf(errorMap.get("outputs"));
+                String error = String.valueOf(errorMap.get("error"));
+
+                // 构建错误响应
+                String errorMessage = "Dify 工作流运行出错，状态码：" + status + "，输出信息：" + outputs + "，错误信息：" + error;
+                log.error(errorMessage);
+                // 这里可以根据具体情况返回自定义的错误响应给用户
+                throw new RuntimeException(errorMessage);
+            }
         } catch (IOException e) {
             log.error("请求规划接口失败，失败原因", e.getMessage());
-            throw new RuntimeException(e);
+//            throw new RuntimeException(e);
         }
         return response;
     }
@@ -689,7 +1109,8 @@ public class ChatServiceImpl implements ChatService {
      */
     @Override
     public RestResponse uploadFileToAi(MultipartFile file, String sceneType) {
-        String apiKey = ChatApiKeyEnum.getKey(sceneType);
+        String apiKey = checkUtil.getApiKey(sceneType);
+//        String apiKey = ChatApiKeyEnum.getKey(sceneType);
         if (StringUtil.isEmpty(apiKey)) {
             throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "场景类型错误");
         }
@@ -727,7 +1148,8 @@ public class ChatServiceImpl implements ChatService {
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
                 .build();
-        String apiKey = ChatApiKeyEnum.getKey(renameChatDto.getSceneType());
+        String apiKey = checkUtil.getApiKey(renameChatDto.getSceneType());
+//        String apiKey = ChatApiKeyEnum.getKey(renameChatDto.getSceneType());
         if (StringUtil.isEmpty(apiKey)) {
             throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "场景类型错误");
         }
@@ -783,7 +1205,8 @@ public class ChatServiceImpl implements ChatService {
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
                 .build();
-        String apiKey = ChatApiKeyEnum.getKey(stopChatDto.getSceneType());
+        String apiKey = checkUtil.getApiKey(stopChatDto.getSceneType());
+//        String apiKey = ChatApiKeyEnum.getKey(stopChatDto.getSceneType());
         if (StringUtil.isEmpty(apiKey)) {
             throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "场景类型错误");
         }
@@ -806,7 +1229,7 @@ public class ChatServiceImpl implements ChatService {
             byte[] responseBytes = response.body().bytes();
             String jsonString = new String(responseBytes);
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
-            if (null != map && map.get("result").equals("success")) {
+            if (null != map && "success".equals((String) map.get("result"))) {
                 return RestResponse.SUCCESS;
             } else {
                 return RestResponse.fail(DefaultErrorCode.CHAT_ERROR.getCode(), "停止会话失败");

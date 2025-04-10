@@ -1,7 +1,7 @@
 package com.thtf.chat.mapper;
 
 import com.thtf.chat.entity.MessageSourceEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.thtf.global.common.mybatis.BatchBaseMapper;
 
 /**
 * @author 86187
@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2025-03-04 10:57:32
 * @Entity com.thtf.chat.entity.MessageSourceEntity
 */
-public interface MessageSourceMapper extends BaseMapper<MessageSourceEntity> {
+public interface MessageSourceMapper extends BatchBaseMapper<MessageSourceEntity> {
 
 }
 

@@ -33,6 +33,8 @@ public class AiConfigProperties {
 
     private String uploadFileApi;
 
+    private String datasetsDocumentListApi;
+
     private String datasetsDocumentSegmentApi;
 
     private String datasetsDeleteDocumentApi;
@@ -46,4 +48,6 @@ public class AiConfigProperties {
     private String chatNetSearchApi;
 
     private String dataCenterChatApi;
+
+    private String newNetworkSearchApi;
 }

@@ -27,8 +27,8 @@
         <spring-ai.version>1.0.0-M6</spring-ai.version>
         <spring-cloud.version>2024.0.0</spring-cloud.version>
 
-        <spring-context.version>6.2.2</spring-context.version>
-        <spring-web.version>6.2.2</spring-web.version>
+<!--        <.version>6.2.2</.version>-->
+<!--        <spring-web.version>6.2.2</spring-web.version>-->
 
         <!--    utils     -->
         <lombok.version>1.18.24</lombok.version>
@@ -225,16 +225,16 @@
                 <version>${aspectjrt.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-context</artifactId>
-                <version>${spring-context.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-web</artifactId>
-                <version>${spring-web.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.springframework</groupId>-->
+<!--                <artifactId></artifactId>-->
+<!--                <version>${spring-context.version}</version>-->
+<!--            </dependency>-->
+<!--            <dependency>-->
+<!--                <groupId>org.springframework</groupId>-->
+<!--                <artifactId>spring-web</artifactId>-->
+<!--                <version>${spring-web.version}</version>-->
+<!--            </dependency>-->
 
 
             <!--     日志       -->
@@ -262,17 +262,17 @@
             <!--     日志       -->
 
             <!--     接口文档       -->
-            <dependency>
-                <groupId>io.springfox</groupId>
-                <artifactId>springfox-boot-starter</artifactId>
-                <version>3.0.0</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>io.springfox</groupId>-->
+<!--                <artifactId>springfox-boot-starter</artifactId>-->
+<!--                <version>3.0.0</version>-->
+<!--            </dependency>-->
 
-            <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-annotations</artifactId>
-                <version>1.6.2</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>io.swagger</groupId>-->
+<!--                <artifactId>swagger-annotations</artifactId>-->
+<!--                <version>1.6.2</version>-->
+<!--            </dependency>-->
             <!--     接口文档       -->
 
             <dependency>
@@ -297,6 +297,20 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>4.5.13</version>
+            </dependency>
+
+            <!-- SpringDoc OpenAPI (核心库) -->
+<!--            <dependency>-->
+<!--                <groupId>org.springdoc</groupId>-->
+<!--                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>-->
+<!--                <version>2.5.0</version> &lt;!&ndash; 当前最新版本 &ndash;&gt;-->
+<!--            </dependency>-->
+
+            <!-- Knife4j 增强UI（可选） -->
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+                <version>4.5.0</version> <!-- 适配 Spring Boot 3.x -->
             </dependency>
 
         </dependencies>

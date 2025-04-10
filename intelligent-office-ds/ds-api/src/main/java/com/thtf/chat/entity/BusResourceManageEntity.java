@@ -106,6 +106,18 @@ public class BusResourceManageEntity {
     private String depName;
 
     /**
+     * 向量化配置编码
+     */
+    @TableField(value = "embedding_config_code")
+    private String embeddingConfigCode;
+
+    /**
+     * 向量化配置
+     */
+    @TableField(value = "embedding_config_name")
+    private String embeddingConfigName;
+
+    /**
      * 创建人
      */
     @TableField(value = "create_user", fill = FieldFill.INSERT)

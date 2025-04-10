@@ -4,7 +4,7 @@ import com.thtf.chat.service.TestService;
 import com.thtf.feign.client.FileApi;
 import com.thtf.file.dto.SyncFileDTO;
 import com.thtf.global.common.rest.RestResponse;
-import com.thtf.chat.config.validation.ValidGroup;
+import com.thtf.global.common.validation.ValidGroup;
 import com.thtf.test.TableTestDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

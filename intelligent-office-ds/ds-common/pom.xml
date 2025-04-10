@@ -46,6 +46,17 @@
             <artifactId>hutool-all</artifactId>
         </dependency>
 
+<!--        <dependency>-->
+<!--            <groupId>org.springdoc</groupId>-->
+<!--            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>-->
+<!--        </dependency>-->
+
+        <!-- Knife4j 增强UI（可选） -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+        </dependency>
+
     </dependencies>
 
 

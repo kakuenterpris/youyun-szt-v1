@@ -6,6 +6,8 @@ import com.thtf.chat.repo.MessageSourceRepo;
 import com.thtf.chat.mapper.MessageSourceMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
 * @author 86187
 * @description 针对表【message_source】的数据库操作Service实现
@@ -15,6 +17,13 @@ import org.springframework.stereotype.Service;
 public class MessageSourceRepoImpl extends ServiceImpl<MessageSourceMapper, MessageSourceEntity>
     implements MessageSourceRepo {
 
+
+    @Override
+    public int batchInsert(List<MessageSourceEntity> entities) {
+        if (entities == null || entities.isEmpty()) {
+            return 0;
+        }
+        return this.getBaseMapper().insertBatchSomeColumn(entities);    }
 }
 
 

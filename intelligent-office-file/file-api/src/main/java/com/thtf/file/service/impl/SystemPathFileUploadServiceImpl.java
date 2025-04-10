@@ -27,6 +27,8 @@ import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.global.common.utils.JsonUtil;
 import com.thtf.global.common.utils.Linq;
+import com.thtf.global.common.utils.PDFCheckUtil;
+import com.thtf.resource.dto.FileEmbeddingConfigDTO;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
@@ -103,7 +106,8 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RestResponse uploadFile(MultipartFile file, String fileMd5,String fileId, String path) throws Exception {
+    public RestResponse uploadFile(MultipartFile file, String fileMd5, String fileId, String path) throws Exception {
+        long startTime = System.currentTimeMillis();
         // 生成文件保存路径
         boolean notBlank = StringUtils.isNotBlank(fileId);
         if (notBlank) {
@@ -111,7 +115,7 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
             iFileUploadRecordRepo.deleteByGuids(Linq.as(fileId));
         }
         //
-        String uuid = notBlank ? fileId: IdUtil.simpleUUID();
+        String uuid = notBlank ? fileId : IdUtil.simpleUUID();
         // 生成根目录 + 年月日的目录
         String fileSaveDir = StringUtils.isBlank(path) ? FileNameUtil.genFileSaveDir(fileBasePath) : fileBasePath + path + File.separator;
         File dir = new File(fileSaveDir);
@@ -121,13 +125,20 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
         // 保存到磁盘目标文件的文件路径
         String targetFilePathStr = FileNameUtil.genFileSavePath(fileSaveDir, uuid, FileNameUtil.getSuffix(file.getOriginalFilename()));
         Path targetPathPath = Paths.get(targetFilePathStr);
+        long saveFileStartTime = System.currentTimeMillis();
         // 保存文件
         file.transferTo(targetPathPath);
+        log.info("文件保存到磁盘耗时：{} ms", System.currentTimeMillis() - saveFileStartTime);
+        long getFileMD5StartTime = System.currentTimeMillis();
         if (StringUtils.isBlank(fileMd5)) {
             fileMd5 = FileUtil.getFileMD5(file.getBytes());
         }
+        log.info("获取文件MD5耗时：{} ms", System.currentTimeMillis() - getFileMD5StartTime);
+        long saveFileRecordStartTime = System.currentTimeMillis();
         // 生成数据库记录
         FileUploadRecordDTO resultDTO = saveFileRecord(uuid, fileMd5, fileSaveDir, file.getOriginalFilename(), file.getSize());
+        log.info("保存数据库记录耗时：{} ms", System.currentTimeMillis() - saveFileRecordStartTime);
+        log.info("文件上传总耗时：{} ms", System.currentTimeMillis() - startTime);
         // 返回文件信息对象
         return RestResponse.success(resultDTO);
     }
@@ -212,7 +223,6 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
         insert.setDeleted(false);
         return insert;
     }
-
 
 
     private RestResponse uploadedSlice(String uuid, SliceUploadResponse response) {
@@ -419,8 +429,6 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
     }
 
 
-
-
     @Override
     public RestResponse uploadBase64(FileUploadBase64DTO dto) throws Exception {
         if (StringUtils.isBlank(dto.getBase64Str()) || StringUtils.isBlank(dto.getFileOriginName())) {
@@ -513,12 +521,12 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
         // 获取文件流路劲
         String path = fileBasePath + File.separator + entity.getPath() + entity.getFileName();
         // 组装data json
-        SyncFileDataDTO data = defaultConfig(entity.getDocumentId());
+        SyncFileDataDTO data = defaultConfig(entity.getDocumentId(), dto);
 
         // 调用dify接口传输json以及文件流
         String json = JsonUtil.toJson(data);
 
-        log.info("json: {}", json);
+        log.info("json: {}, fileName: {}", json, dto.getFileName());
 
         // 获取dify返回的文档id，更新到文件记录表
         File file = new File(path);
@@ -528,11 +536,11 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
         HttpResponse response = HttpRequest.post(url)
                 .header("Authorization", String.format("Bearer %s", properties.getApikey()))
                 .form("data", json) // json
-                .form("file", file, entity.getOriginName())
+                .form("file", file, StringUtils.isNotEmpty(dto.getFileName()) ? dto.getFileName() : entity.getOriginName())
                 .execute();
         log.info("status:{}", response.getStatus());
         log.info("body:{}", response.body());
-        if (!response.isOk()){
+        if (!response.isOk()) {
             log.error("请求接口失败：");
             return RestResponse.fail(ErrorCodeEnum.request_youyun_failed);
         }
@@ -562,23 +570,26 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
         return RestResponse.fail(ErrorCodeEnum.convert_to_record_failed);
     }
 
-    private static SyncFileDataDTO defaultConfig(String documentId){
+    private static SyncFileDataDTO defaultConfig(String documentId, SyncFileDTO dto){
+        FileEmbeddingConfigDTO embeddingConfig = dto.getEmbeddingConfig();
+
         // 处理规则配置
         Segmentation segmentation = Segmentation.builder()
-                .separator(FileProcessRuleConstants.Segmentation.separator)
-                .max_tokens(FileProcessRuleConstants.Segmentation.max_tokens)
+                .separator(StringUtils.isEmpty(embeddingConfig.getSeparatorString()) ? FileProcessRuleConstants.Segmentation.separator : embeddingConfig.getSeparatorString())
+                .max_tokens(null == embeddingConfig.getMaxTokens() ? FileProcessRuleConstants.Segmentation.max_tokens : embeddingConfig.getMaxTokens())
+                .chunk_overlap(null == embeddingConfig.getChunkOverlap() ? FileProcessRuleConstants.Segmentation.chunk_overlap : embeddingConfig.getChunkOverlap())
                 .build();
 
         List<PreProcessingRule> preProcessingRuleList = new ArrayList<>();
         // 替换连续空格、换行符、制表符
         PreProcessingRule remove_extra_spaces = PreProcessingRule.builder()
                 .id(FileProcessRuleConstants.PreProcessingRule.remove_extra_spaces)
-                .enabled(true)
+                .enabled(null == embeddingConfig.getRemoveExtraSpaces() || 1 == embeddingConfig.getRemoveExtraSpaces())
                 .build();
         // 删除 URL、电子邮件地址;
         PreProcessingRule remove_urls_emails = PreProcessingRule.builder()
                 .id(FileProcessRuleConstants.PreProcessingRule.remove_urls_emails)
-                .enabled(true)
+                .enabled(null == embeddingConfig.getRemoveExtraSpaces() || 1 == embeddingConfig.getRemoveUrlsEmails())
                 .build();
 
         preProcessingRuleList.add(remove_extra_spaces);
@@ -601,6 +612,23 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
 
         // 处理规则
         return data;
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public RestResponse checkCanUpload(SyncFileDTO dto) throws IOException {
+        // 根据fileId 查询获取文件位置、documentId等，有documentId表示是修改
+        FileUploadRecordEntity entity = iFileUploadRecordRepo.getByGuid(dto.getFileId());
+        if (Objects.isNull(entity)) {
+            return RestResponse.fail(ErrorCodeEnum.FILE_NOT_EXIST);
+        }
+        // 获取文件流路劲
+        String path = fileBasePath + File.separator + entity.getPath() + entity.getFileName();
+        // 获取dify返回的文档id，更新到文件记录表
+        File file = new File(path);
+        boolean doubleLayerPdf = PDFCheckUtil.isDoubleLayerPdf(file);
+        return doubleLayerPdf ? RestResponse.success(true) : RestResponse.fail(500, "暂不支持扫描版PDF上传");
     }
 
     @Override
@@ -628,5 +656,27 @@ public class SystemPathFileUploadServiceImpl implements IFileUploadService {
     @Override
     public FileUploadRecordDTO getByFileId(String fileId) {
         return fileMapping.entity2DTO(iFileUploadRecordRepo.getByGuid(fileId));
+    }
+
+    public RestResponse getAudioFileByFileId(String fileId) {
+        FileUploadRecordEntity selectOne = iFileUploadRecordRepo.getByGuid(fileId);
+        if (Objects.nonNull(selectOne) && StringUtils.isNotBlank(selectOne.getPath()) && StringUtils.isNotBlank(selectOne.getSuffix())) {
+            String path = fileBasePath + File.separator + selectOne.getPath() + selectOne.getFileName();
+            File file = new File(path);
+            return RestResponse.success(file);
+        }
+        return RestResponse.success(null);
+    }
+
+    public RestResponse deleteFileCommon(@RequestParam String fileId) {
+        FileUploadRecordEntity selectOne = iFileUploadRecordRepo.getByGuid(fileId);
+        if (selectOne != null) {
+            iFileUploadRecordRepo.deleteByGuids(Collections.singletonList(fileId));
+            // 删除服务器文件
+            String path = fileBasePath + File.separator + selectOne.getPath() + selectOne.getFileName();
+            File file = new File(path);
+            file.delete();
+        }
+        return RestResponse.SUCCESS;
     }
 }

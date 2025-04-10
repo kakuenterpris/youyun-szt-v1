@@ -18,7 +18,7 @@ public interface RelUserResourceRepo extends IService<RelUserResourceEntity> {
 
     List<RelUserResourceEntity> listByUserId(String userId);
 
-    List<RelUserResourceEntity> list(String userName);
+    List<RelUserResourceEntity> list(String userId);
 
     List<RelUserResourceEntity> oneByField(String fileId);
 

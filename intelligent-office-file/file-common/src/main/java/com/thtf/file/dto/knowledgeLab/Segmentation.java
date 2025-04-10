@@ -19,5 +19,10 @@ public class Segmentation {
     /**
      * max_tokens 最大长度（token）默认为 1000
      */
-    private Long max_tokens;
+    private Integer max_tokens;
+
+    /**
+     * 分段重叠指的是在对数据进行分段时，段与段之间存在一定的重叠部分（选填）
+     */
+    private Integer chunk_overlap;
 }

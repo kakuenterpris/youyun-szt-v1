@@ -2,19 +2,19 @@ package com.thtf.resource.enums;
 
 public enum ResourceCategoryEnum {
 
-    UNIT (1, "机构"),
-    DEP (2, "部门"),
-    PERSONAL (3, "个人");
+    UNIT ("UNIT", "机构"),
+    DEP ("DEP", "部门"),
+    USER("USER", "个人");
 
-    private final Integer code;
+    private final String code;
     private final String name;
 
-    ResourceCategoryEnum(Integer code, String name) {
+    ResourceCategoryEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
-    public Integer getCode() {
+    public String getCode() {
         return code;
     }
 

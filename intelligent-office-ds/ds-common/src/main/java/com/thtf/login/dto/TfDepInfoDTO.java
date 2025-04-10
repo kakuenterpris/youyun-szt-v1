@@ -45,6 +45,11 @@ public class TfDepInfoDTO {
     private String canceled;
 
     /**
+     * 排序
+     */
+    private String showorder;
+
+    /**
      * 创建时间戳
      */
     private String created;

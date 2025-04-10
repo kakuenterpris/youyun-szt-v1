@@ -1,5 +1,6 @@
 package com.thtf.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -10,6 +11,7 @@ import lombok.Data;
  * @Created by PingY
  */
 @Data
+@Schema(name = "历史对话实体")
 public class HistoryChatDTO {
     /**
      * 用户标识，由开发者定义规则，需保证用户标识在应用内唯一

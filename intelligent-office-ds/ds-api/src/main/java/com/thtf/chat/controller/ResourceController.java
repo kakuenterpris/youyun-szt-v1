@@ -59,6 +59,16 @@ public class ResourceController {
     }
 
     /**
+     * 判断上传权限
+     *
+     * @return 结果集
+     */
+    @PostMapping("/checkUploadAuth")
+    public RestResponse checkUploadAuth(@RequestParam Integer id) {
+        return busResourceManageService.checkUploadAuth(id);
+    }
+
+    /**
      * 保存文件/文件夹
      *
      * @param resourceManageDTO 文件/文件夹入参对象
@@ -153,15 +163,43 @@ public class ResourceController {
         return busResourceManageService.updateSort(list);
     }
 
-
-
     /**
      * 同步dify
      *
      * @return 结果集
      */
     @PostMapping("/syncDifyDocument")
-    public RestResponse syncDifyDocument(@RequestParam String datasetId) {
-        return busResourceManageService.syncDifyDocument(datasetId);
+    public RestResponse syncDifyDocument(@RequestParam String datasetId, @RequestParam Integer parentId) {
+        return busResourceManageService.syncDifyDocument(datasetId, parentId);
+    }
+
+    /**
+     * 获取文件向量化配置枚举
+     *
+     * @return 结果集
+     */
+    @PostMapping("/listEmbedConfig")
+    public RestResponse listEmbedConfig() {
+        return busResourceManageService.listEmbedConfig();
+    }
+
+    /**
+     * 获取文件向量化配置枚举
+     *
+     * @return 结果集
+     */
+    @PostMapping("/getEmbedConfig")
+    public RestResponse getEmbedConfig(@RequestParam String configCode) {
+        return busResourceManageService.getEmbedConfig(configCode);
+    }
+
+    /**
+     * 获取文件向量化配置
+     *
+     * @return 结果集
+     */
+    @PostMapping("/getResourceEmbedInfo")
+    public RestResponse getResourceEmbedInfo(@RequestParam Integer resourceId) {
+        return busResourceManageService.getResourceEmbedInfo(resourceId);
     }
 }

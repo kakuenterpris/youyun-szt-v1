@@ -167,6 +167,29 @@ public class BusResourceManageRepoImpl extends ServiceImpl<BusResourceManageMapp
         return CollUtil.isEmpty(list) ? new ArrayList<>() : Linq.select(list, busResourceManageMapping::entity2Dto);
     }
 
+    @Override
+    public List<BusResourceManageDTO> listByParentIdAndName(Integer parentId, List<String> nameList) {
+        if (null == parentId || CollUtil.isEmpty(nameList)) {
+            return new ArrayList<>();
+        }
+        List<BusResourceManageEntity> list = lambdaQuery()
+                .eq(BusResourceManageEntity::getParentId, parentId)
+                .in(BusResourceManageEntity::getName, nameList)
+                .eq(BusResourceManageEntity::getDeleted, false)
+                .list();
+        return CollUtil.isEmpty(list) ? new ArrayList<>() : Linq.select(list, busResourceManageMapping::entity2Dto);
+    }
+
+    @Override
+    public List<BusResourceManageDTO> listByParentIdAndResourceType(Long parentId, Integer resourceType) {
+        List<BusResourceManageEntity> list = lambdaQuery()
+                .eq(BusResourceManageEntity::getParentId, parentId)
+                .eq(BusResourceManageEntity::getResourceType, resourceType)
+                .eq(BusResourceManageEntity::getDeleted, false)
+                .list();
+        return CollUtil.isEmpty(list) ? new ArrayList<>() : Linq.select(list, busResourceManageMapping::entity2Dto);
+    }
+
 
     @Override
     public BusResourceManageEntity resourceTypeById(Integer id) {

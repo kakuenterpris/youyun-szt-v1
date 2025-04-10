@@ -64,6 +64,6 @@ file.temp.path: /data/project/intelligent-office/backend/data/temp/
 #file.temp.path: D:\data\temp
 
 
-youyun.doc.apikey: dataset-dezUJfSWgpETM8niLddTZboD
-youyun.doc.create: http://10.10.252.220:8090/v1/datasets/%s/document/create-by-file   # datasetsId
-youyun.doc.delete: http://10.10.252.220:8090/v1/datasets/%s/documents/%s              # datasetsId , documentId
+youyun.doc.apikey: dataset-kNfh2qv11cCdKv1yg9JjEctT
+youyun.doc.create: http://119.254.155.240:18090/v1/datasets/%s/document/create-by-file   # datasetsId
+youyun.doc.delete: http://119.254.155.240:18090/v1/datasets/%s/documents/%s              # datasetsId , documentId

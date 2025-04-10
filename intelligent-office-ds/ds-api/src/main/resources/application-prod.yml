@@ -76,22 +76,22 @@ platform:
       verify-url: https://kmoa.test.oa.cnki.net/api/auth/api/v1/authentication?token=   # token 验证接口
 
 ai:
-  answer-api: http://10.10.252.220:8090/v1/chat-messages
-  recommend-list-api: http://10.10.252.220:8090/v1/messages/%s/suggested
-  history-chat-api: http://10.10.252.220:8090/v1/messages
-  conversations-chat-api: http://10.10.252.220:8090/v1/conversations
-  delete-conversations-api: http://10.10.252.220:8090/v1/conversations
-  person-datasets-create-api: http://10.10.252.220:8090/v1/datasets
-  vector-query-api: http://10.10.252.220:8090/v1/datasets/%s/retrieve
-  cnki-vector-query-api: https://maas.cnki.net/maas-gateway/cnkisearch
-  upload-file-api: http://10.10.252.220:8090/v1/files/upload
-  datasets-document-segment-api: http://10.10.252.220:8090/v1/datasets/%s/documents/%s/segments
-  datasets-delete-document-api: http://10.10.252.220:8090/v1/datasets/%s/documents/%s
-  datasets-document-indexing-status-api: http://10.10.252.220:8090/v1/datasets/%s/documents/%s/indexing-status
-  rename-conversation-api: http://10.10.252.220:8090/v1/conversations/%s/name
-  stop-conversation-api: http://10.10.252.220:8090/v1/chat-messages/%s/stop
-  chat-net-search-api: http://10.10.252.220:8090/v1/workflows/run
-  data-center-chat-api: http://10.10.252.220:8090/v1/chat-messages
+  answer-api: http://119.254.155.240:18090/v1/chat-messages
+  recommend-list-api: http://119.254.155.240:18090/v1/messages/%s/suggested
+  history-chat-api: http://119.254.155.240:18090/v1/messages
+  conversations-chat-api: http://119.254.155.240:18090/v1/conversations
+  delete-conversations-api: http://119.254.155.240:18090/v1/conversations
+  person-datasets-create-api: http://119.254.155.240:18090/v1/datasets
+  vector-query-api: http://119.254.155.240:18090/v1/datasets/%s/retrieve
+  #  cnki-vector-query-api: https://maas.cnki.net/maas-gateway/cnkisearch
+  upload-file-api: http://119.254.155.240:18090/v1/files/upload
+  datasets-document-segment-api: http://119.254.155.240:18090/v1/datasets/%s/documents/%s/segments
+  datasets-delete-document-api: http://119.254.155.240:18090/v1/datasets/%s/documents/%s
+  datasets-document-indexing-status-api: http://119.254.155.240:18090/v1/datasets/%s/documents/%s/indexing-status
+  rename-conversation-api: http://119.254.155.240:18090/v1/conversations/%s/name
+  stop-conversation-api: http://119.254.155.240:18090/v1/chat-messages/%s/stop
+  chat-net-search-api: http://119.254.155.240:18090/v1/workflows/run
+  data-center-chat-api: http://119.254.155.240:18090/v1/chat-messages
 
 
 datasets:

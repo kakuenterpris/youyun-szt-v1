@@ -138,7 +138,9 @@ public class BusUserInfoEntity {
                 + "\"loginId\":\"" + (loginId != null ? loginId.replace("\"", "\\\"") : "") + "\","
                 + "\"userName\":\"" + (userName != null ? userName.replace("\"", "\\\"") : "") + "\","
                 + "\"depCode\":\"" + (depCode != null ? depCode.replace("\"", "\\\"") : "") + "\","
-                + "\"depName\":\"" + (depName != null ? depName.replace("\"", "\\\"") : "") + "\""
+                + "\"depNum\":\"" + (depNum != null ? depNum.replace("\"", "\\\"") : "") + "\","
+                + "\"depName\":\"" + (depName != null ? depName.replace("\"", "\\\"") : "") + "\","
+                + "\"specialAuth\":\"" + (specialAuth != null ? specialAuth.replace("\"", "\\\"") : "") + "\""
                 + "}";
     }
 }

@@ -8,10 +8,13 @@ import com.thtf.file.dto.FileUploadBase64DTO;
 import com.thtf.file.dto.FileUploadRecordBaseDTO;
 import com.thtf.file.dto.MergeFileDTO;
 import com.thtf.global.common.rest.RestResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,12 +32,18 @@ import java.util.Arrays;
 @RequestMapping("/api/v1/file/")
 @Slf4j
 @CrossOrigin
+@Tag(name = "文件相关操作（会议记录）", description = "文件相关操作")
 public class FileUploadController {
 
     private static final String[] whiteList = {"TXT", "MARKDOWN", "MDX", "PDF", "HTML", "XLSX", "XLS", "DOCX", "CSV", "MD", "HTM",
             "txt", "markdown", "mdx", "pdf", "html", "xlsx", "xls", "docx", "csv", "md", "htm",
             "MP3", "WAV", "PCM", "AAC", "Opus", "FLAC", "OGG", "AMR", "Speex", "AC3", "APE", "M4A", "M4R", "WMA","MP4"};
 
+    @Value("${spring.servlet.multipart.max-file-size}")
+    private String maxFileSize;
+
+    @Value("${spring.servlet.multipart.max-request-size}")
+    private String maxRequestSize;
     SystemPathFileUploadServiceImpl fileUploadService;
 
     @Autowired
@@ -42,13 +51,20 @@ public class FileUploadController {
         this.fileUploadService = fileUploadService;
     }
 
+    @GetMapping("checkConfig")
+    public String checkConfig() {
+        return "Max File Size: " + maxFileSize + ", Max Request Size: " + maxRequestSize;
+    }
+
     @GetMapping("fetchId")
+    @Operation(summary = "获取uuid接口")
     public RestResponse fetchUuid() {
         return RestResponse.success(IdUtil.simpleUUID());
     }
 
 
     @PostMapping("mergeFile")
+    @Operation(summary = "合并文件接口")
     public RestResponse mergeFile(@RequestBody MergeFileDTO dto) throws Exception {
 
         return fileUploadService.mergeSliceFile(dto.getUuid(), dto.getFileMd5(), dto.getFileName(), dto.getPath());
@@ -70,6 +86,7 @@ public class FileUploadController {
     @PostMapping(value = "uploadSlice")
     @ResponseBody
     @SneakyThrows
+    @Operation(summary = "分片文件上传接口")
     public RestResponse uploadFile(@RequestParam(value = "file") MultipartFile file,
                                    @RequestParam(value = "uuid") String uuid,
                                    @RequestParam("fileMd5") String fileMd5,
@@ -102,6 +119,7 @@ public class FileUploadController {
     @GetMapping(value = "uploadSlice")
     @ResponseBody
     @SneakyThrows
+    @Operation(summary = "分片上传预查询接口")
     public RestResponse checkSlice(@RequestParam(value = "uuid") String uuid,
                                    @RequestParam("fileMd5") String fileMd5,
                                    @RequestParam("filename") String fileName,
@@ -125,6 +143,7 @@ public class FileUploadController {
     @PostMapping(value = "uploadFile")
     @ResponseBody
     @SneakyThrows
+    @Operation(summary = "文件上传接口")
     public RestResponse updateFile(@RequestParam(value = "file") MultipartFile file,  // 文件
                                    @RequestParam(value = "fileMd5", required = false) String fileMd5, // 文件md5
                                    @RequestParam(value = "fileId", required = false) String fileId,  // 文件id（重新上传的文件保持旧的id）
@@ -143,6 +162,7 @@ public class FileUploadController {
 
 
     @PostMapping("deleteFile")
+    @Operation(summary = "删除文件接口")
     public RestResponse deleteFile(@RequestBody FileUploadRecordBaseDTO dto) {
 
         return fileUploadService.deleteFile(dto);
@@ -150,6 +170,7 @@ public class FileUploadController {
 
 
     @PostMapping("enableDownload")
+    @Operation(summary = "修改文件是否可下载接口")
     public RestResponse enableDownload(@RequestBody FileUploadRecordBaseDTO param) {
 
         return fileUploadService.enableDownload(param);
@@ -157,11 +178,13 @@ public class FileUploadController {
 
 
     @GetMapping("download/{guid}")
+    @Operation(summary = "下载文件接口")
     public void getFileStreamByGuid(HttpServletResponse response, @PathVariable String guid) throws UnsupportedEncodingException {
         fileUploadService.getFileStreamByGuid(response, guid);
     }
 
     @PostMapping("uploadBase64")
+    @Operation(summary = "base64方式上传文件接口")
     public RestResponse uploadBase64(@RequestBody FileUploadBase64DTO dto) throws Exception {
 
         return fileUploadService.uploadBase64(dto);
@@ -169,6 +192,7 @@ public class FileUploadController {
 
 
     @PostMapping("syncDocument")
+    @Operation(summary = "同步文件信息接口")
     public RestResponse syncDocument(@RequestBody SyncFileDTO dto) {
 
         return fileUploadService.syncDocument(dto);
@@ -176,6 +200,7 @@ public class FileUploadController {
 
 
     @PostMapping("checkCanUpload")
+    @Operation(summary = "校验文件能否上传接口")
     public RestResponse checkCanUpload(@RequestBody SyncFileDTO dto) throws IOException {
 
         return fileUploadService.checkCanUpload(dto);
@@ -183,6 +208,7 @@ public class FileUploadController {
 
 
     @PostMapping("deleteDocument")
+    @Operation(summary = "删除文件接口")
     public RestResponse deleteDocument(@RequestBody SyncFileDTO dto) {
 
         return fileUploadService.deleteDocument(dto);
@@ -190,11 +216,13 @@ public class FileUploadController {
 
 
     @PostMapping("getByFileId")
+    @Operation(summary = "根据文件id返回文件上传信息接口")
     public RestResponse getByFileId(@RequestParam String fileId) {
         return RestResponse.success(fileUploadService.getByFileId(fileId));
     }
 
     @PostMapping("getAudioFileByFileId")
+    @Operation(summary = "根据文件id获取音频文件接口")
     public RestResponse getAudioFileByFileId(@RequestParam String fileId) {
         return RestResponse.success(fileUploadService.getAudioFileByFileId(fileId));
     }
@@ -207,6 +235,7 @@ public class FileUploadController {
      * @return
      */
     @PostMapping("deleteFileCommon")
+    @Operation(summary = "删除文件上传表记录与服务器文件接口")
     public RestResponse deleteFileCommon(@RequestParam String fileId) {
         return fileUploadService.deleteFileCommon(fileId);
     }

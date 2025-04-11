@@ -119,6 +119,12 @@ public class BusUserMeetingAudioEntity implements Serializable {
     @TableField(value = "guid", fill = FieldFill.INSERT)
     private String guid;
 
+    /**
+     * 讯飞语音识别订单ID
+     */
+    @TableField(value = "order_id", fill = FieldFill.INSERT)
+    private String orderId;
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

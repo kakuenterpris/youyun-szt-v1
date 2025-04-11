@@ -14,9 +14,9 @@ import java.util.List;
  */
 public interface BusUserMeetingAudioMapper extends BaseMapper<BusUserMeetingAudioEntity> {
 
-    List<UserMeetingAudioContentDTO> getAudioList(String userId, String queryParam);
+    List<UserMeetingAudioContentDTO> getAudioList(String userId, String queryParam, Integer start, Integer size);
 
-    List<UserMeetingAudioContentDTO> getAudioRecycleList(String userId, String queryParam);
+    List<UserMeetingAudioContentDTO> getAudioRecycleList(String userId, String queryParam, Integer start, Integer size);
 
     UserMeetingAudioContentDTO getEntity(Long id);
 
@@ -27,6 +27,12 @@ public interface BusUserMeetingAudioMapper extends BaseMapper<BusUserMeetingAudi
     boolean restore(Long id);
 
     int updateByIsTrans(Long id);
+
+    BusUserMeetingAudioEntity getByOrderId(String orderId);
+
+    BusUserMeetingAudioEntity getByFileId(String fileId, String userId);
+
+    UserMeetingAudioContentDTO getDeletedEntity(Long id);
 }
 
 

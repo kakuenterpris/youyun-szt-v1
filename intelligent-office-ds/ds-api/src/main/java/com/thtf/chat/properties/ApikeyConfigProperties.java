@@ -41,10 +41,11 @@ public class ApikeyConfigProperties {
     private String dataCenter;
     //  推荐列表key
     private String recommendList;
-    //  意图识别  --和doc不一样
+    //  意图识别
     private String intent;
     //  新联网搜索  --doc没有
     private String newNetSearch;
 
-
+    //  意图识别--主体
+    private String intentMain;
 }

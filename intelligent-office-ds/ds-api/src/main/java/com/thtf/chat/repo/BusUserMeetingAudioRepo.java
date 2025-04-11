@@ -15,11 +15,12 @@ public interface BusUserMeetingAudioRepo extends IService<BusUserMeetingAudioEnt
 
     Integer getMaxSort();
 
-    List<UserMeetingAudioContentDTO> getAudioList(String userId, String queryParam);
+    List<UserMeetingAudioContentDTO> getAudioList(String userId, String queryParam, Integer start, Integer size);
 
     UserMeetingAudioContentDTO getEntity(Long id);
+    UserMeetingAudioContentDTO getDeletedEntity(Long id);
 
-    List<UserMeetingAudioContentDTO> getAudioRecycleList(String userId, String queryParam);
+    List<UserMeetingAudioContentDTO> getAudioRecycleList(String userId, String queryParam, Integer start, Integer size);
 
     boolean logicDelete(Long id);
 
@@ -30,4 +31,8 @@ public interface BusUserMeetingAudioRepo extends IService<BusUserMeetingAudioEnt
     boolean restore(Long id);
 
     int updateByIsTrans(Long id);
+
+    BusUserMeetingAudioEntity getByOrderId(String orderId);
+
+    BusUserMeetingAudioEntity getByFileId(String fileId, String userId);
 }

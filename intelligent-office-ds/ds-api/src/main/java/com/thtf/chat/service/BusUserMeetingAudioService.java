@@ -5,8 +5,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.meeting.dto.ProgressParamDTO;
 import com.thtf.meeting.dto.UserMeetingAudioContentDTO;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -21,7 +19,7 @@ public interface BusUserMeetingAudioService extends IService<BusUserMeetingAudio
 
     RestResponse transRetry(UserMeetingAudioContentDTO audioContentDTO);
 
-    RestResponse queryAudioFileList(String queryParam);
+    RestResponse queryAudioFileList(String queryParam, Integer start, Integer size);
 
     RestResponse queryLongAsrProgress(List<ProgressParamDTO> progressParamDTOS);
 
@@ -39,7 +37,7 @@ public interface BusUserMeetingAudioService extends IService<BusUserMeetingAudio
 
     RestResponse fileRestore(UserMeetingAudioContentDTO audioContentDTO);
 
-    RestResponse queryAudioFileRecycleList(String queryParam);
+    RestResponse queryAudioFileRecycleList(String queryParam, Integer start, Integer size);
 
     RestResponse xfWebApiCallback(String orderId, int status);
 }

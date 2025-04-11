@@ -45,6 +45,11 @@ public class BusUserMeetingContentRepoImpl extends ServiceImpl<BusUserMeetingCon
     public boolean restore(Long contentId) {
        return contentMapper.restore(contentId);
     }
+
+    @Override
+    public BusUserMeetingContentEntity getByOrderId(String orderId) {
+        return contentMapper.getByOrderId(orderId);
+    }
 }
 
 

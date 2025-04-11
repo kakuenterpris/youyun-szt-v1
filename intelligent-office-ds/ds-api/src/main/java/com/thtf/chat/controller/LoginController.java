@@ -4,25 +4,29 @@ import cn.hutool.core.util.IdUtil;
 import com.thtf.chat.service.BusUserInfoService;
 import com.thtf.chat.service.LoginService;
 import com.thtf.chat.util.VerifyCodeUtil;
-import com.thtf.chat.utils.RedisUtil;
+import com.thtf.global.common.cache.RedisUtil;
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.global.common.utils.RSAUtil;
 import com.thtf.login.dto.CaptchaDTO;
 import com.thtf.login.dto.FwoaLoginInfoDTO;
 import com.thtf.login.dto.LoginDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 /**
@@ -42,7 +46,11 @@ public class LoginController {
     private final RedisUtil redisUtil;
     @Autowired
     @Lazy
-    private  BusUserInfoService busUserInfoService;
+    private BusUserInfoService busUserInfoService;
+    @Value("${integration.rsa.public-key}")
+    private String rsaPublicKey;
+    @Value("${integration.rsa.private-key}")
+    private String rsaPrivateKey;
 
     /**
      * 同步同方OA用户信息
@@ -61,6 +69,15 @@ public class LoginController {
     @PostMapping("/syncDepInfo")
     public RestResponse syncDepInfo(@RequestParam String id) {
         return service.syncDepInfo(id);
+    }
+    /**
+     * 同步同方OA分部信息
+     * @param id
+     * @return
+     */
+    @PostMapping("/syncSubCompanyInfo")
+    public RestResponse syncSubCompanyInfo(@RequestParam String id) {
+        return service.syncSubCompanyInfo(id);
     }
 
     /**
@@ -133,12 +150,60 @@ public class LoginController {
 
     /**
      * 提供给同方泛微OA用于登录
+     * @param userName
+     * @param request
+     * @param response
+     * @return
+     * @throws IOException
+     */
+    @PostMapping("/verifyFromTfoa")
+    public void verifyFromTfoa(String userName, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        log.info("同方泛微OA用于pc登录参数:{}", userName);
+        service.verifyFromTfoa(request, response, userName);
+    }
+
+    /**
+     * 提供给同方泛微OA用于登录
+     * @param userName
+     * @param request
+     * @param response
+     * @return
+     * @throws IOException
+     */
+    @PostMapping("/verifyFromTfoaPc")
+    public RestResponse verifyFromTfoaPc(String userName, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        return service.verifyFromTfoaPc(request, response, userName);
+    }
+
+    /**
+     * 提供给同方泛微OA用于登录
      * @param response
      * @param param
      * @return
      */
-    @PostMapping("/verifyIdentityFromTfoa")
-    public RestResponse verifyIdentityFromTfoa(HttpServletRequest request, HttpServletResponse response, @RequestBody FwoaLoginInfoDTO param) throws IOException {
-        return service.verifyIdentityFromTfoa(request, response, param);
+    @PostMapping("/verifyFromTfoaMobile")
+    public RestResponse verifyFromTfoaMobile(HttpServletRequest request, HttpServletResponse response, @RequestBody FwoaLoginInfoDTO param) throws Exception {
+        return service.verifyFromTfoaMobile(request, response, param);
+    }
+
+    /**
+     * 获取RsaKey
+     * @return
+     */
+    @GetMapping("/getRsaKey")
+    public RestResponse getRsaKey() throws NoSuchAlgorithmException {
+        KeyPair keyPair = RSAUtil.generateKeyPair();
+        Base64.Encoder encoder = Base64.getEncoder();
+        return RestResponse.success("public: " + encoder.encodeToString(keyPair.getPublic().getEncoded()) + "; private: " + encoder.encodeToString(keyPair.getPrivate().getEncoded()));
+    }
+
+    @PostMapping("/encrypt")
+    public RestResponse encrypt(@RequestBody FwoaLoginInfoDTO dto) throws Exception {
+        return RestResponse.success(RSAUtil.encrypt(dto.getUserName(),  rsaPublicKey));
+    }
+
+    @PostMapping("/decrypt")
+    public RestResponse decrypt(@RequestBody FwoaLoginInfoDTO dto) throws Exception {
+        return RestResponse.success(RSAUtil.decrypt(dto.getUserName(), rsaPrivateKey));
     }
 }

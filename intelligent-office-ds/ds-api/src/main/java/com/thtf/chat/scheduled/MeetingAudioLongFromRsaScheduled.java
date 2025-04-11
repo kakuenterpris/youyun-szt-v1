@@ -88,7 +88,12 @@ public class MeetingAudioLongFromRsaScheduled implements Runnable {
                         ? String.valueOf(linkedHashMap.get("data")) : "";
             }
             // 执行转写
-            LfasrMessage lfasrMessage = CommonTrans.xfyunLfasrSDK(filePath, userId, xfAppId, xfLfasrSecretKey, fileId, redisUtil, audioRepo, audioId);
+            LfasrMessage lfasrMessage;
+            // 获取文件大小
+            File audio = new File(filePath);
+            long fileSize = audio.length();
+            log.info("文件大小：" + fileSize);
+            lfasrMessage = CommonTrans.xfyunLfasrSDK(filePath, userId, xfAppId, xfLfasrSecretKey, fileId, redisUtil, audioRepo, audioId);
             StringBuilder stringBuilder = new StringBuilder();
             long realDuration = 0l;
             if (lfasrMessage != null) {
@@ -104,8 +109,15 @@ public class MeetingAudioLongFromRsaScheduled implements Runnable {
                     }
                 }
             }
+            // 根据audioId从bus_user_meeting_audio表获取orderId
+            BusUserMeetingAudioEntity audioEntity = audioRepo.getById(audioId);
+            String orderId = "";
+            if (audioEntity != null) {
+                orderId = audioEntity.getOrderId();
+            }
             // 将执行内容更新到语音内容表中
             BusUserMeetingContentEntity contentEntity = new BusUserMeetingContentEntity(contentId, stringBuilder.toString());
+            contentEntity.setOrderId(orderId);
             contentEntity.setRealDuration(realDuration);
             contentService.updateById(contentEntity);
             log.info("语音转写任务完成,已更新语音内容至bus_user_meeting_content表");

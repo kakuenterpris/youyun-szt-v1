@@ -20,13 +20,17 @@ public interface LoginService {
 
     RestResponse syncDepInfo(String id);
 
+    RestResponse syncSubCompanyInfo(String id);
+
     RestResponse encryptLoginId(String id);
 
     RestResponse login(HttpServletRequest request, HttpServletResponse response, LoginDTO dto);
 
     RestResponse getUserInfo(HttpServletRequest request);
 
-    RestResponse verifyIdentityFromTfoa(HttpServletRequest request, HttpServletResponse response, FwoaLoginInfoDTO param) throws IOException;
+    void verifyFromTfoa(HttpServletRequest request, HttpServletResponse response, String userName) throws IOException;
 
+    RestResponse verifyFromTfoaPc(HttpServletRequest request, HttpServletResponse response, String userName) throws IOException;
 
+    RestResponse verifyFromTfoaMobile(HttpServletRequest request, HttpServletResponse response, FwoaLoginInfoDTO param) throws Exception;
 }

@@ -94,12 +94,55 @@ ai:
   data-center-chat-api: http://119.254.155.240:18090/v1/chat-messages
 
 
+# api-key
+apikey:
+  # 智能助手
+  common: app-KWgDvVooc0zskI0eY7DyrbIU
+  # 智能代码
+  intellcode: app-MF0v0yXl3s33wPVaepsvBVMc
+  # ppt大纲
+  pptoutline: app-KWgDvVooc0zskI0eY7DyrbIU
+  # 新闻稿
+  newsmanuscript: app-oSzsdmDdC3O9g6zBR6yhuORK
+  # 智能公文
+  intelldoc: app-z1ev8jWWWq0VOpCIFkHCsSEc
+  # 智能审校
+  intellproofread: app-z8Hrj4mj3X3uGVnGIjcrU1pb
+  # 发言稿
+  speechscript: app-uZ0x3XaSyB0D4yaxS4iraOhS
+  # 会议纪要
+  meetingsammary: app-0rboba0jQweVfdES4dmt3JJw
+  # 数据挖掘处理
+  dm: app-7MlA0qIGe9CZUIXKP8JHyiBH
+  # 智能研报
+  intellreport: app-yWYyVMfDmq0us7al5bg7JVYG
+  # 个人知识库
+  customvector: dataset-kNfh2qv11cCdKv1yg9JjEctT
+  # 联网搜索--暂不可用
+  netsearch: app-q6PgQfNd13N26n5d2Rckjt4k
+  # 数据中台
+  dataCenter: app-TQ4J8MMGB2iQmF3infBr14cp
+  # 推荐列表key
+  recommendList: app-ONOtPOsaMB2Gzdmj8eBVhEKH
+  # 意图识别
+  intent: app-LJWwn8XRw3Vhy4KOwJ1W58rh
+  # 新联网搜索  --doc没有
+  newNetSearch: sk-5d336986887b474ca4c7f37ab3731f44
+  # 意图识别-主体
+  intentMain: app-UBWkzwvvt5SJaQfA83s0LyHs
+
 datasets:
   unit-id: e811be65-ef5c-4cec-aa83-8f0401fa6947
   #  dep-id: f6456a92-2497-4abd-bdbc-9e58f21bf7e7
   dep-id: 09c749d3-7dca-435c-bb84-3610921ef3ed
 
 integration:
+  rsa:
+    public-key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjERtGXLscEUZHixkx6NbYpRo+RPjIUmjIUNPLwk0LaPd8tb2ggUmqElJWBUTfY0bdXv4A174ZigXrK9X8MoC+jvuTN1h4y4OTxjyoAJaV6HivaQy7XLUAWihWOhAT6IRg2N1xu+rwywvmNNePvcv6IwKHoCojkXFCCdjky4fd5tL7QJbQ2lZUcuTNv+nWFbxUUWdxOIv2gHHX1c6MlJJ3PRiLEgLe5BfD0XOI8FBHKcjT6wg5C5j/7EDeFrAtpb96FrcQNAYBiBSClR0RVmXOLBo3zHF+tZ/TmZTQWs00Uj+HGispNOb6D35sfjdKclKPHLOtgn++SwV2eHkjuKEBwIDAQAB
+    private-key: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCMRG0ZcuxwRRkeLGTHo1tilGj5E+MhSaMhQ08vCTQto93y1vaCBSaoSUlYFRN9jRt1e/gDXvhmKBesr1fwygL6O+5M3WHjLg5PGPKgAlpXoeK9pDLtctQBaKFY6EBPohGDY3XG76vDLC+Y014+9y/ojAoegKiORcUIJ2OTLh93m0vtAltDaVlRy5M2/6dYVvFRRZ3E4i/aAcdfVzoyUknc9GIsSAt7kF8PRc4jwUEcpyNPrCDkLmP/sQN4WsC2lv3oWtxA0BgGIFIKVHRFWZc4sGjfMcX61n9OZlNBazTRSP4caKyk05voPfmx+N0pyUo8cs62Cf75LBXZ4eSO4oQHAgMBAAECggEAB4hH0OK1A7USNjvtZYhw3d2uYsHIo/76UvefBvLtlGMvsLIOfB5JXHwjA3yOQWMUeGih1ucrW6uyKcR4v9DOpsq/xJeW1sZLCmsCjHPT5M99XPBhCRNDg0KFIkBxQ6rRBJyQtJAmSc1+TiymQPyxMUG5QWNoqcs2sMtnXiikk/L0mkN+ZA/9FPq2MArJjpAi8ayoGynnmcI1owzfaTTn/LrEtUPu+iLV6f5ckvQPbe41g5VjTsp+UbQFcc9AbLOaoldvtY3xjg1ah2DYVNfMfJcXxj4EVYzbMCgjjDWiLyaXeASwvcGOMazcyZfjFcjimeJPAJr3SPY6gx7ACoje4QKBgQDGEP7uIOEnV47A7z12Wy/YtJFyzN/yNBc0YPKy6M0PeCWP19djDWd1F3hzDffswKtm5X12iEHrw2M9qoQ+9t93ktVST+IOaW7f306nSQjNmT0LFRCPJLQGZTTIpO1MCiKLW5ZFmHvdfUtTE1jB67Rmwx9YMGNVoqI3Y/9j6w/9bwKBgQC1S36BSs2OMPQwf3StttvSHZTbTmA3E9FN5SODTg5ISiE0k4hal6LGmqAFZcFlrB8tUu/AmtW+ARFc06exbAOcmMcZXOceg2kAirLM0HeuGTOFjfa9cFsoGDuyvTAYogtX8KyFnY+QZ4Zg5oqfaaGjgLpZ8OwQfXdVgyD5rz/G6QKBgAEz7Tho/rUMdRN64HatixbX0eJOmDWSV2m8BP1NKKGlayT6fJZfaHdvkw2v0gegC+puDlr/7NaPszSWqoLvYOALBjyfu5G21jOJ2aJucR0+hv5gPF+CK422Y6GsTrydeyQ5hCocCPSJZEG25l0XH1tYaAJTGOdWO4H2m4Bx1wEFAoGBAJILQNtyoOhcszmmUx3lYmt+/P01w/hadI+leNg7tvGxFdK+zmb8JFqNET+H2yXGZE8kspKbqHepcI0wy7P3aWlrAWiDGIPSJHIVSTgI74BGOOTrmcq9ihFghCbWlLojP7QV40S3yoDvhKbm0ODePSHzfysZE3GtQMaYHaZF8MCRAoGBAMEZrp/j6k7M5p9rApoeseibZ1/JDTboYmpW0J2lTFMlhktMnd820wHj6R/HcsWEn9Bas9pHJq4kW82SqGeGTnHwRHB7O/84dCfSAOHTHK5c8XJE2NW+wgkpFLeCsuJI4BTJXHoeonsjhU9xlJ4498fzbfDUN0pFI4HJ3qsEy81T
+  thtf:
+    pc-redirect-url: https://119.254.155.240:18090/authorization
+    h5-redirect-url: https://119.254.155.240:18090/h5/authorization
   ppt:
     api-key: 67caa0869255a
     secret-key: v6kBne1Kl1vQVlvuK3ck1tEsVD8lbSZs
@@ -124,3 +167,17 @@ thtf:
     server: ldap://thtf.com:389
     domain: thtf.com
     enable: false
+
+xfyun:
+  appId: 27111875
+  apiSecret: YzBjMGIyNzU5MDc0MWY4YWU4ODgyZjNj
+  apiKey: f7ad1ffad087351ea77a48a051a87532
+  lfasrSecretKey: ab2b020325a6224aa5ae7014e7c81e05
+
+springdoc:
+  swagger-ui:
+    enabled: false
+knife4j:
+  enable: false
+
+

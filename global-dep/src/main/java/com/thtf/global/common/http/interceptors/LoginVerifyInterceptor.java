@@ -69,7 +69,7 @@ public class LoginVerifyInterceptor implements HandlerInterceptor {
         } else {
             try {
                 // todo 根据token获取人员信息，获取信息为空，同样返回无效token
-                String userInfoStr = (String) redisUtil.get("token:" + token);
+                String userInfoStr = (String) redisUtil.get("token_" + token);
                 if (StringUtils.isBlank(userInfoStr)){
                     responseRequestFail(response, DefaultErrorCode.INVALID_TOKEN);
                     return false;

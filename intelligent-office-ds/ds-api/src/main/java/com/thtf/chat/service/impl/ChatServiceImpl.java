@@ -146,7 +146,12 @@ public class ChatServiceImpl implements ChatService {
                             likeOrDislikeEntity.setMessageId(message_id);
                             likeOrDislikeEntity.setUserId(ContextUtil.getUserId());
                             likeOrDislikeEntity.setLikeStatus(0);
-                            likeOrDislikeRepo.save(likeOrDislikeEntity);
+                            try {
+                                likeOrDislikeRepo.save(likeOrDislikeEntity);
+                            } catch (Exception e) {
+                                log.error("Error saving like/dislike entity: {}", e.getMessage());
+                            }
+//                            likeOrDislikeRepo.save(likeOrDislikeEntity);
                             for (MessageSourceEntity messageSourceEntity : messageSourceEntities) {
                                 messageSourceEntity.setMessageId(message_id);
                                 messageSourceEntity.setConversationId(conversation_id);
@@ -295,6 +300,13 @@ public class ChatServiceImpl implements ChatService {
     private ModelInputChatDto prepareModelInput(ChatRequestDto chatRequestDto, List<MessageSourceEntity> messageSourceEntities) {
         ModelInputChatDto modelInputChatDto = new ModelInputChatDto();
 
+        // 新增意图识别主体
+        String resultMain =  resultIntentionRecognitionMain(chatRequestDto, messageSourceEntities);
+        log.info("意图识别主体==>: {}", resultMain);
+        if (StringUtils.isNotEmpty(resultMain)) {
+            chatRequestDto.setQuestion(resultMain);
+        }
+
         // 新增意图识别方法
         String result = resultIntentionRecognition(chatRequestDto, messageSourceEntities);
         log.info("意图识别方法返回值: {}", result);
@@ -364,11 +376,13 @@ public class ChatServiceImpl implements ChatService {
 //            }
 
             String customVectorContent = this.queryCustomVector(chatRequestDto.getQuestion(),messageSourceEntities,1);
+            modelInputChatDto.setKnowledge(customVectorContent);
             log.info("TtknVectorContent: {}", customVectorContent);
         }
         // 查询部门知识库
         if (chatRequestDto.getIsUseDept()) {
             String customVectorContent = this.queryCustomVector(chatRequestDto.getQuestion(),messageSourceEntities,2);
+            modelInputChatDto.setKnowledge(customVectorContent);
             log.info("DepartmentVectorContent: {}", customVectorContent);
         }
 
@@ -481,7 +495,7 @@ public class ChatServiceImpl implements ChatService {
      * @param question
      * @return
      */
-    private Map queryIntentionRecognition(String question, List<MessageSourceEntity> messageSourceEntities) {
+    private String queryIntentionRecognition(String question,String apiKey, List<MessageSourceEntity> messageSourceEntities) {
         //  查询意图识别集成
         String url = aiConfigProperties.getAnswerApi();
         if (null != ContextUtil.getUserId()) {
@@ -498,7 +512,6 @@ public class ChatServiceImpl implements ChatService {
         String json = gson.toJson(paramMap);
         log.info("调用查询意图识别集成请求：{}", json);
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
-        String apiKey = apikeyConfigProperties.getIntent();
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
@@ -526,8 +539,7 @@ public class ChatServiceImpl implements ChatService {
             if (StringUtils.isEmpty(data)) {
                 return null;
             }
-            Map<String, Object> dataMap = JSONUtil.toBean(data, Map.class);
-            return dataMap;
+            return data;
         } catch (Exception e) {
             log.error("请求查询意图识别集成失败，失败原因：" + e.getMessage());
             e.getMessage();
@@ -575,12 +587,13 @@ public class ChatServiceImpl implements ChatService {
             log.info("newQuestion: {}", newQuestion);
             // 意图识别
             Boolean checkField = checkField(chatRequestDto);
-            Map queryMap = new HashMap();
+            String queryData = "";
             String type ="";
             String query = "";
             if (checkField){
-                queryMap = queryIntentionRecognition(newQuestion, messageSourceEntities);
+                queryData = queryIntentionRecognition(newQuestion,apikeyConfigProperties.getIntent(), messageSourceEntities);
             }
+            Map<String, Object> queryMap = JSONUtil.toBean(queryData, Map.class);
             if (queryMap!= null && queryMap.size()>0 ) {
                 log.info("queried: {}", queryMap.toString());
                 type = (String) queryMap.get("type");
@@ -592,6 +605,29 @@ public class ChatServiceImpl implements ChatService {
                     return query;
                 }else {
                     return chatRequestDto.getQuestion();
+                }
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * 意图识别-主体
+     * @param chatRequestDto
+     * @param messageSourceEntities
+     * @return
+     */
+    private String resultIntentionRecognitionMain(ChatRequestDto chatRequestDto,List<MessageSourceEntity> messageSourceEntities) {
+        // 第一次问答不走意图识别
+        if(chatRequestDto !=null && StringUtils.isEmpty(chatRequestDto.getConversationId())){
+            // 意图识别-主题
+            Boolean checkField = checkField(chatRequestDto);
+            if (checkField){
+                String queryData = queryIntentionRecognition(chatRequestDto.getQuestion(),apikeyConfigProperties.getIntentMain(), messageSourceEntities);
+                if (StringUtils.isNotEmpty(queryData)) {
+                    String result = queryData.split("content:")[1];
+                    return result;
                 }
             }
         }
@@ -656,17 +692,23 @@ public class ChatServiceImpl implements ChatService {
             }
             JSONArray jsonArray = JSONArray.parseArray(jsonString);
             StringBuffer textBuffer = new StringBuffer();
+            // 先将数据记录到数据库，避免知识库的数据丢失
             for (int i = 0; i < jsonArray.size(); i++) {
                 MessageSourceEntity messageSourceEntity = new MessageSourceEntity();
-                if (textBuffer.length() > 2000) {
-                    return textBuffer.toString();
-                }
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 String text = jsonObject.getString("text");
                 messageSourceEntity.setContext(text);
                 messageSourceEntity.setSource("CnkiVector");
                 messageSourceEntity.setTitle(jsonObject.getString("title"));
                 messageSourceEntities.add(messageSourceEntity);
+            }
+
+            for (int i = 0; i < jsonArray.size(); i++) {
+                if (textBuffer.length() > 2000) {
+                    return textBuffer.toString();
+                }
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String text = jsonObject.getString("text");
                 if (textBuffer.length() > 0) {
                     textBuffer.append("\\r\\n");
                 }
@@ -715,7 +757,7 @@ public class ChatServiceImpl implements ChatService {
                 "            \"reranking_model_name\": \"\"" +
                 "        }," +
                 "        \"weights\": null," +
-                "        \"top_k\": 1," +
+                "        \"top_k\": 5," +
                 "        \"score_threshold_enabled\": false," +
                 "        \"score_threshold\": null" +
                 "    } " +

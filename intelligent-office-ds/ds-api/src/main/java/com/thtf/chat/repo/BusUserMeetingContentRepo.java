@@ -17,4 +17,6 @@ public interface BusUserMeetingContentRepo extends IService<BusUserMeetingConten
     boolean deleteById(Long contentId);
 
     boolean restore(Long contentId);
+
+    BusUserMeetingContentEntity getByOrderId(String orderId);
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @ClassName: DsApi
  * @Date: 2025-02-20 10:11
  */
-@FeignClient(name = "chat-api", url = "http://119.254.155.108/chat-api/", configuration = DsFeignAutoconfiguration.class)
+@FeignClient(name = "chat-api", configuration = DsFeignAutoconfiguration.class)
 //@FeignClient(name = "ds-api", url = "http://localhost:8080/", configuration = DsFeignAutoconfiguration.class)
 public interface DsApi {
 

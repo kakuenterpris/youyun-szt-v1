@@ -1,29 +1,35 @@
 package com.thtf.chat.realm;
 
 import com.thtf.chat.entity.BusUserInfoEntity;
-import com.thtf.chat.mapper.BusUserInfoMapper;
 import com.thtf.chat.util.JwtToken;
 import com.thtf.chat.util.JwtUtil;
-import com.thtf.chat.utils.RedisUtil;
+import com.thtf.global.common.cache.RedisUtil;
+import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.UnknownAccountException;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 @Component
-public class UsernameRealm extends AuthorizingRealm {
+@RequiredArgsConstructor
+public class UsernameRealm extends AuthorizingRealm  {
 
-    @Autowired
-    private RedisUtil redisUtil;
+
+    private final RedisUtil redisUtil;
     @Autowired
     private JwtUtil jwtUtil;
+
+
     //授权
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {

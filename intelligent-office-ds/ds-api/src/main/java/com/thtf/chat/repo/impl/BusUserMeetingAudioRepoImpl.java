@@ -1,12 +1,10 @@
 package com.thtf.chat.repo.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.thtf.chat.entity.*;
+import com.thtf.chat.entity.BusUserMeetingAudioEntity;
 import com.thtf.chat.mapper.BusUserMeetingAudioMapper;
 import com.thtf.chat.mappings.BusUserMeetingAudioMapping;
 import com.thtf.chat.repo.BusUserMeetingAudioRepo;
-import com.thtf.global.common.utils.Linq;
 import com.thtf.meeting.dto.UserMeetingAudioContentDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,8 +34,8 @@ public class BusUserMeetingAudioRepoImpl extends ServiceImpl<BusUserMeetingAudio
     }
 
     @Override
-    public List<UserMeetingAudioContentDTO> getAudioList(String userId, String queryParam) {
-        return audioMapper.getAudioList(userId, queryParam);
+    public List<UserMeetingAudioContentDTO> getAudioList(String userId, String queryParam, Integer start, Integer size) {
+        return audioMapper.getAudioList(userId, queryParam, start, size);
     }
 
     @Override
@@ -50,8 +48,13 @@ public class BusUserMeetingAudioRepoImpl extends ServiceImpl<BusUserMeetingAudio
     }
 
     @Override
-    public List<UserMeetingAudioContentDTO> getAudioRecycleList(String userId, String queryParam) {
-        return audioMapper.getAudioRecycleList(userId, queryParam);
+    public UserMeetingAudioContentDTO getDeletedEntity(Long id) {
+        return audioMapper.getDeletedEntity(id);
+    }
+
+    @Override
+    public List<UserMeetingAudioContentDTO> getAudioRecycleList(String userId, String queryParam, Integer start, Integer size) {
+        return audioMapper.getAudioRecycleList(userId, queryParam, start, size);
     }
 
     @Override
@@ -80,6 +83,16 @@ public class BusUserMeetingAudioRepoImpl extends ServiceImpl<BusUserMeetingAudio
     @Override
     public int updateByIsTrans(Long id) {
         return audioMapper.updateByIsTrans(id);
+    }
+
+    @Override
+    public BusUserMeetingAudioEntity getByOrderId(String orderId) {
+        return audioMapper.getByOrderId(orderId);
+    }
+
+    @Override
+    public BusUserMeetingAudioEntity getByFileId(String fileId, String userId) {
+        return audioMapper.getByFileId(fileId, userId);
     }
 }
 

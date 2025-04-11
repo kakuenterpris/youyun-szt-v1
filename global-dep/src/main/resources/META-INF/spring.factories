@@ -1,7 +1,0 @@
-#org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-#com.thtf.global.common.http.WebMvcConfiguration, \
-#com.thtf.chat.config.serialize.JacksonConfiguration, \
-#com.thtf.global.common.http.clients.OkHttpConfiguration, \
-#com.thtf.chat.config.validation.ParamValidatorConfiguration, \
-#com.thtf.chat.exception.GlobalExceptionHandler  \
-

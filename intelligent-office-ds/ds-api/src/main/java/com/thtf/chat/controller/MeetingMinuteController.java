@@ -4,6 +4,8 @@ import com.thtf.chat.service.BusUserMeetingAudioService;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.meeting.dto.ProgressParamDTO;
 import com.thtf.meeting.dto.UserMeetingAudioContentDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -24,6 +26,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "会议记录", description = "会议记录相关接口")
 public class MeetingMinuteController {
     private final BusUserMeetingAudioService busUserMeetingAudioService;
 
@@ -34,6 +37,7 @@ public class MeetingMinuteController {
      * @return
      */
     @PostMapping("/audioToChar")
+    @Operation(summary = "语音转文件接口")
     public RestResponse audioToChar(@RequestBody UserMeetingAudioContentDTO audioContentDTO) {
         return busUserMeetingAudioService.audioToChar(audioContentDTO);
     }
@@ -45,6 +49,7 @@ public class MeetingMinuteController {
      * @return
      */
     @PostMapping("/transRetry")
+    @Operation(summary = "转换重试接口")
     public RestResponse transRetry(@RequestBody UserMeetingAudioContentDTO audioContentDTO) {
         return busUserMeetingAudioService.transRetry(audioContentDTO);
     }
@@ -55,8 +60,9 @@ public class MeetingMinuteController {
      * @return
      */
     @GetMapping("/queryAudioFileList")
-    public RestResponse queryAudioFileList(@RequestParam String queryParam) {
-        return busUserMeetingAudioService.queryAudioFileList(queryParam);
+    @Operation(summary = "查当前用户语音文件列表接口")
+    public RestResponse queryAudioFileList(@RequestParam String queryParam, @RequestParam(defaultValue = "1") Integer start, @RequestParam(defaultValue = "10") Integer size) {
+        return busUserMeetingAudioService.queryAudioFileList(queryParam, start, size);
     }
 
     /**
@@ -66,6 +72,7 @@ public class MeetingMinuteController {
      * @return
      */
     @PostMapping("/queryLongAsrProgress")
+    @Operation(summary = "查文件进度接口")
     public RestResponse queryLongAsrProgress(@RequestBody List<ProgressParamDTO> progressParamDTOS) {
         return busUserMeetingAudioService.queryLongAsrProgress(progressParamDTOS);
     }
@@ -77,6 +84,7 @@ public class MeetingMinuteController {
      * @return
      */
     @GetMapping("/queryAudioFileAndContent")
+    @Operation(summary = "获取单个语音文件表数据接口")
     public RestResponse queryAudioFileAndContent(@RequestParam String contentId) {
         return busUserMeetingAudioService.queryAudioFileAndContent(contentId);
     }
@@ -88,6 +96,7 @@ public class MeetingMinuteController {
      * @return
      */
     @PostMapping("/updateAudioEntity")
+    @Operation(summary = "更新文件名称接口")
     public RestResponse updateAudioEntity(@RequestBody UserMeetingAudioContentDTO audioContentDTO) {
         return busUserMeetingAudioService.updateAudioEntity(audioContentDTO);
     }
@@ -99,6 +108,7 @@ public class MeetingMinuteController {
      * @return
      */
     @PostMapping("/updateContent")
+    @Operation(summary = "编辑内容接口")
     public RestResponse updateContent(@RequestBody UserMeetingAudioContentDTO audioContentDTO) {
         return busUserMeetingAudioService.updateContent(audioContentDTO);
     }
@@ -109,8 +119,9 @@ public class MeetingMinuteController {
      * @return
      */
     @GetMapping("/queryAudioFileRecycleList")
-    public RestResponse queryAudioFileRecycleList(@RequestParam String queryParam) {
-        return busUserMeetingAudioService.queryAudioFileRecycleList(queryParam);
+    @Operation(summary = "查回收站文件列表接口")
+    public RestResponse queryAudioFileRecycleList(@RequestParam String queryParam, @RequestParam(defaultValue = "1") Integer start, @RequestParam(defaultValue = "10") Integer size) {
+        return busUserMeetingAudioService.queryAudioFileRecycleList(queryParam, start, size);
     }
 
     /**
@@ -120,6 +131,7 @@ public class MeetingMinuteController {
      * @return
      */
     @PostMapping("/logicDelete")
+    @Operation(summary = "删除文件-逻辑删除接口")
     public RestResponse logicDelete(@RequestParam String id) {
         return busUserMeetingAudioService.logicDelete(id);
     }
@@ -131,6 +143,7 @@ public class MeetingMinuteController {
      * @return
      */
     @PostMapping("/permanentlyDelete")
+    @Operation(summary = "永久删除接口")
     public RestResponse permanentlyDelete(@RequestParam String id) {
         return busUserMeetingAudioService.permanentlyDelete(id);
     }
@@ -140,6 +153,7 @@ public class MeetingMinuteController {
      * @return
      */
     @PostMapping("/clearRecycle")
+    @Operation(summary = "清空回收站接口")
     public RestResponse clearRecycle() {
         return busUserMeetingAudioService.clearRecycle();
     }
@@ -150,6 +164,7 @@ public class MeetingMinuteController {
      * @return
      */
     @PostMapping("/fileRestore")
+    @Operation(summary = "文件还原接口")
     public RestResponse fileRestore(@RequestBody UserMeetingAudioContentDTO audioContentDTO) {
         return busUserMeetingAudioService.fileRestore(audioContentDTO);
     }
@@ -164,6 +179,7 @@ public class MeetingMinuteController {
      * @return
      */
     @GetMapping("/xfWebApiCallback")
+    @Operation(summary = "讯飞转写完成异步回调接口")
     public RestResponse xfWebApiCallback(@RequestParam String orderId, int status) {
         return busUserMeetingAudioService.xfWebApiCallback(orderId, status);
     }

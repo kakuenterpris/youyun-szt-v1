@@ -14,6 +14,7 @@ import com.thtf.chat.repo.LikeOrDislikeRepo;
 import com.thtf.chat.repo.MessageSourceRepo;
 import com.thtf.chat.service.HistoryChatService;
 import com.thtf.chat.util.CheckUtil;
+import com.thtf.chat.util.DateUtil;
 import com.thtf.chat.util.HttpUtils;
 import com.thtf.dto.HistoryChatDTO;
 import com.thtf.dto.ModelChatDto;
@@ -96,6 +97,8 @@ public class HistoryChatServiceImpl implements HistoryChatService {
                         // 新增key为场景字段
                         for (Map map1 : dataList) {
                             map1.put("sceneType", apiType);
+                            Long timestamp = ((Double) map1.get("created_at")).longValue() * 1000;
+                            map1.put("timeRange",DateUtil.getTimeRange(timestamp));
                         }
                         list.addAll(dataList);
                     }
@@ -113,7 +116,12 @@ public class HistoryChatServiceImpl implements HistoryChatService {
             if (StringUtils.isNotEmpty(historyChatDTO.getQuery())){
                 list = Linq.find(list, x -> String.valueOf(x.get("name")).contains(historyChatDTO.getQuery()));
             }
-            return RestResponse.success(list);
+
+            // 最多返回300条数据
+            int limits = Math.min(list.size(), 300);
+            list = list.subList(0, limits);
+
+            return RestResponse.success(list,limits);
         } catch (Exception e) {
             log.info("【历史会话列表】错误日志：【{}】，异常为：【{}】", JsonUtil.toJson(historyChatDTO), JsonUtil.toJson(e));
             throw new RuntimeException(e);

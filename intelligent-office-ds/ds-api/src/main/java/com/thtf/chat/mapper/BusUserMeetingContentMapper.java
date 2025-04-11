@@ -14,6 +14,8 @@ public interface BusUserMeetingContentMapper extends BaseMapper<BusUserMeetingCo
     boolean completelyDelete(Long id);
 
     boolean restore(Long id);
+
+    BusUserMeetingContentEntity getByOrderId(String orderId);
 }
 
 

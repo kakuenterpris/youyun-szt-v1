@@ -1,22 +1,19 @@
 package com.thtf.chat.service.impl;
 
-import cn.xfyun.api.LfasrClient;
-import cn.xfyun.config.LfasrTaskStatusEnum;
-import cn.xfyun.model.response.lfasr.LfasrMessage;
 import cn.xfyun.model.sign.LfasrSignature;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.thtf.chat.entity.BusUserMeetingAudioEntity;
 import com.thtf.chat.entity.BusUserMeetingContentEntity;
+import com.thtf.chat.mapper.BusUserMeetingAudioMapper;
 import com.thtf.chat.mappings.BusUserMeetingAudioMapping;
 import com.thtf.chat.mappings.BusUserMeetingContentMapping;
 import com.thtf.chat.repo.BusUserMeetingAudioRepo;
 import com.thtf.chat.repo.BusUserMeetingContentRepo;
-import com.thtf.chat.scheduled.CommonTrans;
 import com.thtf.chat.scheduled.MeetingAudioLongFromRsaScheduled;
 import com.thtf.chat.service.BusUserMeetingAudioService;
-import com.thtf.chat.mapper.BusUserMeetingAudioMapper;
 import com.thtf.chat.service.BusUserMeetingContentService;
 import com.thtf.chat.util.DateUtil;
 import com.thtf.chat.util.HttpUtils;
@@ -25,27 +22,22 @@ import com.thtf.global.common.cache.RedisUtil;
 import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.meeting.constants.AudioConstants;
-import com.thtf.meeting.dto.ContentDTO;
 import com.thtf.meeting.dto.ProgressParamDTO;
 import com.thtf.meeting.dto.UserMeetingAudioContentDTO;
 import com.thtf.meeting.dto.XFResultDTO;
 import com.thtf.meeting.enums.MeetingAudioErrorCode;
-import com.thtf.resource.enums.ResourceErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Admin_14104
@@ -75,6 +67,7 @@ public class BusUserMeetingAudioServiceImpl extends ServiceImpl<BusUserMeetingAu
     private final BusUserMeetingContentMapping contentMapping;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public RestResponse audioToChar(UserMeetingAudioContentDTO audioContentDTO) {
         String userId = StringUtils.isBlank(ContextUtil.getUserId()) ? "abc-123" : ContextUtil.getUserId();
         String fileId = audioContentDTO.getFileId();
@@ -85,6 +78,22 @@ public class BusUserMeetingAudioServiceImpl extends ServiceImpl<BusUserMeetingAu
         }
         // 新增语音文件表
         BusUserMeetingAudioEntity audioEntity = audioMapping.dto2Entity(audioContentDTO);
+        audioEntity.setUserId(userId);
+        audioEntity.setIsDeleted(0);
+        // 判断之前是否上传过该文件，若上传过，则删除旧纪录
+        BusUserMeetingAudioEntity audioRepoOne = audioRepo.getOne(new QueryWrapper<>(audioEntity));
+        if (audioRepoOne != null) {
+            audioRepo.logicDelete(audioRepoOne.getId());
+            LambdaQueryWrapper<BusUserMeetingContentEntity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(BusUserMeetingContentEntity::getFileId, fileId)
+                    .eq(BusUserMeetingContentEntity::getUserId, userId)
+                    .eq(BusUserMeetingContentEntity::getAudioId, audioRepoOne.getId())
+                    .eq(BusUserMeetingContentEntity::getIsDeleted, false);
+            BusUserMeetingContentEntity contentRepoOne = contentRepo.getOne(wrapper);
+            if (contentRepoOne != null) {
+                contentRepo.logicDelete(contentRepoOne.getId());
+            }
+        }
         Integer sort = audioRepo.getMaxSort() + 1;
         audioEntity.setSort(sort);
         audioEntity.setUserId(userId);
@@ -126,14 +135,15 @@ public class BusUserMeetingAudioServiceImpl extends ServiceImpl<BusUserMeetingAu
     }
 
     @Override
-    public RestResponse queryAudioFileList(String queryParam) {
+    public RestResponse queryAudioFileList(String queryParam, Integer start, Integer size) {
         String userId = StringUtils.isBlank(ContextUtil.getUserId()) ? "abc-123" : ContextUtil.getUserId();
-        List<UserMeetingAudioContentDTO> audioContentDTOS = audioRepo.getAudioList(userId, queryParam);
+        start = (start - 1) * size; // 计算从第几条数据开始
+        List<UserMeetingAudioContentDTO> audioContentDTOS = audioRepo.getAudioList(userId, queryParam, start, size);
         // 转换时间
         for (UserMeetingAudioContentDTO audioContentDTO : audioContentDTOS) {
             audioContentDTO.setRealDurationString(DateUtil.millisecondConversionTime(audioContentDTO.getRealDuration()));
         }
-        return RestResponse.success(audioContentDTOS);
+        return RestResponse.success(audioContentDTOS, audioContentDTOS.size());
     }
 
     @Override
@@ -251,7 +261,7 @@ public class BusUserMeetingAudioServiceImpl extends ServiceImpl<BusUserMeetingAu
         if (StringUtils.isBlank(id)) {
             return RestResponse.fail(MeetingAudioErrorCode.DELETE_FAIL.getCode(), "参数为空");
         }
-        UserMeetingAudioContentDTO audioRepoEntity = audioRepo.getEntity(Long.parseLong(id));
+        UserMeetingAudioContentDTO audioRepoEntity = audioRepo.getDeletedEntity(Long.parseLong(id));
         if (audioRepoEntity != null) {
             // 语音文件表物理删除
             audioRepo.deleteById(Long.parseLong(id));
@@ -278,7 +288,7 @@ public class BusUserMeetingAudioServiceImpl extends ServiceImpl<BusUserMeetingAu
         if (null == audioContentDTO || null == audioContentDTO.getId() || 0 == audioContentDTO.getId()) {
             return RestResponse.fail(MeetingAudioErrorCode.EDIT_FAIL.getCode(), "参数为空");
         }
-        UserMeetingAudioContentDTO audioRepoEntity = audioRepo.getEntity(audioContentDTO.getId());
+        UserMeetingAudioContentDTO audioRepoEntity = audioRepo.getDeletedEntity(audioContentDTO.getId());
         if (audioRepoEntity != null) {
             // 语音文件表还原
             audioRepo.restore(audioRepoEntity.getId());
@@ -289,18 +299,21 @@ public class BusUserMeetingAudioServiceImpl extends ServiceImpl<BusUserMeetingAu
     }
 
     @Override
-    public RestResponse queryAudioFileRecycleList(String queryParam) {
+    public RestResponse queryAudioFileRecycleList(String queryParam, Integer start, Integer size) {
         String userId = StringUtils.isBlank(ContextUtil.getUserId()) ? "abc-123" : ContextUtil.getUserId();
-        List<UserMeetingAudioContentDTO> audioRecycleList = audioRepo.getAudioRecycleList(userId, queryParam);
+        start = (start - 1) * size; // 计算从第几条数据开始
+        List<UserMeetingAudioContentDTO> audioRecycleList = audioRepo.getAudioRecycleList(userId, queryParam, start, size);
         for (UserMeetingAudioContentDTO audioContentDTO : audioRecycleList) {
             audioContentDTO.setRealDurationString(DateUtil.millisecondConversionTime(audioContentDTO.getRealDuration()));
         }
-        return RestResponse.success(audioRecycleList);
+        return RestResponse.success(audioRecycleList, audioRecycleList.size());
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public RestResponse xfWebApiCallback(String orderId, int status) {
         try {
+            log.info("讯飞语音接口回调开始");
             HashMap<String, Object> map = new HashMap<>(16);
             map.put("orderId", orderId);
             LfasrSignature lfasrSignature = new LfasrSignature(xfAppId, xfLfasrSecretKey);
@@ -309,13 +322,65 @@ public class BusUserMeetingAudioServiceImpl extends ServiceImpl<BusUserMeetingAu
             map.put("appId", xfAppId);
             map.put("resultType", "transfer,predict");
             String paramString = HttpUtils.parseMapToPathParam(map);
+            log.info("语音回调接口，获取转写结果请求参数：" + paramString);
             String url = HOST + "/v2/api/getResult" + "?" + paramString;
-            log.info("获取转写结果请求地址：" + url);
+            log.info("语音回调接口，获取转写结果请求地址：" + url);
             String response = HttpUtils.iflyrecGet(url);
+            log.info("语音回调接口，获取转写结果响应：" + response);
             XFResultDTO xfResultDTO = gson.fromJson(response, XFResultDTO.class);
 
-            // todo
-
+            // 订单流程状态
+            // 0：订单已创建
+            // 3：订单处理中
+            // 4：订单已完成
+            // -1：订单失败
+            if (xfResultDTO.getContent() != null && xfResultDTO.getContent().getOrderInfo() != null) {
+                BusUserMeetingAudioEntity audioEntity = audioRepo.getByOrderId(orderId);
+                BusUserMeetingContentEntity contentEntity = contentRepo.getByOrderId(orderId);
+                if (audioEntity != null) {
+                    // 修改Redis中进度值
+                    String redisAudioKey = AudioConstants.PROGRESS_REDIS_KEY + audioEntity.getUserId() + ":" + audioEntity.getFileId();
+                    Object obj = redisUtil.get(redisAudioKey);
+                    long expireTime;
+                    if (obj != null) {
+                        expireTime = redisUtil.getExpire(redisAudioKey);
+                    } else {
+                        expireTime = AudioConstants.EXPIRE_DATE_30_MIN;
+                    }
+                    // 订单已完成
+                    if (xfResultDTO.getContent().getOrderInfo().getStatus() == 4) {
+                        audioEntity.setOrderId(orderId);
+                        // 更新语音文件表状态
+                        audioEntity.setIsTrans(AudioConstants.TRANS_SUCCESS);
+                        audioRepo.updateById(audioEntity);
+                        redisUtil.set(redisAudioKey, 100, expireTime);
+                        log.info("语音转写成功");
+                    }
+                    // 订单失败
+                    if (xfResultDTO.getContent().getOrderInfo().getStatus() == -1) {
+                        audioEntity.setOrderId(orderId);
+                        // 更新语音文件表状态
+                        audioEntity.setIsTrans(AudioConstants.TRANS_FAIL);
+                        audioRepo.updateById(audioEntity);
+                        redisUtil.set(redisAudioKey, -1, expireTime);
+                        log.error("语音转写失败");
+                    }
+                } else {
+                    log.error("语音文件表中未查询到该orderId：" + orderId);
+                }
+                if (contentEntity != null) {
+                    // 将执行内容更新到语音内容表中
+                    contentEntity.setContent(xfResultDTO.getContent().getOrderResult());
+                    contentEntity.setOrderId(orderId);
+                    contentEntity.setRealDuration(xfResultDTO.getContent().getOrderInfo().getRealDuration());
+                    contentService.updateById(contentEntity);
+                } else {
+                    log.error("语音内容表中未查询到该orderId：" + orderId);
+                }
+            } else {
+                log.error("讯飞语音接口调用失败：" + xfResultDTO.getDescInfo());
+            }
+            log.info("讯飞语音接口回调结束");
             return RestResponse.success(xfResultDTO);
         } catch (SignatureException e) {
             throw new RuntimeException(e);

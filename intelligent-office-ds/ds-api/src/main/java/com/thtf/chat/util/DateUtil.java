@@ -3,6 +3,7 @@ package com.thtf.chat.util;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.Calendar;
 
 /**
  * Author：PingY
@@ -32,6 +33,42 @@ public class DateUtil {
         long seconds = duration.toSecondsPart();    // 秒部分（去分钟后的余数）
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
+
+    /**
+     * 获取时间范围
+     * @param timestamp
+     * @return 当天、本周、近一年、更早
+     */
+    public static String getTimeRange(Long timestamp){
+        // 添加时间范围判断
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(timestamp);
+        Calendar now = Calendar.getInstance();
+        String timeRange = "";
+        // 判断当天
+        if (cal.get(Calendar.YEAR) == now.get(Calendar.YEAR)
+                && cal.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)) {
+            timeRange = "当天";
+        }
+        // 判断本周
+        else if (cal.get(Calendar.YEAR) == now.get(Calendar.YEAR)
+                && cal.get(Calendar.WEEK_OF_YEAR) == now.get(Calendar.WEEK_OF_YEAR)) {
+            timeRange = "本周";
+        }
+        // 判断近一年
+        else if ((now.getTimeInMillis() - timestamp) < 365L * 24 * 60 * 60 * 1000) {
+            timeRange = "近一年";
+        }
+        // 更早
+        else {
+            timeRange = "更早";
+        }
+        return timeRange;
+    }
+
+
+
+
 
 //    public static void main(String[] args) {
 //        System.out.println(millisecondConversionTime(30000L));;

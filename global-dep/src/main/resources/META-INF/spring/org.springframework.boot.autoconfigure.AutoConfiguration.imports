@@ -1,1 +1,7 @@
 com.thtf.global.common.feign.FeignConfiguration
+com.thtf.global.common.mybatis.BatchInsertSqlInjector
+com.thtf.global.common.http.clients.OkHttpConfiguration
+com.thtf.global.common.cache.RedisConfig
+com.thtf.global.common.http.WebMvcConfiguration
+#com.thtf.global.common.mybatis.MybatisPlusConfig
+com.thtf.global.common.serialize.JacksonConfiguration

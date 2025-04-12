@@ -587,7 +587,7 @@ public class ChatServiceImpl implements ChatService {
             log.info("newQuestion: {}", newQuestion);
             // 意图识别
             Boolean checkField = checkField(chatRequestDto);
-            String queryData = "";
+            String queryData = "{}";
             String type ="";
             String query = "";
             if (checkField){

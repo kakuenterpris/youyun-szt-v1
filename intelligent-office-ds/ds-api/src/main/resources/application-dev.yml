@@ -92,11 +92,12 @@ ai:
   stop-conversation-api: http://119.254.155.240:18090/v1/chat-messages/%s/stop
   chat-net-search-api: http://119.254.155.240:18090/v1/workflows/run
   data-center-chat-api: http://119.254.155.240:18090/v1/chat-messages
+  new-network-search-api: https://api.bochaai.com/v1/web-search
 
 # api-key
 apikey:
   # 智能助手
-  common: app-KWgDvVooc0zskI0eY7DyrbIU
+  common: app-3P4HVPVeoNl6L1ZhUZl2evQl
   # 智能代码
   intellcode: app-MF0v0yXl3s33wPVaepsvBVMc
   # ppt大纲
@@ -124,11 +125,11 @@ apikey:
   # 推荐列表key
   recommendList: app-ONOtPOsaMB2Gzdmj8eBVhEKH
   # 意图识别
-  intent: app-LJWwn8XRw3Vhy4KOwJ1W58rh
+  intent: app-ZloxQh9n6H6ztIa4n96qKKIj
   # 新联网搜索  --doc没有
   newNetSearch: sk-5d336986887b474ca4c7f37ab3731f44
   # 意图识别-主体
-  intentMain: app-UBWkzwvvt5SJaQfA83s0LyHs
+  intentMain: app-ir26ZHxTOltaUpLX2ofEjT9A
 
 datasets:
   unit-id: e811be65-ef5c-4cec-aa83-8f0401fa6947

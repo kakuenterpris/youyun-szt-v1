@@ -19,9 +19,12 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 
 @Service
@@ -40,6 +43,17 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
 
     @Override
     public RestResponse login(HttpServletRequest request, HttpServletResponse response, LoginDTO loginDTO) {
+        // 验证码
+        if (StringUtils.isNotEmpty(loginDTO.getUuid()) && StringUtils.isNotEmpty(loginDTO.getVerifyCode())){
+            //return RestResponse.fail(1004, "请输入验证码！");
+            Object o1 = redisUtil.get(loginDTO.getUuid());
+            if (Objects.isNull(o1)){
+                return RestResponse.fail(1004, "验证码已过期！");
+            }
+            if (!StringUtils.equalsIgnoreCase(Objects.toString(o1), loginDTO.getVerifyCode())){
+                return RestResponse.fail(1004, "验证码错误！");
+            }
+        }
         BusUserInfoEntity user= this.getOne(new QueryWrapper<BusUserInfoEntity>().eq("login_id", loginDTO.getAccount()));
         if (null == user) {
             throw new CustomException(DefaultErrorCode.NAME_ERROR);

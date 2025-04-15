@@ -35,22 +35,12 @@ spring:
       max-file-size: 300MB
       max-request-size: 300MB
   #  # 服务注册与发现配置
-#  cloud:
-#    nacos:
-#      discovery:
-#        server-addr: 119.254.155.108:8848
-#        # gateway 与对应的后端服务应该在相同的namespace下
-#        namespace: 33125179-fe3d-4c48-84f9-157e298d40b4
-#        username: nacos
-#        password: nacos@ttknoa
-#        config:
-#          server-addr: 119.254.155.108:8848
-#          file-extension: yaml
-#          namespace: 33125179-fe3d-4c48-84f9-157e298d40b4
-#          username: nacos
-#          password: nacos@ttknoa
-#        #      username: nacos
-#        #      password: nacos
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 119.254.155.108:8848
+        username: nacos
+        password: nacos
   datasource:
     druid:
       # 下面为连接池的补充设置，应用到上面所有数据源中

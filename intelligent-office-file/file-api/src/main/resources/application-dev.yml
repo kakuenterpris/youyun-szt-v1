@@ -11,11 +11,6 @@ spring:
           url: jdbc:mysql://119.254.155.108:3306/intelligent_office?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
           username: root
           password: yyccYOUyun
-  cloud:
-    nacos:
-      discovery:
-        enabled: false
-        server-addr: localhost:8848
   data:
     redis:
       host: 119.254.155.108

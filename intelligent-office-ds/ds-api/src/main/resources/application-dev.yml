@@ -10,11 +10,6 @@ spring:
           url: jdbc:mysql://119.254.155.108:3306/intelligent_office?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
           username: root
           password: yyccYOUyun
-  cloud:
-    nacos:
-      discovery:
-        enabled: false
-        server-addr: localhost:8848
   data:
     redis:
       host: 119.254.155.108
@@ -132,7 +127,7 @@ apikey:
   intentMain: app-ir26ZHxTOltaUpLX2ofEjT9A
 
 datasets:
-  unit-id: e811be65-ef5c-4cec-aa83-8f0401fa6947
+  unit-id: 944bb996-bdea-44ed-95c9-3f5f8ec368bd
 #  dep-id: f6456a92-2497-4abd-bdbc-9e58f21bf7e7
   dep-id: 09c749d3-7dca-435c-bb84-3610921ef3ed
 

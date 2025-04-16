@@ -17,6 +17,7 @@ public enum DefaultErrorCode implements ErrorCode {
     INVALID_TOKEN(601, "无效token"),
     USERNAME_PASSWORD_WRONG(602, "用户名密码错误"),
     VERIFY_CODE_WRONG(603, "验证码错误"),
+    PERMISSION_DENIED(604, "权限不足"),
 
     AUTH_REQUEST_ERROR(600, "请求认证接口失败"),
     AUTH_RESPONSE_EMPTY(605, "请求认证接口响应结果为空"),

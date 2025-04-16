@@ -148,6 +148,17 @@ public class LoginController {
         return service.getUserInfo(request);
     }
 
+
+    /**
+     * 获取用户菜单
+     * @param request
+     * @return
+     */
+    @GetMapping("/getUserMenu")
+    public RestResponse getUserMenu(HttpServletRequest request) {
+        return service.getUserMenu(request);
+    }
+
     /**
      * 提供给同方泛微OA用于登录
      * @param userName

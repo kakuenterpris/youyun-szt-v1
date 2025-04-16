@@ -6,6 +6,7 @@ import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import com.alibaba.nacos.shaded.com.google.gson.Gson;
 import com.alibaba.nacos.shaded.com.google.gson.reflect.TypeToken;
+import com.thtf.chat.entity.SysMenuEntity;
 import com.thtf.chat.mappings.BusDepInfoMapping;
 import com.thtf.chat.mappings.BusSubCompanyInfoMapping;
 import com.thtf.chat.mappings.BusUserInfoMapping;
@@ -511,5 +512,18 @@ public class LoginServiceImpl implements LoginService {
             log.info("移动端跳转登录异常:{}", JsonUtil.toJson(e));
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public RestResponse getUserMenu(HttpServletRequest request) {
+        String token = getToken(request);
+        if (Objects.isNull(token)) {
+            return RestResponse.fail(DefaultErrorCode.INVALID_TOKEN);
+        }
+        String userMenu = (String) redisUtil.get("menu_" + token);
+        if (Objects.isNull(token)) {
+            return RestResponse.fail(DefaultErrorCode.INVALID_TOKEN);
+        }
+        return RestResponse.success(userMenu);
     }
 }

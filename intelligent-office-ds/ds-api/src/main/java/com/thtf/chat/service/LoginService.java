@@ -33,4 +33,6 @@ public interface LoginService {
     RestResponse verifyFromTfoaPc(HttpServletRequest request, HttpServletResponse response, String userName) throws IOException;
 
     RestResponse verifyFromTfoaMobile(HttpServletRequest request, HttpServletResponse response, FwoaLoginInfoDTO param) throws Exception;
+
+    RestResponse getUserMenu(HttpServletRequest request);
 }

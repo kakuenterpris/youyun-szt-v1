@@ -1,6 +1,8 @@
 package com.thtf.chat.controller;
 
 import cn.hutool.core.io.file.FileNameUtil;
+import com.thtf.chat.annotation.CommonPermission;
+import com.thtf.chat.annotation.RequiresPermission;
 import com.thtf.chat.properties.AiConfigProperties;
 import com.thtf.chat.service.ChatService;
 import com.thtf.dto.*;
@@ -56,6 +58,7 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/common", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @CommonPermission()
     @Operation(summary = "智能问答接口")
     public SseEmitter common(@RequestBody ChatRequestDto chatRequestDto) {
         if (null != chatRequestDto.getFiles() && chatRequestDto.getFiles().size() > 5) {
@@ -71,6 +74,7 @@ public class ChatController {
      * @return
      */
     @PostMapping("/recommendList")
+//    @RequiresPermission("chat:recommendList")
     @Operation(summary = "推荐问答接口")
     public RestResponse recommendList(@RequestBody RecommendChatDto recommendChatDto) {
         return questionAnswerService.recommendList(recommendChatDto);

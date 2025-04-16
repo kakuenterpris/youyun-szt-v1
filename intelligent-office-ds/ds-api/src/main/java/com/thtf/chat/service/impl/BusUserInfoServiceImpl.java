@@ -2,8 +2,11 @@ package com.thtf.chat.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.Gson;
 import com.thtf.chat.entity.BusUserInfoEntity;
+import com.thtf.chat.entity.SysMenuEntity;
 import com.thtf.chat.mapper.BusUserInfoMapper;
+import com.thtf.chat.repo.SysMenuRepo;
 import com.thtf.chat.service.BusUserInfoService;
 import com.thtf.chat.util.BcryptUtil;
 import com.thtf.chat.util.JwtUtil;
@@ -24,7 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
+
 
 
 @Service
@@ -39,6 +44,8 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
 
     private static final Integer SESSION_TIME_OUT = 86400000;
 
+    @Autowired
+    private SysMenuRepo sysMenuRepo;
 
 
     @Override
@@ -63,9 +70,14 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         }
         SystemUser userInfo = bs2User(user);
         TokenDTO token = getTokenDTO(request, response, userInfo);
+        //todo  获取用户权限
+        List<SysMenuEntity> userMenu = sysMenuRepo.getUserMenu(userInfo.getUserId());
+        Gson gson = new Gson();
         try {
             boolean set = redisUtil.set("token_" + token.getToken(), user.toString(), 60 * 60 * 6);
+            boolean setm = redisUtil.set("menu_" + token.getToken(), gson.toJson(userMenu), 60 * 60 * 6);
             System.out.println("set = " + set);
+            System.out.println("set = " + setm);
         }catch (Exception e){
             e.printStackTrace();
         }

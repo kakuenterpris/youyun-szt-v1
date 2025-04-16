@@ -1,5 +1,6 @@
 package com.thtf.chat.controller;
 
+import com.thtf.chat.annotation.RequiresPermission;
 import com.thtf.chat.service.HistoryChatService;
 import com.thtf.dto.HistoryChatDTO;
 import com.thtf.global.common.rest.RestResponse;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
+@RequiresPermission("chat:history")
 @Tag(name = "历史会话接口", description = "历史会话相关操作")
 public class HistoryChatController {
 

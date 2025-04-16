@@ -41,7 +41,7 @@ public class PermissionAspect {
     private SysRoleRepo sysRoleRepo;
 
 
-    @Around("@annotation(requiresPermission)") // 拦截带有 @RequiresPermission 注解的方法
+    @Around("@annotation(requiresPermission)||@within(requiresPermission)") // 拦截带有 @RequiresPermission 注解的方法
     public Object checkPermission(ProceedingJoinPoint joinPoint, RequiresPermission requiresPermission) throws Throwable {
         String token = getTokenFromContext();
         if (token == null || token.isEmpty()) {

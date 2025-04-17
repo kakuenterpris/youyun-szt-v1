@@ -72,18 +72,40 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         TokenDTO token = getTokenDTO(request, response, userInfo);
         //todo  获取用户权限
         List<SysMenuEntity> userMenu = sysMenuRepo.getUserMenu(userInfo.getUserId());
+//        流式构建子菜单
+        List<SysMenuEntity> sysMenuEntities = userMenu.stream().filter(item -> Objects.equals(0L, item.getParentId())).map(item -> {
+            item.setChildren(this.getChild(item.getMenuId(), userMenu));
+            return item;
+        }).toList();
+
         Gson gson = new Gson();
         try {
             boolean set = redisUtil.set("token_" + token.getToken(), user.toString(), 60 * 60 * 6);
-            boolean setm = redisUtil.set("menu_" + token.getToken(), gson.toJson(userMenu), 60 * 60 * 6);
+            String s = gson.toJson(sysMenuEntities);
+            boolean setm = redisUtil.set("menu_" + token.getToken(), s, 60 * 60 * 6);
             System.out.println("set = " + set);
-            System.out.println("set = " + setm);
+            System.out.println("setm = " + setm);
         }catch (Exception e){
             e.printStackTrace();
         }
-
-
         return RestResponse.success(token);
+    }
+
+    /**
+     * 获取子节点
+     */
+    private List<SysMenuEntity> getChild(Long id, List<SysMenuEntity> sysMenuEntities) {
+        // 遍历所有节点，将所有表单分类的父id与传过来的根节点的id比较
+        List<SysMenuEntity> childList = sysMenuEntities.stream().filter(e -> Objects.equals(id, e.getParentId())).toList();
+        if (childList.isEmpty()) {
+            // 没有子节点，返回一个空 List（递归退出）
+            return null;
+        }
+        // 递归
+        return childList.stream().map(e -> {
+            e.setChildren(this.getChild(e.getMenuId(), sysMenuEntities));
+            return e;
+        }).toList();
     }
 
     @NotNull

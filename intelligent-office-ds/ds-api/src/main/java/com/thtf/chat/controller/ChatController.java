@@ -58,7 +58,6 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/common", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @CommonPermission()
     @Operation(summary = "智能问答接口")
     public SseEmitter common(@RequestBody ChatRequestDto chatRequestDto) {
         if (null != chatRequestDto.getFiles() && chatRequestDto.getFiles().size() > 5) {

@@ -30,4 +30,10 @@ public class LikeOrDislikeEntity extends BaseEntity implements Serializable {
     @TableField(value = "like_status")
     private Integer likeStatus;
 
+    @TableField(value = "dict_id")
+    private String dictId;
+
+    @TableField(value = "suggestion")
+    private String suggestion;
+
 }

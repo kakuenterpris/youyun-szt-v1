@@ -45,7 +45,10 @@ public class ApikeyConfigProperties {
     private String intent;
     //  新联网搜索  --doc没有
     private String newNetSearch;
-
     //  意图识别--主体
     private String intentMain;
+    // 意图识别--工作流版本
+    private String intentWorkflowVersion;
+    // 意图识别核心
+    private String intentCore;
 }

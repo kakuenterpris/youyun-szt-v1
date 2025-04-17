@@ -51,6 +51,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -116,11 +118,14 @@ public class ChatServiceImpl implements ChatService {
         if (StringUtil.isEmpty(apiKey)) {
             throw new CustomException(DefaultErrorCode.CHAT_ERROR.getCode(), "场景类型错误");
         }
+
+        String question = chatRequestDto.getQuestion();
+
         // 查询向量库
         ModelInputChatDto modelInputChatDto = prepareModelInput(chatRequestDto,messageSourceEntities);
         // 上传文件处理
         List<ModelFileChatDto> modelFileChatDtoList = inputFileHandler(chatRequestDto.getFiles());
-
+        chatRequestDto.setQuestion(question);
         SseEmitter emitter = new SseEmitter((long) Integer.MAX_VALUE); // 设置超时时间
         CompletableFuture.runAsync(() -> {
             Response response = null;
@@ -146,12 +151,7 @@ public class ChatServiceImpl implements ChatService {
                             likeOrDislikeEntity.setMessageId(message_id);
                             likeOrDislikeEntity.setUserId(ContextUtil.getUserId());
                             likeOrDislikeEntity.setLikeStatus(0);
-                            try {
-                                likeOrDislikeRepo.save(likeOrDislikeEntity);
-                            } catch (Exception e) {
-                                log.error("Error saving like/dislike entity: {}", e.getMessage());
-                            }
-//                            likeOrDislikeRepo.save(likeOrDislikeEntity);
+                            likeOrDislikeRepo.save(likeOrDislikeEntity);
                             for (MessageSourceEntity messageSourceEntity : messageSourceEntities) {
                                 messageSourceEntity.setMessageId(message_id);
                                 messageSourceEntity.setConversationId(conversation_id);
@@ -162,10 +162,16 @@ public class ChatServiceImpl implements ChatService {
                             List<MessageSourceEntity> mergedList = messageSourceEntities.stream()
                                     .filter(e -> e.getMessageId() != null)
                                     .collect(Collectors.groupingBy(
-                                            MessageSourceEntity::getTitle,
+                                            e -> "netVector".equals(e.getSource()) ?
+                                                    UUID.randomUUID().toString() : // 为 netVector 生成唯一分组键
+                                                    e.getTitle(),
                                             Collectors.collectingAndThen(
                                                     Collectors.toList(),
                                                     group -> {
+                                                        // 当来源是 netVector 时直接返回第一个元素（不合并）
+                                                        if ("netVector".equals(group.get(0).getSource())) {
+                                                            return group.get(0);
+                                                        }
                                                         MessageSourceEntity merged = new MessageSourceEntity();
                                                         // 复制第一个实体的基础信息
                                                         MessageSourceEntity first = group.get(0);
@@ -300,19 +306,28 @@ public class ChatServiceImpl implements ChatService {
     private ModelInputChatDto prepareModelInput(ChatRequestDto chatRequestDto, List<MessageSourceEntity> messageSourceEntities) {
         ModelInputChatDto modelInputChatDto = new ModelInputChatDto();
 
-        // 新增意图识别主体
-        String resultMain =  resultIntentionRecognitionMain(chatRequestDto, messageSourceEntities);
-        log.info("意图识别主体==>: {}", resultMain);
-        if (StringUtils.isNotEmpty(resultMain)) {
-            chatRequestDto.setQuestion(resultMain);
+        // 新增意图识别工作流
+        String query = resultIntentionWorkflow(chatRequestDto, messageSourceEntities);
+        // 新增意图识别核心
+        if (StringUtils.isEmpty(query)) {
+            query = resultIntentionCore(chatRequestDto, messageSourceEntities);
+            if (StringUtils.isNotEmpty(query)) {
+                chatRequestDto.setQuestion(query);
+            }
         }
-
-        // 新增意图识别方法
-        String result = resultIntentionRecognition(chatRequestDto, messageSourceEntities);
-        log.info("意图识别方法返回值: {}", result);
-        if (StringUtils.isNotEmpty(result)) {
-            chatRequestDto.setQuestion(result);
-        }
+//        // 新增意图识别主体
+//        String resultMain =  resultIntentionRecognitionMain(chatRequestDto, messageSourceEntities);
+//        log.info("意图识别主体==>: {}", resultMain);
+//        if (StringUtils.isNotEmpty(resultMain)) {
+//            chatRequestDto.setQuestion(resultMain);
+//        }
+//
+//        // 新增意图识别方法
+//        String result = resultIntentionRecognition(chatRequestDto, messageSourceEntities);
+//        log.info("意图识别方法返回值: {}", result);
+//        if (StringUtils.isNotEmpty(result)) {
+//            chatRequestDto.setQuestion(result);
+//        }
 
         // 查询个人向量库
         if (chatRequestDto.getIsUseCustom()) {
@@ -492,22 +507,14 @@ public class ChatServiceImpl implements ChatService {
     /**
      * 查询意图识别集成
      *
-     * @param question
+     * @param
      * @return
      */
-    private String queryIntentionRecognition(String question,String apiKey, List<MessageSourceEntity> messageSourceEntities) {
+    private String queryIntentionRecognition(String url,String apiKey,Map paramMap, List<MessageSourceEntity> messageSourceEntities) {
         //  查询意图识别集成
-        String url = aiConfigProperties.getAnswerApi();
         if (null != ContextUtil.getUserId()) {
             userId = ContextUtil.getUserId();
         }
-
-        Map paramMap = new HashMap<>();
-        paramMap.put("inputs", new HashMap<>());
-        paramMap.put("query", question);
-        paramMap.put("response_mode", "blocking");
-        paramMap.put("conversation_id", "");
-        paramMap.put("user", userId);
         Gson gson = new Gson();
         String json = gson.toJson(paramMap);
         log.info("调用查询意图识别集成请求：{}", json);
@@ -591,7 +598,14 @@ public class ChatServiceImpl implements ChatService {
             String type ="";
             String query = "";
             if (checkField){
-                queryData = queryIntentionRecognition(newQuestion,apikeyConfigProperties.getIntent(), messageSourceEntities);
+                String url = aiConfigProperties.getAnswerApi();
+                Map paramMap = new HashMap<>();
+                paramMap.put("inputs", new HashMap<>());
+                paramMap.put("query", newQuestion);
+                paramMap.put("response_mode", "blocking");
+                paramMap.put("conversation_id", "");
+                paramMap.put("user", userId);
+                queryData = queryIntentionRecognition(url,apikeyConfigProperties.getIntent(), paramMap, messageSourceEntities);
             }
             Map<String, Object> queryMap = JSONUtil.toBean(queryData, Map.class);
             if (queryMap!= null && queryMap.size()>0 ) {
@@ -624,7 +638,14 @@ public class ChatServiceImpl implements ChatService {
             // 意图识别-主题
             Boolean checkField = checkField(chatRequestDto);
             if (checkField){
-                String queryData = queryIntentionRecognition(chatRequestDto.getQuestion(),apikeyConfigProperties.getIntentMain(), messageSourceEntities);
+                String url = aiConfigProperties.getAnswerApi();
+                Map paramMap = new HashMap<>();
+                paramMap.put("inputs", new HashMap<>());
+                paramMap.put("query", chatRequestDto.getQuestion());
+                paramMap.put("response_mode", "blocking");
+                paramMap.put("conversation_id", "");
+                paramMap.put("user", userId);
+                String queryData = queryIntentionRecognition(url,apikeyConfigProperties.getIntentMain(),paramMap, messageSourceEntities);
                 if (StringUtils.isNotEmpty(queryData)) {
                     String result = queryData.split("content:")[1];
                     return result;
@@ -634,6 +655,133 @@ public class ChatServiceImpl implements ChatService {
         return null;
     }
 
+
+    /**
+     * 意图识别-工作流版本
+     * @param chatRequestDto
+     * @param messageSourceEntities
+     * @return
+     */
+    private String resultIntentionWorkflow(ChatRequestDto chatRequestDto,List<MessageSourceEntity> messageSourceEntities) {
+        Boolean checkField = checkField(chatRequestDto);
+        if (checkField){
+            String url = aiConfigProperties.getChatNetSearchApi();
+            Map paramMap = new HashMap<>();
+            Map inputs = new HashMap<>();
+            inputs.put("query", chatRequestDto.getQuestion());
+            paramMap.put("inputs", inputs);
+            paramMap.put("response_mode", "blocking");
+            paramMap.put("conversation_id", "");
+            paramMap.put("user", userId);
+            Map map = queryCommonMethod(url,apikeyConfigProperties.getIntentWorkflowVersion(),paramMap, messageSourceEntities);
+            Map data = (Map) map.get("data");
+            Map outputs = (Map) data.get("outputs");
+
+            if (outputs!= null && outputs.size()>0 ) {
+                log.info("queried: {}", outputs.toString());
+                String type = "";
+                String query = "";
+                String jsonString = outputs.get("text").toString();
+                if (jsonString.contains("context:")) {
+                    query = jsonString.split("context:")[1];
+                    return query;
+                }else if(jsonString.contains("type")){
+                    Map<String, Object> textMap = JSONUtil.toBean(jsonString, Map.class);
+                    if (textMap != null) {
+                        type = textMap.get("type").toString();
+                        query = textMap.get("query").toString();
+                        log.info("解析后的type: {}, query: {}", type, query);
+                    }
+                    // 根据返回的type进行判断
+                    if("查询".equals(type)){
+                        if (StringUtils.isNotEmpty(query) && query.length() < 20){
+                            return query;
+                        }else {
+                            return chatRequestDto.getQuestion();
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * 意图识别-核心
+     * @param chatRequestDto
+     * @param messageSourceEntities
+     * @return
+     */
+    private String resultIntentionCore(ChatRequestDto chatRequestDto,List<MessageSourceEntity> messageSourceEntities) {
+        Boolean checkField = checkField(chatRequestDto);
+        if (checkField){
+            String url = aiConfigProperties.getAnswerApi();
+            Map paramMap = new HashMap<>();
+            paramMap.put("inputs", new HashMap<>());
+            paramMap.put("query", chatRequestDto.getQuestion());
+            paramMap.put("response_mode", "blocking");
+            paramMap.put("conversation_id", "");
+            paramMap.put("user", userId);
+            Map map = queryCommonMethod(url,apikeyConfigProperties.getIntentCore(),paramMap, messageSourceEntities);
+            String data = (String) map.get("answer");
+            if (StringUtils.isNotEmpty(data) && data.contains("context:")) {
+                return data.split("context:")[1];
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * 通用方法
+     * @param url
+     * @param apiKey
+     * @param paramMap
+     * @param messageSourceEntities
+     * @return
+     */
+    private Map queryCommonMethod(String url,String apiKey,Map paramMap, List<MessageSourceEntity> messageSourceEntities) {
+        //  查询意图识别集成
+        if (null != ContextUtil.getUserId()) {
+            userId = ContextUtil.getUserId();
+        }
+        Gson gson = new Gson();
+        String json = gson.toJson(paramMap);
+        log.info("调用查询意图识别集成请求：{}", json);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Authorization", "Bearer "+apiKey)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(300, TimeUnit.SECONDS)
+                .readTimeout(300, TimeUnit.SECONDS)
+                .writeTimeout(300, TimeUnit.SECONDS)
+                .build();
+
+        Response response = null;
+        try {
+            response = client.newCall(request).execute();
+            byte[] responseBytes = response.body().bytes();
+            String jsonString = new String(responseBytes);
+            log.info("调用查询意图识别集成响应：{}", jsonString);
+            if (StringUtils.isEmpty(jsonString)) {
+                return null;
+            }
+            Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
+            return map;
+        } catch (Exception e) {
+            log.error("请求查询意图识别集成失败，失败原因：" + e.getMessage());
+            e.getMessage();
+            return null;
+        } finally {
+            response.close();
+        }
+    }
 
     /**
      * 检查是否有字段为true
@@ -1008,6 +1156,11 @@ public class ChatServiceImpl implements ChatService {
             byte[] responseBytes = response.body().bytes();
             String jsonString = new String(responseBytes);
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
+//            判断回答是否符合规范
+            String answer = map.get("answer").toString();
+            if (!isCorrectFormat(answer)){
+                map=null;
+            }
             return RestResponse.success(map);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -1062,6 +1215,10 @@ public class ChatServiceImpl implements ChatService {
             watch.stop();
             log.info("请求推荐接口响应：{}, 耗时：{} ms", jsonString, watch.getTime(TimeUnit.MILLISECONDS));
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
+            //判断回答是否符合规范
+            if (!isCorrectFormat(map.get("answer").toString())) {
+                map=null;
+            }
             return RestResponse.success(map);
         } catch (IOException e) {
             log.error("请求推荐接口失败，失败原因", e.getMessage());
@@ -1071,6 +1228,23 @@ public class ChatServiceImpl implements ChatService {
                 response.close();
             }
         }
+    }
+
+    // 检查字符串是否符合正确的格式
+    private Boolean isCorrectFormat(String answer) {
+        String[] lines = answer.trim().split("\n");
+        if (lines.length > 3||answer.length()>108) {
+            return false;
+        }
+        String patternString = "^\\d+\\. .+$";
+        Pattern pattern = Pattern.compile(patternString);
+        for (String line : lines) {
+            Matcher matcher = pattern.matcher(line);
+            if (!matcher.matches()||line.length()>36) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private Response chatQuery(ChatRequestDto chatRequestDto, String apiKey, ModelInputChatDto modelInputChatDto, List<ModelFileChatDto> files) {

@@ -30,9 +30,13 @@ public class LikeOrDislikeRepoImpl extends ServiceImpl<LikeOrDislikeMapper, Like
                 .eq(LikeOrDislikeEntity::getMessageId, likeOrDislikeEntity.getMessageId()).one();
         if (entity == null) {
             likeOrDislikeEntity.setUserId(userId);
+            entity.setDictId(likeOrDislikeEntity.getDictId());
+            entity.setSuggestion(likeOrDislikeEntity.getSuggestion());
             return RestResponse.success(save(likeOrDislikeEntity));
         }
         entity.setLikeStatus(likeOrDislikeEntity.getLikeStatus());
+        entity.setDictId(likeOrDislikeEntity.getDictId());
+        entity.setSuggestion(likeOrDislikeEntity.getSuggestion());
         return RestResponse.success(updateById(entity));
     }
 

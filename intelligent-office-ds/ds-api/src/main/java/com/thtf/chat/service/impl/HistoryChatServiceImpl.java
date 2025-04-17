@@ -97,8 +97,8 @@ public class HistoryChatServiceImpl implements HistoryChatService {
                         // 新增key为场景字段
                         for (Map map1 : dataList) {
                             map1.put("sceneType", apiType);
-                            Long timestamp = ((Double) map1.get("created_at")).longValue() * 1000;
-                            map1.put("timeRange",DateUtil.getTimeRange(timestamp));
+                            Long timestamp = ((Double) map1.get("updated_at")).longValue() * 1000;
+                            map1.put("timeRange",DateUtil.getTimeRangeNew(timestamp));
                         }
                         list.addAll(dataList);
                     }

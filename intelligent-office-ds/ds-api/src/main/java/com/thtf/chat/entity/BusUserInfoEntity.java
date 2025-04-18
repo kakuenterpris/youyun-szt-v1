@@ -125,7 +125,7 @@ public class BusUserInfoEntity {
      * 删除标志 (0-未删除, 1-已删除)
      */
     @TableField(value = "is_deleted")
-    private Boolean isDeleted;
+    private Boolean deleted;
 
     @Override
     public String toString() {

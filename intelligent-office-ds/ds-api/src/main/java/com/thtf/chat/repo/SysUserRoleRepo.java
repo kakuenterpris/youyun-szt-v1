@@ -1,7 +1,9 @@
 package com.thtf.chat.repo;
 
+import com.thtf.chat.dto.AssignRolesDTO;
 import com.thtf.chat.entity.SysUserRoleEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.thtf.global.common.rest.RestResponse;
 
 /**
 * @author 86187
@@ -9,5 +11,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2025-04-15 18:33:50
 */
 public interface SysUserRoleRepo extends IService<SysUserRoleEntity> {
+    boolean assignRoles(AssignRolesDTO dto);
 
+    RestResponse getUserPermissions(Integer userId);
 }

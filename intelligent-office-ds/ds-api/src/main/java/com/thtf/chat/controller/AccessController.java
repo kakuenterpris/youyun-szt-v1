@@ -6,12 +6,14 @@ import com.github.pagehelper.page.PageParams;
 import com.thtf.access.dto.UserInfoDto;
 import com.thtf.access.vo.UserInfoVO;
 import com.thtf.chat.dto.AssignRolesDTO;
+import com.thtf.chat.dto.UpdateRoleDto;
 import com.thtf.chat.dto.UpdateUserInfoDto;
 import com.thtf.chat.entity.BusUserInfoEntity;
 import com.thtf.chat.entity.SysRoleEntity;
 import com.thtf.chat.entity.SysUserRoleEntity;
 import com.thtf.chat.repo.BusUserInfoRepo;
 import com.thtf.chat.repo.SysMenuRepo;
+import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.chat.repo.SysUserRoleRepo;
 import com.thtf.chat.service.BusUserInfoService;
@@ -46,6 +48,9 @@ public class AccessController {
 
     @Autowired
     private SysUserRoleRepo sysUserRoleRepo;
+
+    @Autowired
+    private SysRoleMenuRepo sysRoleMenuRepo;
 
 
 //    用户管理
@@ -88,43 +93,58 @@ public class AccessController {
       return sysUserRoleRepo.getUserPermissions(userId);
     }
 
-//    角色管理
+    // todo 角色管理
     //todo 创建角色
     public RestResponse createRole(SysRoleEntity role) {
-        return RestResponse.success("创建角色成功");
-        // 实现创建角色的逻辑
+        try {
+            sysRoleRepo.save(role);
+            return RestResponse.success("创建角色成功");
+        }catch (Exception e) {
+            log.error("创建角色失败", e);
+            return RestResponse.error("创建角色失败");
+        }
     }
     //todo 删除角色（逻辑删除）
-    public RestResponse deleteRole(Integer roleId) {
-        return RestResponse.success("删除角色成功");
-        // 实现删除角色的逻辑
+    public RestResponse deleteRole(List<Integer> roleId) {
+        try {
+            sysRoleRepo.removeBatchByIds(roleId);
+            return RestResponse.success("删除角色成功");
+        }catch (Exception e) {
+            log.error("删除角色失败", e);
+            return RestResponse.error("删除角色失败");
+        }
     }
+
     //todo 获取角色列表
-    public RestResponse getRoleList() {
-        return RestResponse.success("获取角色列表成功");
-        // 实现获取角色列表的逻辑
+    public RestResponse getRoleList(Page<SysRoleEntity> page, SysRoleDto vo) {
+        return sysRoleRepo.pageList(page,vo);
     }
+
     //todo 获取角色信息
     public RestResponse getRoleInfo(Integer roleId) {
-        return RestResponse.success("获取角色信息成功");
-        // 实现获取角色信息的逻辑
+        try {
+            return RestResponse.success(sysRoleRepo.getById(roleId));
+        }catch (Exception e) {
+            log.error("获取角色信息失败", e);
+            return RestResponse.error("获取角色信息失败");
+        }
     }
     //todo 更新角色信息
-    public RestResponse updateRole(SysRoleEntity role) {
-        return RestResponse.success("更新角色信息成功");
-        // 实现更新角色信息的逻辑
+    public RestResponse updateRole(UpdateRoleDto role) {
+        try {
+            sysRoleRepo.updateByRoleId(role);
+            return RestResponse.success("更新角色信息成功");
+        }catch (Exception e) {
+            log.error("更新角色信息失败", e);
+            return RestResponse.error("更新角色信息失败");
+        }
     }
-    //todo 获取角色菜单
+    //todo 获取角色菜单id
     public RestResponse getRoleMenus(Integer roleId) {
-        return RestResponse.success("获取角色菜单成功");
-        // 实现获取角色菜单的逻辑
+        return sysRoleMenuRepo.getByRoleId(roleId);
     }
-    //todo 更新角色权限
-    public RestResponse updateRolePermissions(Integer roleId, List<SysRoleDto> permissionIds) {
-        return RestResponse.success("更新角色权限成功");
-        // 实现更新角色权限的逻辑
-    }
-//    菜单管理
+
+//   todo 菜单管理
     //todo 创建菜单
     public RestResponse createMenu(SysRoleEntity menu) {
         return RestResponse.success("创建菜单成功");

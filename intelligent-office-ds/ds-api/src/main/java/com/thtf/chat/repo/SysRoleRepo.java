@@ -1,7 +1,11 @@
 package com.thtf.chat.repo;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.thtf.access.dto.SysRoleDto;
+import com.thtf.chat.dto.UpdateRoleDto;
 import com.thtf.chat.entity.SysRoleEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.thtf.global.common.rest.RestResponse;
 
 import java.util.List;
 
@@ -14,4 +18,7 @@ public interface SysRoleRepo extends IService<SysRoleEntity> {
 //    根据用户id查看角色
     List<SysRoleEntity> getRoleByUserId(Integer userId);
 
+    RestResponse pageList(Page<SysRoleEntity> page, SysRoleDto vo);
+
+    RestResponse updateByRoleId(UpdateRoleDto role);
 }

@@ -1,10 +1,18 @@
 package com.thtf.chat.repo.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.thtf.chat.dto.AssignMenusDTO;
 import com.thtf.chat.entity.SysRoleMenuEntity;
+import com.thtf.chat.entity.SysUserRoleEntity;
 import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.mapper.SysRoleMenuMapper;
+import com.thtf.global.common.rest.RestResponse;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author 86187
@@ -15,8 +23,40 @@ import org.springframework.stereotype.Service;
 public class SysRoleMenuRepoImpl extends ServiceImpl<SysRoleMenuMapper, SysRoleMenuEntity>
     implements SysRoleMenuRepo {
 
-}
+    @Override
+    public boolean assignMenus(AssignMenusDTO dto) {
+        // 删除历史
+        List<Long> roleIds = dto.getRoleIds();
+        this.removeBatchByIds(roleIds);
+        if (CollectionUtils.isEmpty(dto.getRoleIds())) {
+            // 无需分配角色
+            return true;
+        }
 
+        // 批量新增
+        List<SysRoleMenuEntity> sysRoleMenuList = new ArrayList<>();
+        roleIds.forEach(roleId -> sysRoleMenuList.addAll(dto.getMenuIds().stream()
+                .map(menuId -> {
+                    SysRoleMenuEntity sysRoleMenu = new SysRoleMenuEntity();
+                    sysRoleMenu.setRoleId(roleId);
+                    sysRoleMenu.setMenuId(menuId);
+                    return sysRoleMenu;
+                }).toList()));
+        return super.saveBatch(sysRoleMenuList);
+    }
+
+    @Override
+    public RestResponse getByRoleId(Integer roleId) {
+        try {
+            LambdaQueryWrapper<SysRoleMenuEntity> sysRoleMenuQuery = new LambdaQueryWrapper<>();
+            sysRoleMenuQuery.select(SysRoleMenuEntity::getMenuId);
+            sysRoleMenuQuery.eq(SysRoleMenuEntity::getRoleId, roleId);
+            return RestResponse.success(this.list(sysRoleMenuQuery));
+        } catch (Exception e) {
+            return RestResponse.error("获取角色权限失败");
+        }
+    }
+}
 
 
 

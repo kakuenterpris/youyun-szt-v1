@@ -27,7 +27,7 @@ public class BusUserInfoRepoImpl extends ServiceImpl<BusUserInfoMapper, BusUserI
     public BusUserInfoDTO getByLoginId(String loginId) {
         List<BusUserInfoEntity> list = lambdaQuery()
                 .eq(BusUserInfoEntity::getLoginId, loginId)
-                .eq(BusUserInfoEntity::getIsDeleted, false)
+                .eq(BusUserInfoEntity::getDeleted, false)
                 .list();
         return mapping.entity2Dto(Linq.first(list));
     }
@@ -35,7 +35,7 @@ public class BusUserInfoRepoImpl extends ServiceImpl<BusUserInfoMapper, BusUserI
     public BusUserInfoDTO getByEncryptLoginId(String encryptLoginId) {
         List<BusUserInfoEntity> list = lambdaQuery()
                 .eq(BusUserInfoEntity::getEncryptLoginId, encryptLoginId)
-                .eq(BusUserInfoEntity::getIsDeleted, false)
+                .eq(BusUserInfoEntity::getDeleted, false)
                 .list();
         return mapping.entity2Dto(Linq.first(list));
     }
@@ -43,15 +43,15 @@ public class BusUserInfoRepoImpl extends ServiceImpl<BusUserInfoMapper, BusUserI
     @Override
     public boolean deleteAll() {
         return lambdaUpdate()
-                .set(BusUserInfoEntity::getIsDeleted, true)
-                .eq(BusUserInfoEntity::getIsDeleted, false)
+                .set(BusUserInfoEntity::getDeleted, true)
+                .eq(BusUserInfoEntity::getDeleted, false)
                 .update(new BusUserInfoEntity());
     }
 
     @Override
     public List<BusUserInfoDTO> listAll() {
         List<BusUserInfoEntity> list = lambdaQuery()
-                .eq(BusUserInfoEntity::getIsDeleted, false)
+                .eq(BusUserInfoEntity::getDeleted, false)
                 .list();
         return Linq.select(list, mapping::entity2Dto);
     }
@@ -61,7 +61,7 @@ public class BusUserInfoRepoImpl extends ServiceImpl<BusUserInfoMapper, BusUserI
         return lambdaUpdate()
                 .set(BusUserInfoEntity::getEncryptLoginId, encryptLoginId)
                 .eq(BusUserInfoEntity::getLoginId, loginId)
-                .eq(BusUserInfoEntity::getIsDeleted, false)
+                .eq(BusUserInfoEntity::getDeleted, false)
                 .update(new BusUserInfoEntity());
     }
 }

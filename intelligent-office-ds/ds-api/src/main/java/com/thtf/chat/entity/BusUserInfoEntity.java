@@ -140,6 +140,7 @@ public class BusUserInfoEntity {
                 + "\"depCode\":\"" + (depCode != null ? depCode.replace("\"", "\\\"") : "") + "\","
                 + "\"depNum\":\"" + (depNum != null ? depNum.replace("\"", "\\\"") : "") + "\","
                 + "\"depName\":\"" + (depName != null ? depName.replace("\"", "\\\"") : "") + "\","
+                + "\"post\":\"" + (post != null ? post.replace("\"", "\\\"") : "") + "\","
                 + "\"specialAuth\":\"" + (specialAuth != null ? specialAuth.replace("\"", "\\\"") : "") + "\""
                 + "}";
     }

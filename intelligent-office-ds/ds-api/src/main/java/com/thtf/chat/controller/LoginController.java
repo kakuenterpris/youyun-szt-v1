@@ -10,6 +10,8 @@ import com.thtf.global.common.utils.RSAUtil;
 import com.thtf.login.dto.CaptchaDTO;
 import com.thtf.login.dto.FwoaLoginInfoDTO;
 import com.thtf.login.dto.LoginDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -38,6 +40,7 @@ import java.util.Base64;
 @RestController
 @RequestMapping("/api/v1/chat/login")
 @Slf4j
+@Tag(name = "登录", description = "登录相关接口")
 @RequiredArgsConstructor
 public class LoginController {
 
@@ -154,6 +157,7 @@ public class LoginController {
      * @param request
      * @return
      */
+    @Operation(summary = "获取用户菜单", description = "获取用户菜单")
     @GetMapping("/getUserMenu")
     public RestResponse getUserMenu(HttpServletRequest request) {
         return service.getUserMenu(request);

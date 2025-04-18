@@ -1,11 +1,16 @@
 package com.thtf.chat.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
+import com.thtf.access.dto.UserInfoDto;
+import com.thtf.access.vo.UserInfoVO;
 import com.thtf.chat.entity.BusUserInfoEntity;
 import com.thtf.chat.entity.SysMenuEntity;
+import com.thtf.chat.entity.SysUserRoleEntity;
 import com.thtf.chat.mapper.BusUserInfoMapper;
+import com.thtf.chat.mapper.SysUserRoleMapper;
 import com.thtf.chat.repo.SysMenuRepo;
 import com.thtf.chat.service.BusUserInfoService;
 import com.thtf.chat.util.BcryptUtil;
@@ -26,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -46,6 +52,9 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
 
     @Autowired
     private SysMenuRepo sysMenuRepo;
+
+    @Autowired
+    private SysUserRoleMapper sysUserRoleMapper;
 
 
     @Override
@@ -89,6 +98,42 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
             e.printStackTrace();
         }
         return RestResponse.success(token);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public RestResponse addUser(UserInfoDto user) {
+        try {
+            BusUserInfoEntity busUserInfoEntity = dtoToEntity(user);
+            String roleIds = user.getRoleIds();
+            SysUserRoleEntity sysUserRoleEntity = new SysUserRoleEntity();
+            sysUserRoleEntity.setUserId(Long.valueOf(busUserInfoEntity.getUserId()));
+            sysUserRoleEntity.setRoleId(Long.valueOf(roleIds));
+            baseMapper.insert(busUserInfoEntity);
+            sysUserRoleMapper.insert(sysUserRoleEntity);
+        }catch (Exception e){
+            return RestResponse.fail(1004, "添加失败！" + e.getMessage());
+        }
+        return RestResponse.success("添加成功");
+    }
+
+    @Override
+    public Page<UserInfoVO> pageList(Page<UserInfoDto> pages, UserInfoVO vo) {
+        Page<UserInfoVO> sysUserPage = baseMapper.selectPageByVO(pages,vo);
+        return sysUserPage;
+    }
+
+    private BusUserInfoEntity dtoToEntity(UserInfoDto user) {
+        BusUserInfoEntity entity = new BusUserInfoEntity();
+        entity.setLoginId(user.getLoginId());
+        entity.setPassword(BcryptUtil.encode(user.getPassword()));
+        entity.setUserName(user.getUserName());
+        entity.setPhone(user.getPhone());
+        entity.setDepName(user.getDepName());
+        entity.setDepNum(user.getDepNum());
+        entity.setSpecialAuth("UNIT_FILE_MANAGE");
+        entity.setEmail(user.getEmail());
+        return entity;
     }
 
     /**

@@ -2,6 +2,7 @@ package com.thtf.chat.mapper;
 
 import com.thtf.chat.entity.SysUserRoleEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author 86187
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2025-04-15 18:33:50
 * @Entity generator.domain.SysUserRole
 */
+@Mapper
 public interface SysUserRoleMapper extends BaseMapper<SysUserRoleEntity> {
 
 }

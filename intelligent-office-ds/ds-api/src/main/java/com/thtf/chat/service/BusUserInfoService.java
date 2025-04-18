@@ -1,6 +1,9 @@
 package com.thtf.chat.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.thtf.access.dto.UserInfoDto;
+import com.thtf.access.vo.UserInfoVO;
 import com.thtf.chat.entity.BusUserInfoEntity;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.login.dto.LoginDTO;
@@ -15,4 +18,8 @@ public interface BusUserInfoService extends IService<BusUserInfoEntity> {
      * @param loginDTO 登录信息
      */
     RestResponse login(HttpServletRequest request, HttpServletResponse response, LoginDTO loginDTO);
+
+    RestResponse addUser(UserInfoDto user);
+
+    Page<UserInfoVO> pageList(Page<UserInfoDto> pages, UserInfoVO dto);
 }

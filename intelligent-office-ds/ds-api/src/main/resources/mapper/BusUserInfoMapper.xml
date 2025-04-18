@@ -8,7 +8,7 @@
             <id property="id" column="id" />
             <result property="userId" column="user_id" />
             <result property="userNum" column="user_num" />
-            <result property="logInId" column="log_in_id" />
+            <result property="loginId" column="log_in_id" />
             <result property="userName" column="user_name" />
             <result property="depNum" column="dep_num" />
             <result property="depName" column="dep_name" />
@@ -19,7 +19,7 @@
             <result property="email" column="email" />
             <result property="createTime" column="create_time" />
             <result property="lastLogInTime" column="last_log_in_time" />
-            <result property="isDeleted" column="is_deleted" />
+            <result property="deleted" column="is_deleted" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -27,4 +27,25 @@
         dep_name,post_num,post,mobile_phone,phone,
         email,create_time,last_log_in_time,is_deleted
     </sql>
+    <select id="selectPageByVO" resultType="com.thtf.access.vo.UserInfoVO">
+        SELECT u.* FROM bus_user_info u
+        <if test="vo != null">
+            <if test="vo.roleId != null">
+               LEFT JOIN sys_user_role r ON u.user_id = r.user_id AND r.role_id=#{vo.roleId}
+            </if>
+        </if>
+        WHERE u.is_deleted = 0
+        <if test="vo != null">
+            <if test="vo.userName != null">
+                AND u.user_name LIKE CONCAT(CONCAT('%',#{vo.userName}),'%')
+            </if>
+            <if test="vo.loginId != null">
+                AND  u.login_id LIKE CONCAT(CONCAT('%',#{vo.loginId}),'%')
+            </if>
+            <if test="vo.userDepName != null">
+                AND u.dep_name LIKE CONCAT(CONCAT('%',#{vo.userDepName}),'%')
+            </if>
+        </if>
+        ORDER BY u.update_time DESC
+    </select>
 </mapper>

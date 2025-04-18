@@ -1,5 +1,8 @@
 package com.thtf.chat.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.thtf.access.dto.UserInfoDto;
+import com.thtf.access.vo.UserInfoVO;
 import com.thtf.chat.entity.BusUserInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -11,6 +14,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface BusUserInfoMapper extends BaseMapper<BusUserInfoEntity> {
 
+    Page<UserInfoVO> selectPageByVO(Page<UserInfoDto> pages, UserInfoVO vo);
 }
 
 

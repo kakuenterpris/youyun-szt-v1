@@ -1,5 +1,6 @@
 package com.thtf.chat.repo;
 
+import com.thtf.chat.VO.MenuVO;
 import com.thtf.chat.entity.SysMenuEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -15,4 +16,6 @@ public interface SysMenuRepo extends IService<SysMenuEntity> {
     List<SysMenuEntity> getMenuByRoleId(Long RoleId);
 
     List<SysMenuEntity> getUserMenu(String userId);
+
+    List<MenuVO> listTree();
 }

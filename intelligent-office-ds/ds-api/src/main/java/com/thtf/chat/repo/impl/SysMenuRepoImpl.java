@@ -1,13 +1,16 @@
 package com.thtf.chat.repo.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.thtf.chat.VO.MenuVO;
 import com.thtf.chat.entity.SysMenuEntity;
 import com.thtf.chat.repo.SysMenuRepo;
 import com.thtf.chat.mapper.SysMenuMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
 * @author 86187
@@ -29,6 +32,60 @@ public class SysMenuRepoImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity>
     public List<SysMenuEntity> getUserMenu(String userId) {
         return sysMenuMapper.getUserMenu(userId);
     }
+
+    @Override
+    public List<MenuVO> listTree() {
+        List<SysMenuEntity> menuList = listAll(false);
+        if (CollectionUtils.isEmpty(menuList)) {
+            return null;
+        }
+        return menuList.stream().filter(e -> Objects.equals(0L, e.getParentId())).map(e -> {
+            MenuVO vo = new MenuVO();
+            vo.setMenuId(e.getMenuId());
+            vo.setMenuName(e.getMenuName());
+            vo.setChildren(getChild(vo.getMenuId(), vo.getMenuName(), menuList));
+            return vo;
+        }).toList();
+    }
+
+
+    /**
+     * 获取子节点
+     */
+    protected List<MenuVO> getChild(Long id, String parentName, List<SysMenuEntity> sysResourceList) {
+        // 遍历所有节点，将所有菜单的父id与传过来的根节点的id比较
+        List<SysMenuEntity> childList = sysResourceList.stream().filter(e -> Objects.equals(id, e.getParentId())).toList();
+        if (childList.isEmpty()) {
+            // 没有子节点，返回一个空 List（递归退出）
+            return null;
+        }
+        // 递归
+        return childList.stream().map(e -> {
+            MenuVO vo = new MenuVO();
+            vo.setMenuId(e.getMenuId());
+            vo.setMenuName(e.getMenuName());
+            vo.setParentName(parentName);
+            vo.setChildren(getChild(vo.getMenuId(), vo.getMenuName(), sysResourceList));
+            return vo;
+        }).toList();
+    }
+
+
+    /**
+     * 获取所有菜单
+     *
+     * @param menu 是否菜单
+     * @return 菜单列表
+     */
+    private List<SysMenuEntity> listAll(Boolean menu){
+        List<SysMenuEntity> list = lambdaQuery().eq(SysMenuEntity::getStatus, 1)
+                .ne(menu, SysMenuEntity::getMenuType, 3)
+                .orderByAsc(SysMenuEntity::getOrderNum).list();
+        return list;
+    }
+
+
+
 }
 
 

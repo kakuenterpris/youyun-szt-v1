@@ -3,7 +3,9 @@ package com.thtf.chat.repo;
 import com.thtf.chat.VO.MenuVO;
 import com.thtf.chat.entity.SysMenuEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.thtf.chat.entity.SysOperLogEntity;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -17,5 +19,14 @@ public interface SysMenuRepo extends IService<SysMenuEntity> {
 
     List<SysMenuEntity> getUserMenu(String userId);
 
-    List<MenuVO> listTree();
+    List<SysMenuEntity> getUserMenu(String userId, String authType);
+
+    List<MenuVO> listTree(String authType);
+
+    // 新增审计日志方法
+    void recordAuditLog(SysOperLogEntity logEntity);
+
+    // 获取审计日志
+    List<SysOperLogEntity> getAuditLogs(Date startTime, Date endTime);
+
 }

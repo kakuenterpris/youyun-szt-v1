@@ -36,6 +36,12 @@ public class SysMenuEntity implements Serializable {
     private Long parentId;
 
     /**
+     * 权限类型（system:系统管理员, security:安全管理员, audit:审计员, user:普通用户）
+     */
+    @TableField(value = "auth_type")
+    private String authType;
+
+    /**
      * 显示顺序
      */
     @TableField(value = "order_num")

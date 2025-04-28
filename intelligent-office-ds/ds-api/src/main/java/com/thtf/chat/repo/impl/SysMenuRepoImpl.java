@@ -3,12 +3,14 @@ package com.thtf.chat.repo.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.thtf.chat.VO.MenuVO;
 import com.thtf.chat.entity.SysMenuEntity;
+import com.thtf.chat.entity.SysOperLogEntity;
 import com.thtf.chat.repo.SysMenuRepo;
 import com.thtf.chat.mapper.SysMenuMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,8 +36,18 @@ public class SysMenuRepoImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity>
     }
 
     @Override
-    public List<MenuVO> listTree() {
-        List<SysMenuEntity> menuList = listAll(false);
+    public List<SysMenuEntity> getUserMenu(String userId, String authType) {
+        return sysMenuMapper.getUserMenu(userId, authType);
+    }
+
+
+    @Override
+    public List<MenuVO> listTree(String authType) {
+        List<SysMenuEntity> menuList = lambdaQuery()
+                .eq(SysMenuEntity::getStatus, 1)
+                .eq(SysMenuEntity::getAuthType, authType)
+                .orderByAsc(SysMenuEntity::getOrderNum)
+                .list();
         if (CollectionUtils.isEmpty(menuList)) {
             return null;
         }
@@ -46,6 +58,26 @@ public class SysMenuRepoImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity>
             vo.setChildren(getChild(vo.getMenuId(), vo.getMenuName(), menuList));
             return vo;
         }).toList();
+    }
+
+    /**
+     * 新增审计日志方法
+     * @param logEntity
+     */
+    @Override
+    public void recordAuditLog(SysOperLogEntity logEntity) {
+
+    }
+
+    /**
+     * 获取审计日志
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    @Override
+    public List<SysOperLogEntity> getAuditLogs(Date startTime, Date endTime) {
+        return List.of();
     }
 
 

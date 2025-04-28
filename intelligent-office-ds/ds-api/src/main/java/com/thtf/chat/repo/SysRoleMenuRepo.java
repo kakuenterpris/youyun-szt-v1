@@ -1,9 +1,12 @@
 package com.thtf.chat.repo;
 
 import com.thtf.chat.dto.AssignMenusDTO;
+import com.thtf.chat.dto.MenuTreeNode;
 import com.thtf.chat.entity.SysRoleMenuEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.thtf.global.common.rest.RestResponse;
+
+import java.util.List;
 
 /**
 * @author 86187
@@ -15,4 +18,7 @@ public interface SysRoleMenuRepo extends IService<SysRoleMenuEntity> {
     boolean assignMenus(AssignMenusDTO amd);
 
     RestResponse getByRoleId(Integer roleId);
+
+    List<MenuTreeNode> getMenuTree();
+
 }

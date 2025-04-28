@@ -6,6 +6,7 @@ import com.github.pagehelper.page.PageParams;
 import com.thtf.access.dto.UserInfoDto;
 import com.thtf.access.vo.UserInfoVO;
 import com.thtf.chat.dto.AssignRolesDTO;
+import com.thtf.chat.dto.MenuTreeNode;
 import com.thtf.chat.dto.UpdateRoleDto;
 import com.thtf.chat.dto.UpdateUserInfoDto;
 import com.thtf.chat.entity.BusUserInfoEntity;
@@ -170,5 +171,17 @@ public class AccessController {
         return RestResponse.success("更新菜单信息成功");
         // 实现更新菜单信息的逻辑
     }
+
+
+    /***
+     * 获取所有菜单树
+     * @return
+     */
+    public List<MenuTreeNode> getMenuTree(){
+        List<MenuTreeNode> menuTree = sysRoleMenuRepo.getMenuTree();
+        return menuTree;
+    }
+
+
 
 }

@@ -25,8 +25,8 @@ import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-@Aspect
-@Component
+//@Aspect
+//@Component
 public class OperLogAspect {
 
     @Autowired

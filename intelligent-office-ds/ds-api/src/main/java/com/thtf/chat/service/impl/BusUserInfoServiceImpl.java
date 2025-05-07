@@ -11,6 +11,8 @@ import com.thtf.chat.dto.UpdateUserInfoDto;
 import com.thtf.chat.entity.BusUserInfoEntity;
 import com.thtf.chat.entity.SysMenuEntity;
 import com.thtf.chat.entity.SysUserRoleEntity;
+import com.thtf.chat.manager.AsyncManager;
+import com.thtf.chat.manager.factory.AsyncFactory;
 import com.thtf.chat.mapper.BusUserInfoMapper;
 import com.thtf.chat.mapper.SysUserRoleMapper;
 import com.thtf.chat.repo.SysMenuRepo;
@@ -18,7 +20,9 @@ import com.thtf.chat.repo.SysUserRoleRepo;
 import com.thtf.chat.service.BusUserInfoService;
 import com.thtf.chat.util.BcryptUtil;
 import com.thtf.chat.util.JwtUtil;
+import com.thtf.chat.utils.MessageUtils;
 import com.thtf.chat.utils.RedisUtil;
+import com.thtf.constans.Constants;
 import com.thtf.global.common.dto.BusUserInfoDTO;
 import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.dto.TokenDTO;
@@ -71,17 +75,21 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
             //return RestResponse.fail(1004, "请输入验证码！");
             Object o1 = redisUtil.get(loginDTO.getUuid());
             if (Objects.isNull(o1)){
+                AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire")));
                 return RestResponse.fail(1004, "验证码已过期！");
             }
             if (!StringUtils.equalsIgnoreCase(Objects.toString(o1), loginDTO.getVerifyCode())){
+                AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error")));
                 return RestResponse.fail(1004, "验证码错误！");
             }
         }
         BusUserInfoEntity user= this.getOne(new QueryWrapper<BusUserInfoEntity>().eq("login_id", loginDTO.getAccount()));
         if (null == user) {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.not.exists")));
             throw new CustomException(DefaultErrorCode.NAME_ERROR);
         }
         if (!BcryptUtil.match(loginDTO.getPassword(), user.getPassword())) {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.password.error")));
             throw new CustomException(DefaultErrorCode.USERNAME_PASSWORD_WRONG);
         }
         SystemUser userInfo = bs2User(user);
@@ -104,6 +112,7 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         }catch (Exception e){
             e.printStackTrace();
         }
+        AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success")));
         return RestResponse.success(token);
     }
 

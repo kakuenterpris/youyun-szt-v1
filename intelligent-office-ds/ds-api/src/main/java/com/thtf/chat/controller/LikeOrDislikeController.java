@@ -1,8 +1,10 @@
 package com.thtf.chat.controller;
 
 
+import com.thtf.annotation.Log;
 import com.thtf.chat.entity.LikeOrDislikeEntity;
 import com.thtf.chat.repo.LikeOrDislikeRepo;
+import com.thtf.enums.BusinessType;
 import com.thtf.global.common.rest.RestResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +37,7 @@ public class LikeOrDislikeController {
      * @return
      */
     @PostMapping("/likeOrDislike")
+    @Log(title = "登录日志", businessType = BusinessType.INSERT)
     @Operation(summary = "点赞或点踩")
     public RestResponse likeOrDislike(@RequestBody LikeOrDislikeEntity likeOrDislikeEntity) throws Exception{
         return likeOrDislikeRepo.likeOrDislike(likeOrDislikeEntity);

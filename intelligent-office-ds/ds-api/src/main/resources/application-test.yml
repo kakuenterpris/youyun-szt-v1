@@ -6,17 +6,17 @@ spring:
       strict: false
       datasource:
         primary:
-          driver-class-name: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://119.254.155.108:3306/intelligent_office?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
-          username: root
-          password: yyccYOUyun
+          driver-class-name: dm.jdbc.driver.DmDriver
+          url: jdbc:dm://118.193.126.254:5236/INTELLIGENT_OFFICE?schema=INTELLIGENT_OFFICE&encoding=UTF-8
+          username: SYSDBA
+          password: Sysdba@123
   data:
     redis:
-      host: 119.254.155.108
+      host: localhost
       port: 6379
       database: 0
       timeout: 1800s # 使用时间格式化
-      password: yyccYOUyun
+#      password: yyccYOUyun
       lettuce:
         pool:
           max-active: 20  # 最大连接数

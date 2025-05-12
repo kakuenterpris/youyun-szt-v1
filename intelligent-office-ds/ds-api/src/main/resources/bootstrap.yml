@@ -3,7 +3,7 @@ server.port: 8080
 # 应用名称
 spring.application.name: chat-api
 # 启动环境
-spring.profiles.active: dev
+spring.profiles.active: test
 
 
 
@@ -38,7 +38,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 119.254.155.108:8848
+        server-addr: localhost:8848
         username: nacos
         password: nacos
   datasource:

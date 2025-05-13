@@ -1,0 +1,82 @@
+package com.thtf.op.repo.impl;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.thtf.op.entity.BusResourceDatasetEntity;
+import com.thtf.op.mapper.BusResourceDatasetMapper;
+import com.thtf.op.mappings.BusResourceDatasetMapping;
+import com.thtf.op.repo.BusResourceDatasetRepo;
+import com.thtf.global.common.utils.Linq;
+import com.thtf.resource.dto.BusResourceDatasetDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+/**
+* @author allm
+* @description 针对表【bus_resource_dataset(人员或部门与知识库关联表)】的数据库操作Service实现
+* @createDate 2025-03-27 17:43:25
+*/
+@Service
+@RequiredArgsConstructor
+public class BusResourceDatasetRepoImpl extends ServiceImpl<BusResourceDatasetMapper, BusResourceDatasetEntity>
+    implements BusResourceDatasetRepo {
+    private final BusResourceDatasetMapping datasetMapping;
+
+    @Override
+    public boolean add(BusResourceDatasetDTO dto) {
+        BusResourceDatasetEntity entity = datasetMapping.dto2Entity(dto);
+        entity.setId(null);
+        return save(entity);
+    }
+
+    @Override
+    public boolean add(String categoryCode, String code, String datasetsId) {
+        BusResourceDatasetEntity entity = new BusResourceDatasetEntity();
+        entity.setCategoryCode(categoryCode);
+        entity.setCode(code);
+        entity.setDatasetsId(datasetsId);
+        return save(entity);
+    }
+
+    @Override
+    public boolean delete(String code) {
+        return lambdaUpdate()
+                .set(BusResourceDatasetEntity::getDeleted, true)
+                .eq(BusResourceDatasetEntity::getCode, code)
+                .eq(BusResourceDatasetEntity::getDeleted, false)
+                .update(new BusResourceDatasetEntity());
+    }
+
+    @Override
+    public boolean update(BusResourceDatasetDTO dto) {
+        BusResourceDatasetEntity entity = datasetMapping.dto2Entity(dto);
+
+        return lambdaUpdate()
+                .eq(BusResourceDatasetEntity::getId, dto.getId())
+                .eq(BusResourceDatasetEntity::getDeleted, false)
+                .update(entity);
+    }
+
+    @Override
+    public List<BusResourceDatasetDTO> list(String categoryCode) {
+        List<BusResourceDatasetEntity> list = lambdaQuery()
+                .eq(BusResourceDatasetEntity::getCategoryCode, categoryCode)
+                .eq(BusResourceDatasetEntity::getDeleted, false)
+                .list();
+        return Linq.select(list, datasetMapping::entity2Dto);
+    }
+
+    @Override
+    public BusResourceDatasetDTO getByCode(String code) {
+        List<BusResourceDatasetEntity> list = lambdaQuery()
+                .eq(BusResourceDatasetEntity::getCode, code)
+                .eq(BusResourceDatasetEntity::getDeleted, false)
+                .list();
+        return datasetMapping.entity2Dto(Linq.first(list));
+    }
+}
+
+
+
+

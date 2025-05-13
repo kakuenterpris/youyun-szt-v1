@@ -1,0 +1,17 @@
+# 服务端口
+server.port: 30003
+# 应用名称
+spring.application.name: kbase-api
+# 启动环境
+spring.profiles.active: dev
+
+
+#server:
+#  servlet:
+#    context-path: /kbase-api
+server:
+  max-http-request-header-size: 2048KB
+
+
+
+

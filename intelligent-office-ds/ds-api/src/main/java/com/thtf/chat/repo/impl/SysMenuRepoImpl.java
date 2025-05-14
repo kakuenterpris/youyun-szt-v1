@@ -1,18 +1,25 @@
 package com.thtf.chat.repo.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.thtf.access.dto.SysMenuDto;
+import com.thtf.access.dto.SysRoleDto;
 import com.thtf.chat.VO.MenuVO;
+import com.thtf.chat.dto.MenuTreeNode;
+import com.thtf.chat.dto.UpdateRoleDto;
 import com.thtf.chat.entity.SysMenuEntity;
 import com.thtf.chat.entity.SysOperLogEntity;
+import com.thtf.chat.entity.SysRoleEntity;
 import com.thtf.chat.repo.SysMenuRepo;
 import com.thtf.chat.mapper.SysMenuMapper;
+import com.thtf.global.common.rest.RestResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
 * @author 86187
@@ -117,6 +124,111 @@ public class SysMenuRepoImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity>
     }
 
 
+    public RestResponse deleteMenu(Integer menuId) {
+        try {
+            SysMenuEntity menu = getById(menuId);
+            if(menu.getChildren() != null && !menu.getChildren().isEmpty()){
+                return RestResponse.success("删除菜单失败，包含子菜单不能删除");
+            }
+            removeById(menuId);
+            return RestResponse.success("删除菜单成功");
+        }catch (Exception e) {
+            log.error("删除菜单失败", e);
+            return RestResponse.error("删除菜单失败");
+        }
+    }
+
+
+    @Override
+    public RestResponse pageList(Page<SysMenuEntity> page, SysMenuDto vo) {
+        try {
+            LambdaQueryWrapper<SysMenuEntity> menuQuery = new LambdaQueryWrapper<>();
+            menuQuery.eq(vo.getMenuName() != null, SysMenuEntity::getMenuName, vo.getMenuName());
+            menuQuery.eq(vo.getStatus() != null, SysMenuEntity::getStatus, vo.getStatus());
+            return RestResponse.success(this.page(page, menuQuery));
+        }catch (Exception e){
+            e.printStackTrace();
+            return RestResponse.error("查询失败");
+        }
+    }
+
+    @Override
+    public RestResponse updateByRoleId(SysMenuEntity menu) {
+        try {
+            this.updateById(menu);
+        }catch (Exception e){
+            return RestResponse.fail(1004, "修改失败！" + e.getMessage());
+        }
+        return RestResponse.success("修改成功");
+    }
+
+
+    /**
+     * 获取所有菜单树
+     *
+     * @return 菜单树
+     */
+    @Override
+    public List<MenuTreeNode> getMenuTree() {
+        List<SysMenuEntity> allMenus = sysMenuMapper.selectList(new QueryWrapper());
+        return buildTree(allMenus);
+    }
+
+
+    private List<MenuTreeNode> buildTree(List<SysMenuEntity> menus) {
+        // 使用LinkedHashMap保持顺序
+        Map<Long, MenuTreeNode> nodeMap = new LinkedHashMap<>();
+
+        // 第一次遍历：创建所有节点并缓存
+        for (SysMenuEntity menu : menus) {
+            MenuTreeNode node = new MenuTreeNode();
+            node.setId(menu.getMenuId());
+            node.setName(menu.getMenuName());
+            node.setParentId(menu.getParentId());
+            node.setPath(menu.getPath());
+            node.setIcon(menu.getIcon());
+            node.setChildren(new ArrayList<>()); // 初始化空子节点
+            nodeMap.put(menu.getMenuId(), node);
+        }
+
+        // 第二次遍历：构建树形结构
+        List<MenuTreeNode> roots = new ArrayList<>();
+        for (MenuTreeNode node : nodeMap.values()) {
+            if (node.getParentId() == null || node.getParentId() == 0) {
+                roots.add(node);
+            } else {
+                MenuTreeNode parent = nodeMap.get(node.getParentId());
+                if (parent != null) {
+                    parent.getChildren().add(node);
+                }
+            }
+        }
+
+        // 按sort字段排序（假设SysMenu有sort字段）
+        sortTree(roots);
+        return roots;
+    }
+
+
+    // 递归排序方法
+    private void sortTree(List<MenuTreeNode> nodes) {
+        if (nodes == null) return;
+
+        // 当前层排序
+//        nodes.sort(Comparator.comparingInt(MenuTreeNode::getSort));
+
+        nodes.sort(Comparator.comparing(
+                MenuTreeNode::getSort,
+                Comparator.nullsLast(Comparator.naturalOrder())
+        ));
+
+        // 递归排序子节点
+        for (MenuTreeNode node : nodes) {
+            if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+                sortTree(node.getChildren());
+            }
+        }
+    }
 
 }
 

@@ -1207,7 +1207,7 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         Response response = null;
         try {
-            StopWatch watch = new StopWatch("请求推荐接口");
+            StopWatch watch = new StopWatch();
             watch.start();
             response = client.newCall(request).execute();
             byte[] responseBytes = response.body().bytes();

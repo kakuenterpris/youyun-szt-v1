@@ -19,6 +19,5 @@ public interface SysRoleMenuRepo extends IService<SysRoleMenuEntity> {
 
     RestResponse getByRoleId(Integer roleId);
 
-    List<MenuTreeNode> getMenuTree();
 
 }

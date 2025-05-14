@@ -168,6 +168,7 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         entity.setPhone(user.getPhone());
         entity.setDepName(user.getDepName());
         entity.setDepNum(user.getDepNum());
+        entity.setUserId(user.getUserId());
         entity.setSpecialAuth("UNIT_FILE_MANAGE");
         entity.setEmail(user.getEmail());
         return entity;

@@ -178,7 +178,7 @@ public class AccessController {
      * @return
      */
     public List<MenuTreeNode> getMenuTree(){
-        List<MenuTreeNode> menuTree = sysRoleMenuRepo.getMenuTree();
+        List<MenuTreeNode> menuTree = sysMenuRepo.getMenuTree();
         return menuTree;
     }
 

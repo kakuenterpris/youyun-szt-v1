@@ -20,12 +20,13 @@
             <result property="createTime" column="create_time" />
             <result property="lastLogInTime" column="last_log_in_time" />
             <result property="deleted" column="is_deleted" />
+            <result property="secretLevel" column="secret_level" />
     </resultMap>
 
     <sql id="Base_Column_List">
         id,user_id,user_num,log_in_id,user_name,dep_num,
         dep_name,post_num,post,mobile_phone,phone,
-        email,create_time,last_log_in_time,is_deleted
+        email,create_time,last_log_in_time,is_deleted,secret_level
     </sql>
     <select id="selectPageByVO" resultType="com.thtf.access.vo.UserInfoVO">
         SELECT u.* FROM bus_user_info u
@@ -46,6 +47,6 @@
                 AND u.dep_name LIKE CONCAT(CONCAT('%',#{vo.userDepName}),'%')
             </if>
         </if>
-        ORDER BY u.update_time DESC
+        ORDER BY u.create_time DESC
     </select>
 </mapper>

@@ -16,7 +16,7 @@ spring:
       port: 6379
       database: 0
       timeout: 1800s # 使用时间格式化
-#      password: yyccYOUyun
+      password: yyccYOUyun
       lettuce:
         pool:
           max-active: 20  # 最大连接数

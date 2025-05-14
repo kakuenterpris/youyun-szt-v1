@@ -40,7 +40,7 @@ spring:
       discovery:
         server-addr: localhost:8848
         username: nacos
-        password: nacos
+        password: yyccYOUyun
   datasource:
     druid:
       # 下面为连接池的补充设置，应用到上面所有数据源中

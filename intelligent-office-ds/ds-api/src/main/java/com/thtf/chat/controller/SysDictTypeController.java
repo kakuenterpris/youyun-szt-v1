@@ -51,7 +51,7 @@ public class SysDictTypeController {
      */
     @Log(title = "字典类型", businessType = BusinessType.INSERT)
     @PostMapping
-    public RestResponse add(@Validated @RequestBody SysDictTypeEntity dict)
+    public RestResponse add(@RequestBody SysDictTypeEntity dict)
     {
         if (!dictTypeRepo.checkDictTypeUnique(dict))
         {
@@ -66,12 +66,12 @@ public class SysDictTypeController {
      */
     @Log(title = "字典类型", businessType = BusinessType.UPDATE)
     @PutMapping
-    public RestResponse edit(@Validated @RequestBody SysDictTypeEntity dict)
+    public RestResponse edit(@RequestBody SysDictTypeEntity dict)
     {
         if (!dictTypeRepo.checkDictTypeUnique(dict))
         {
             String error = "修改字典'" + dict.getDictName() + "'失败，字典类型已存在";
-            return null;
+            return RestResponse.error(error);
         }
 
         return dictTypeRepo.updateDictType(dict);

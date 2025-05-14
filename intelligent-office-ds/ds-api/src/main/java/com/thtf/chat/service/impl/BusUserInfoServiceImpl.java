@@ -105,6 +105,9 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         Gson gson = new Gson();
         try {
             boolean set = redisUtil.set("token_" + token.getToken(), user.toString(), 60 * 60 * 6);
+            Cookie cookie = new Cookie("token", token.getToken());
+            cookie.setMaxAge(SESSION_TIME_OUT);
+            response.addCookie(cookie);
             String s = gson.toJson(sysMenuEntities);
             boolean setm = redisUtil.set("menu_" + token.getToken(), s, 60 * 60 * 6);
             System.out.println("set = " + set);

@@ -71,7 +71,7 @@ public class SysDictDataController {
     @Log(title = "字典类型", businessType = BusinessType.INSERT)
     @PostMapping("/add")
     @Operation(summary = "新增字典类型")
-    public RestResponse add(@Validated @RequestBody SysDictDataEntity dictDataEntity) {
+    public RestResponse add(@RequestBody SysDictDataEntity dictDataEntity) {
         return dictDataRepo.insertDictData(dictDataEntity);
     }
 
@@ -82,7 +82,7 @@ public class SysDictDataController {
     @Log(title = "字典类型", businessType = BusinessType.UPDATE)
     @PutMapping("/edit")
     @Operation(summary = "修改字典类型")
-    public RestResponse edit(@Validated @RequestBody SysDictDataEntity dictDataEntity) {
+    public RestResponse edit(@RequestBody SysDictDataEntity dictDataEntity) {
         return dictDataRepo.updateDictData(dictDataEntity);
     }
 

@@ -65,67 +65,7 @@ public class SysRoleMenuRepoImpl extends ServiceImpl<SysRoleMenuMapper, SysRoleM
     }
 
 
-    /**
-     * 获取所有菜单树
-     *
-     * @return 菜单树
-     */
-    @Override
-    public List<MenuTreeNode> getMenuTree() {
-        List<SysMenuEntity> allMenus = sysRoleMenuMapper.selectList(new QueryWrapper());
-        return buildTree(allMenus);
-    }
 
-
-    private List<MenuTreeNode> buildTree(List<SysMenuEntity> menus) {
-        // 使用LinkedHashMap保持顺序
-        Map<Long, MenuTreeNode> nodeMap = new LinkedHashMap<>();
-
-        // 第一次遍历：创建所有节点并缓存
-        for (SysMenuEntity menu : menus) {
-            MenuTreeNode node = new MenuTreeNode();
-            node.setId(menu.getMenuId());
-            node.setName(menu.getMenuName());
-            node.setParentId(menu.getParentId());
-            node.setPath(menu.getPath());
-            node.setIcon(menu.getIcon());
-            node.setChildren(new ArrayList<>()); // 初始化空子节点
-            nodeMap.put(menu.getMenuId(), node);
-        }
-
-        // 第二次遍历：构建树形结构
-        List<MenuTreeNode> roots = new ArrayList<>();
-        for (MenuTreeNode node : nodeMap.values()) {
-            if (node.getParentId() == null || node.getParentId() == 0) {
-                roots.add(node);
-            } else {
-                MenuTreeNode parent = nodeMap.get(node.getParentId());
-                if (parent != null) {
-                    parent.getChildren().add(node);
-                }
-            }
-        }
-
-        // 按sort字段排序（假设SysMenu有sort字段）
-        sortTree(roots);
-        return roots;
-    }
-
-
-    // 递归排序方法
-    private void sortTree(List<MenuTreeNode> nodes) {
-        if (nodes == null) return;
-
-        // 当前层排序
-        nodes.sort(Comparator.comparingInt(MenuTreeNode::getSort));
-
-        // 递归排序子节点
-        for (MenuTreeNode node : nodes) {
-            if (node.getChildren() != null && !node.getChildren().isEmpty()) {
-                sortTree(node.getChildren());
-            }
-        }
-    }
 
 }
 

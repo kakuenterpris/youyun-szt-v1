@@ -74,6 +74,9 @@ public class UserInfoVO {
      */
     private Boolean locked;
 
-
+    /**
+     * 人员密级
+     */
+    private String secretLevel;
 
 }

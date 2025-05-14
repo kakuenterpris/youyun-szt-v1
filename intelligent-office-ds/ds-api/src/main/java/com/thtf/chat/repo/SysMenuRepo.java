@@ -1,9 +1,16 @@
 package com.thtf.chat.repo;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.thtf.access.dto.SysMenuDto;
+import com.thtf.access.dto.SysRoleDto;
 import com.thtf.chat.VO.MenuVO;
+import com.thtf.chat.dto.MenuTreeNode;
+import com.thtf.chat.dto.UpdateRoleDto;
 import com.thtf.chat.entity.SysMenuEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.thtf.chat.entity.SysOperLogEntity;
+import com.thtf.chat.entity.SysRoleEntity;
+import com.thtf.global.common.rest.RestResponse;
 
 import java.util.Date;
 import java.util.List;
@@ -29,4 +36,10 @@ public interface SysMenuRepo extends IService<SysMenuEntity> {
     // 获取审计日志
     List<SysOperLogEntity> getAuditLogs(Date startTime, Date endTime);
 
+    //获取菜单列表
+    RestResponse pageList(Page<SysMenuEntity> page, SysMenuDto vo);
+
+    RestResponse updateByRoleId(SysMenuEntity menu);
+
+    List<MenuTreeNode> getMenuTree();
 }

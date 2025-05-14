@@ -103,4 +103,9 @@ public class UserInfoDto {
 //    角色
     private String roleIds;
 
+    /**
+     * 人员密级
+     */
+    private String secretLevel;
+
 }

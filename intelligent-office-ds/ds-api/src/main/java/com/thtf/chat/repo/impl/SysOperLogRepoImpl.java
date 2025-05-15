@@ -5,7 +5,6 @@ import com.thtf.chat.entity.SysOperLog;
 import com.thtf.chat.entity.SysOperLogEntity;
 import com.thtf.chat.mapper.SysOperLogMapper;
 import com.thtf.chat.repo.ISysOperLogRepo;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,8 +13,6 @@ import java.util.List;
 public class SysOperLogRepoImpl extends ServiceImpl<SysOperLogMapper, SysOperLogEntity> implements ISysOperLogRepo {
 
 
-    @Autowired
-    private SysOperLogMapper operLogMapper;
 
     /**
      * 新增操作日志
@@ -23,9 +20,9 @@ public class SysOperLogRepoImpl extends ServiceImpl<SysOperLogMapper, SysOperLog
      * @param operLog 操作日志对象
      */
     @Override
-    public void insertOperlog(SysOperLog operLog)
+    public void insertOperlog(SysOperLogEntity operLog)
     {
-        ;
+        save(operLog);
     }
 
     /**
@@ -35,7 +32,7 @@ public class SysOperLogRepoImpl extends ServiceImpl<SysOperLogMapper, SysOperLog
      * @return 操作日志集合
      */
     @Override
-    public List<SysOperLog> selectOperLogList(SysOperLog operLog)
+    public List<SysOperLogEntity> selectOperLogList(SysOperLogEntity operLog)
     {
        return selectOperLogList(operLog);
     }

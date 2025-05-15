@@ -1,10 +1,13 @@
 package com.thtf.chat.repo;
 
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.thtf.chat.entity.LikeOrDislikeEntity;
 import com.thtf.chat.entity.SysOperLog;
+import com.thtf.chat.entity.SysOperLogEntity;
 
 import java.util.List;
 
-public interface ISysOperLogRepo {
+public interface ISysOperLogRepo extends IService<SysOperLogEntity> {
 
 
     /**
@@ -12,7 +15,7 @@ public interface ISysOperLogRepo {
      *
      * @param operLog 操作日志对象
      */
-    public void insertOperlog(SysOperLog operLog);
+    public void insertOperlog(SysOperLogEntity operLog);
 
     /**
      * 查询系统操作日志集合
@@ -20,7 +23,7 @@ public interface ISysOperLogRepo {
      * @param operLog 操作日志对象
      * @return 操作日志集合
      */
-    public List<SysOperLog> selectOperLogList(SysOperLog operLog);
+    public List<SysOperLogEntity> selectOperLogList(SysOperLogEntity operLog);
 
     /**
      * 批量删除系统操作日志

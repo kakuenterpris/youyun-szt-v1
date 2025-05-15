@@ -1,7 +1,7 @@
 package com.thtf.chat.manager.factory;
 
 import com.thtf.chat.entity.SysLogininfor;
-import com.thtf.chat.entity.SysOperLog;
+import com.thtf.chat.entity.SysOperLogEntity;
 import com.thtf.chat.repo.ISysLogininforRepo;
 import com.thtf.chat.repo.ISysOperLogRepo;
 import com.thtf.chat.utils.*;
@@ -82,10 +82,10 @@ public class AsyncFactory {
     /**
      * 操作日志记录
      *
-     * @param operLog 操作日志信息
+     * @param operLogEntity 操作日志信息
      * @return 任务task
      */
-    public static TimerTask recordOper(final SysOperLog operLog)
+    public static TimerTask recordOper(final SysOperLogEntity operLogEntity)
     {
         return new TimerTask()
         {
@@ -93,8 +93,8 @@ public class AsyncFactory {
             public void run()
             {
                 // 远程查询操作地点
-                operLog.setOperLocation(AddressUtils.getRealAddressByIP(operLog.getOperIp()));
-                SpringUtils.getBean(ISysOperLogRepo.class).insertOperlog(operLog);
+                operLogEntity.setOperLocation(AddressUtils.getRealAddressByIP(operLogEntity.getOperIp()));
+                SpringUtils.getBean(ISysOperLogRepo.class).insertOperlog(operLogEntity);
             }
         };
     }

@@ -3,6 +3,7 @@ package com.thtf.chat.annotation.aspect;
 import com.alibaba.fastjson2.JSON;
 import com.thtf.annotation.Log;
 import com.thtf.chat.entity.SysOperLog;
+import com.thtf.chat.entity.SysOperLogEntity;
 import com.thtf.chat.manager.AsyncManager;
 import com.thtf.chat.manager.factory.AsyncFactory;
 import com.thtf.chat.util.Convert;
@@ -87,8 +88,9 @@ public class LogAspect {
 
 
             // *========数据库日志=========*//
-            SysOperLog operLog = new SysOperLog();
+            SysOperLogEntity operLog = new SysOperLogEntity();
             operLog.setStatus(BusinessStatus.SUCCESS.ordinal());
+
             // 请求的地址
             String ip = IpUtils.getIpAddr();
             operLog.setOperIp(ip);
@@ -96,6 +98,8 @@ public class LogAspect {
             if (systemUser != null)
             {
                 operLog.setOperName(systemUser.getUserName());
+                operLog.setCreateUser(systemUser.getUserName());
+                operLog.setCreateUserId(systemUser.getUserId());
                 if (StringUtils.isNotNull(operLog.getDeptName()))
                 {
                     operLog.setDeptName(operLog.getDeptName());
@@ -139,7 +143,7 @@ public class LogAspect {
      * @param operLog 操作日志
      * @throws Exception
      */
-    public void getControllerMethodDescription(JoinPoint joinPoint, Log log, SysOperLog operLog, Object jsonResult) throws Exception
+    public void getControllerMethodDescription(JoinPoint joinPoint, Log log, SysOperLogEntity operLog, Object jsonResult) throws Exception
     {
         // 设置action动作
         operLog.setBusinessType(log.businessType().ordinal());
@@ -166,7 +170,7 @@ public class LogAspect {
      * @param operLog 操作日志
      * @throws Exception 异常
      */
-    private void setRequestValue(JoinPoint joinPoint, SysOperLog operLog, String[] excludeParamNames) throws Exception
+    private void setRequestValue(JoinPoint joinPoint, SysOperLogEntity operLog, String[] excludeParamNames) throws Exception
     {
         Map<?, ?> paramsMap = ServletUtils.getParamMap(ServletUtils.getRequest());
         String requestMethod = operLog.getRequestMethod();

@@ -1,13 +1,18 @@
 package com.thtf.chat.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.thtf.global.common.entity.BaseEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
+@TableName(value ="sys_oper_log")
 @Data
-public class SysOperLog extends BaseEntity {
+@Schema(name = "日志记录表")
+public class SysOperLog extends BaseEntity implements Serializable {
 
     /** 日志主键 */
     private Long operId;

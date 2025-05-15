@@ -26,21 +26,21 @@ import java.util.Map;
 @Tag(name = "ragflow", description = "ragflow相关操作")
 public class RagflowController {
 
-    @Autowired
-    private OkHttpClientUtil okHttpClientUtil;
-
-    @Autowired
-    private RagflowConfigProperties ragflowConfigProperties;
+//    @Autowired
+//    private OkHttpClientUtil okHttpClientUtil;
+//
+//    @Autowired
+//    private RagflowConfigProperties ragflowConfigProperties;
     /**
      * 注册用户
      */
     @PostMapping("/register")
     @Operation(summary = "注册用户", description = "注册用户")
     public RestResponse registerUser(RagflowEntity ragflowEntity) {
-        Map<String, String> params = new HashMap<>();
-        Map<String, String> headers = new HashMap<>();
-        String url = ragflowConfigProperties.getCommonUrl() + "/user/register";
-        okHttpClientUtil.doPost(url, params, headers);
+//        Map<String, String> params = new HashMap<>();
+//        Map<String, String> headers = new HashMap<>();
+//        String url = ragflowConfigProperties.getCommonUrl() + "/user/register";
+//        okHttpClientUtil.doPost(url, params, headers);
 
         return RestResponse.success("注册成功");
     }

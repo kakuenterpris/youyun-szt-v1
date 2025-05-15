@@ -47,6 +47,13 @@ platform:
         - /api/v1/chat/login
         - /api/v1/chat/login/captcha
         - /api/v1/chat/login/verifyIdentityFromTfoa
+        - /api/v1/chat/login/
+        - /api/v1/chat/login/verifyFromTfoaMobile
+        - /swagger-ui/*
+        - /swagger-ui.html
+        - /v3/api-docs/**
+        - /webjars/**
+        - /doc.html
 #        - /api/v1/chat/*
 #        - /api/v1/resource/*
 #        - /api/v1/historyChat/*

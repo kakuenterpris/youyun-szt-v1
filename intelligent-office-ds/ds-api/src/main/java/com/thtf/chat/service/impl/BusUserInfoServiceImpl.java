@@ -107,6 +107,7 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
             boolean set = redisUtil.set("token_" + token.getToken(), user.toString(), 60 * 60 * 6);
             Cookie cookie = new Cookie("token", token.getToken());
             cookie.setMaxAge(SESSION_TIME_OUT);
+            cookie.setPath("/");
             response.addCookie(cookie);
             String s = gson.toJson(sysMenuEntities);
             boolean setm = redisUtil.set("menu_" + token.getToken(), s, 60 * 60 * 6);
@@ -200,6 +201,7 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         // 返回cookie 关闭浏览器就删除cookie
         Cookie cookie = new Cookie("sessionId", session.getId());
         cookie.setMaxAge(SESSION_TIME_OUT);
+        cookie.setPath("/");
         response.addCookie(cookie);
         //
         TokenDTO token = new TokenDTO();

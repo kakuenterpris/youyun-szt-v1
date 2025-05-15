@@ -38,7 +38,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: localhost:8848
+        server-addr: 101.52.216.178:8848
         username: nacos
         password: yyccYOUyun
   datasource:

@@ -64,18 +64,18 @@ public class OperLogAspect {
             // 记录请求信息
             log.setOperTime(new Date());
             log.setOperIp(getClientIP(request));
-            log.setOperMethod(request.getMethod() + " " + request.getRequestURI());
+            log.setRequestMethod(request.getMethod() + " " + request.getRequestURI());
 
             // 获取用户信息
             SystemUser currentUser = ContextUtil.currentUser();
             if (currentUser != null) {
                 log.setOperName(currentUser.getUserName());
-                log.setOperDept(currentUser.getDepName());
+                log.setDeptName(currentUser.getDepName());
             }
 
-            // 记录请求参数
-            log.setParams(parseParams(joinPoint.getArgs()));
-            log.setRequestBody(getRequestBody(request));
+//            // 记录请求参数
+//            log.setParams(parseParams(joinPoint.getArgs()));
+//            log.setRequestBody(getRequestBody(request));
 
             // 执行方法
             Object result = joinPoint.proceed();
@@ -84,7 +84,7 @@ public class OperLogAspect {
             if (result instanceof RestResponse) {
                 RestResponse<?> response = (RestResponse<?>) result;
                 log.setStatus(response.getCode());
-                log.setResponse(JsonUtil.toJson(response.getData()));
+//                log.setResponse(JsonUtil.toJson(response.getData()));
             }
 
             return result;

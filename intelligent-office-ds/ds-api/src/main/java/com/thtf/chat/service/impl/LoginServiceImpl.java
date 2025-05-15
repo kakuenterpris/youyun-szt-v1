@@ -446,6 +446,16 @@ public class LoginServiceImpl implements LoginService {
     }
 
     private String getToken(HttpServletRequest request){
+        //        获取cookie 中的sessionId
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("token".equals(cookie.getName())) {  // 假设token存储在名为"token"的cookie中
+                    System.out.println("cookie:" + cookie.getValue());
+                    return cookie.getValue();
+                }
+            }
+        }
         // 从header取
         String fromHeader = request.getHeader(AuthConstants.token_key);
         if (StringUtils.isNotBlank(fromHeader)){

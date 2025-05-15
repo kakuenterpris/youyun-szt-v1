@@ -12,7 +12,7 @@ spring:
           password: Sysdba@123
   data:
     redis:
-      host: localhost
+      host: 101.52.216.178
       port: 6379
       database: 0
       timeout: 1800s # 使用时间格式化

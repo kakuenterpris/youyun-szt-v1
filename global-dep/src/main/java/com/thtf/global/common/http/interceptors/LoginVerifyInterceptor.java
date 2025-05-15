@@ -12,6 +12,7 @@ import com.thtf.global.common.rest.RequestContext;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.global.common.utils.AESUtil;
 import com.thtf.global.common.utils.JsonUtil;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -119,6 +120,16 @@ public class LoginVerifyInterceptor implements HandlerInterceptor {
 
     private String getToken(HttpServletRequest request){
 
+        //        获取cookie 中的sessionId
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("token".equals(cookie.getName())) {  // 假设token存储在名为"token"的cookie中
+                    System.out.println("cookie:" + cookie.getValue());
+                    return cookie.getValue();
+                }
+            }
+        }
         // 从header取
         String fromHeader = request.getHeader(AuthConstants.token_key);
         if (StringUtils.isNotBlank(fromHeader)){

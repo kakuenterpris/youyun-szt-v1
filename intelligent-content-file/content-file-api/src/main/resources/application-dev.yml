@@ -13,8 +13,8 @@ spring:
   cloud:
     nacos:
       discovery:
-        enabled: false
-        instance-enabled: false
+#        enabled: false
+#        instance-enabled: false
         server-addr: 101.52.216.178:8848
         username: nacos
         password: yyccYOUyun

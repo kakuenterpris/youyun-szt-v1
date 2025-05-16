@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -93,7 +94,7 @@ public class RoleController {
     //todo 更新角色信息
     @PostMapping("/updateRole")
     @Operation(summary = "更新角色信息接口")
-    public RestResponse updateRole(UpdateRoleDto role) {
+    public RestResponse updateRole(@RequestBody UpdateRoleDto role) {
         try {
             sysRoleRepo.updateByRoleId(role);
             return RestResponse.success("更新角色信息成功");

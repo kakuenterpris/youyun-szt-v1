@@ -42,11 +42,12 @@ public class SysRoleMenuRepoImpl extends ServiceImpl<SysRoleMenuMapper, SysRoleM
 
         // 批量新增
         List<SysRoleMenuEntity> sysRoleMenuList = new ArrayList<>();
-        roleIds.forEach(roleId -> sysRoleMenuList.addAll(dto.getMenuIds().stream()
-                .map(menuId -> {
+        roleIds.forEach(roleId -> sysRoleMenuList.addAll(dto.getMenuAuth().stream()
+                .map(menuauth -> {
                     SysRoleMenuEntity sysRoleMenu = new SysRoleMenuEntity();
                     sysRoleMenu.setRoleId(roleId);
-                    sysRoleMenu.setMenuId(menuId);
+                    sysRoleMenu.setMenuId(menuauth.getMenuId());
+                    sysRoleMenu.setManageAuth(menuauth.getManageAuth());
                     return sysRoleMenu;
                 }).toList()));
         return super.saveBatch(sysRoleMenuList);

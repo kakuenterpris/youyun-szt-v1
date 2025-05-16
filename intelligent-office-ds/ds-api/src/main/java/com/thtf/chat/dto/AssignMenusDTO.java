@@ -1,5 +1,6 @@
 package com.thtf.chat.dto;
 
+import com.thtf.chat.entity.SysRoleMenuEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -15,4 +16,8 @@ public class AssignMenusDTO {
     @Schema(description = "角色ID列表")
     @NotEmpty
     private List<Long> roleIds;
+
+    @Schema(description = "用户ID列表")
+    @NotEmpty
+    private List<SysRoleMenuEntity> menuAuth;
 }

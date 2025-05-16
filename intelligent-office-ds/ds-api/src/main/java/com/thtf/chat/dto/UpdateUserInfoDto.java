@@ -1,6 +1,7 @@
 package com.thtf.chat.dto;
 
 import com.thtf.chat.entity.BusUserInfoEntity;
+import com.thtf.chat.entity.SysRoleMenuEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 

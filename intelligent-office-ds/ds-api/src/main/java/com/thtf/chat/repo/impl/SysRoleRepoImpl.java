@@ -65,7 +65,7 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
     protected boolean assignMenus(UpdateRoleDto dto) {
         // 分配角色
         AssignMenusDTO amd = new AssignMenusDTO();
-        amd.setMenuIds(dto.getMenuIds());
+        amd.setMenuAuth(dto.getMenuAuth());
         amd.setRoleIds(Collections.singletonList(dto.getRoleId().longValue()));
         return sysRoleMenuRepo.assignMenus(amd);
     }

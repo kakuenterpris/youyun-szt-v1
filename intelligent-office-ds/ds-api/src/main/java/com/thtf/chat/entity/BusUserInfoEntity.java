@@ -127,6 +127,14 @@ public class BusUserInfoEntity {
     @TableField(value = "is_deleted")
     private Boolean deleted;
 
+    /**
+     * 是否锁定 (0-未锁定, 1-已锁定)
+     */
+    @TableField(value = "locked")
+    private Boolean locked;
+
+
+
     @Override
     public String toString() {
 //        返回json格式的字符串

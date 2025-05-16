@@ -1,5 +1,6 @@
 package com.thtf.chat.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -166,12 +167,24 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         userInfoVO.setUserDepName( param.getDepName() );
         userInfoVO.setUserPhone( param.getMobilePhone() );
         userInfoVO.setUserEmail( param.getEmail() );
+        userInfoVO.setLocked( param.getLocked() );
         return userInfoVO;
     }
 
     @Override
     public RestResponse updateByUserId(UpdateUserInfoDto user) {
         try {
+            if (user.getRoleIds().size()>0) {
+                LambdaQueryWrapper<SysUserRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(SysUserRoleEntity::getUserId, user.getId());
+                sysUserRoleRepo.remove(queryWrapper);
+                for (Long roleId : user.getRoleIds()) {
+                    SysUserRoleEntity sysUserRoleEntity = new SysUserRoleEntity();
+                    sysUserRoleEntity.setUserId(Long.valueOf(user.getUserId()));
+                    sysUserRoleEntity.setRoleId(roleId);
+                    sysUserRoleRepo.save(sysUserRoleEntity);
+                }
+            }
             this.updateById(user);
             assignRoles(user);
         }catch (Exception e){

@@ -65,6 +65,20 @@ public class RoleController {
         return sysRoleRepo.pageList(page,vo);
     }
 
+    //todo 获取所有角色列表
+    @GetMapping("/getRoleAllList")
+    @Operation(summary = "获取所有角色列表接口")
+    public RestResponse getRoleAllList() {
+        List<SysRoleEntity> list;
+        try {
+            list = sysRoleRepo.list();
+        }catch (Exception e){
+            log.error("获取角色列表失败", e);
+            return RestResponse.error("获取角色列表失败");
+        }
+        return RestResponse.success(list);
+    }
+
     //todo 获取角色信息
     @GetMapping("/getRoleInfo")
     @Operation(summary = "获取角色信息接口")

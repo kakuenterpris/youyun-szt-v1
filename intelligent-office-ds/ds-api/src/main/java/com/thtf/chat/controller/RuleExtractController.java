@@ -1,0 +1,81 @@
+package com.thtf.chat.controller;
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.thtf.access.dto.SysRuleExtractDto;
+import com.thtf.chat.entity.SysRuleExtractEntity;
+import com.thtf.chat.repo.SysRuleExtractRepo;
+import com.thtf.global.common.rest.RestResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/ruleExtract")
+@Slf4j
+@RequiredArgsConstructor
+@Validated
+@Tag(name = "知识规则提取配置", description = "知识规则提取配置相关接口")
+public class RuleExtractController {
+
+    @Autowired
+    private SysRuleExtractRepo sysRuleExtractRepo;
+
+    @PostMapping("/createRuleExtract")
+    @Operation(summary = "创建提取规则接口")
+    public RestResponse createRuleExtract(SysRuleExtractEntity entity) {
+        return sysRuleExtractRepo.saveRuleExtract(entity);
+    }
+
+    @PostMapping("/deleteRuleExtract")
+    @Operation(summary = "删除提取规则接口")
+    public RestResponse deleteUser(Integer id) {
+        try {
+            sysRuleExtractRepo.removeById(id);
+        } catch (Exception e) {
+            log.error("删除提取规则失败", e);
+            return RestResponse.error("删除提取规则失败");
+        }
+        return RestResponse.success("删除提取规则成功");
+    }
+
+    @PostMapping("/deleteBatchRuleExtract")
+    @Operation(summary = "批量删除提取规则接口")
+    public RestResponse deleteRole(List<Integer> id) {
+        try {
+            sysRuleExtractRepo.removeBatchByIds(id);
+            return RestResponse.success("删除提取规则成功");
+        } catch (Exception e) {
+            log.error("删除提取规则失败", e);
+            return RestResponse.error("删除提取规则失败");
+        }
+    }
+
+    @GetMapping("/getRuleExtractList")
+    @Operation(summary = "获取提取规则列表接口")
+    public RestResponse getRuleExtractList(Page<SysRuleExtractEntity> page, SysRuleExtractDto dto) {
+        return sysRuleExtractRepo.pageList(page, dto);
+    }
+
+    @PostMapping("/updateRuleExtract")
+    @Operation(summary = "更新提取规则接口")
+    public RestResponse updateUser(@Validated SysRuleExtractEntity entity) {
+        try {
+            sysRuleExtractRepo.updateById(entity);
+            return RestResponse.success("更新提取规则成功");
+        }catch (Exception e) {
+            log.error("更新提取规则失败", e);
+            return RestResponse.error("更新提取规则失败");
+        }
+    }
+
+
+}

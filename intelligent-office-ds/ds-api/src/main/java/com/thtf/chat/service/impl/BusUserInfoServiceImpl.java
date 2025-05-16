@@ -43,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
+import java.util.stream.Collectors;
 
 
 @Service
@@ -139,8 +139,34 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
 
     @Override
     public Page<UserInfoVO> pageList(Page<UserInfoDto> pages, UserInfoVO vo) {
-        Page<UserInfoVO> sysUserPage = baseMapper.selectPageByVO(pages,vo);
-        return sysUserPage;
+        Page<BusUserInfoEntity> sysUserPage = baseMapper.selectPageByVO(pages,vo);
+        Page<UserInfoVO> userInfoVOPage = new Page<>();
+        userInfoVOPage.setCurrent(sysUserPage.getCurrent());
+        userInfoVOPage.setSize(sysUserPage.getSize());
+        userInfoVOPage.setTotal(sysUserPage.getTotal());
+        List<UserInfoVO> collect = sysUserPage.getRecords().stream()
+                .map(this::entity2VO)
+                .collect(Collectors.toList());
+        userInfoVOPage.setRecords(collect);
+//        转换为vo对象
+        return userInfoVOPage;
+    }
+
+    public UserInfoVO entity2VO(BusUserInfoEntity param) {
+        if ( param == null ) {
+            return null;
+        }
+
+        UserInfoVO userInfoVO = new UserInfoVO();
+        userInfoVO.setId( param.getId() );
+        userInfoVO.setUserNum( param.getUserNum() );
+        userInfoVO.setLoginId( param.getLoginId() );
+        userInfoVO.setUserName( param.getUserName() );
+        userInfoVO.setUserDepNum( param.getDepNum() );
+        userInfoVO.setUserDepName( param.getDepName() );
+        userInfoVO.setUserPhone( param.getMobilePhone() );
+        userInfoVO.setUserEmail( param.getEmail() );
+        return userInfoVO;
     }
 
     @Override

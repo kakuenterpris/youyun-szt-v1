@@ -14,7 +14,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface BusUserInfoMapper extends BaseMapper<BusUserInfoEntity> {
 
-    Page<UserInfoVO> selectPageByVO(Page<UserInfoDto> pages, UserInfoVO vo);
+    Page<BusUserInfoEntity> selectPageByVO(Page<UserInfoDto> pages, UserInfoVO vo);
 }
 
 

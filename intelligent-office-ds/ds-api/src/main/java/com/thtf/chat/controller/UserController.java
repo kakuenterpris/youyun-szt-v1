@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -73,7 +74,7 @@ public class UserController {
     //todo 更新用户信息（包括角色）
     @PostMapping("/updateUser")
     @Operation(summary = "更新用户信息（包括角色）接口")
-    public RestResponse updateUser(@Validated UpdateUserInfoDto user) {
+    public RestResponse updateUser(@RequestBody UpdateUserInfoDto user) {
         return busUserInfoService.updateByUserId(user);
     }
 

@@ -28,7 +28,7 @@
         dep_name,post_num,post,mobile_phone,phone,
         email,create_time,last_log_in_time,is_deleted,secret_level
     </sql>
-    <select id="selectPageByVO" resultType="com.thtf.access.vo.UserInfoVO">
+    <select id="selectPageByVO" resultType="com.thtf.chat.entity.BusUserInfoEntity">
         SELECT u.* FROM bus_user_info u
         <if test="vo != null">
             <if test="vo.roleId != null">

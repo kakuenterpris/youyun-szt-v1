@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/user")
 @Slf4j
@@ -59,6 +61,14 @@ public class UserController {
     @Operation(summary = "获取用户列表接口")
     public RestResponse getUserList(Page<UserInfoDto> page,UserInfoVO vo) {
         Page<UserInfoVO> list=busUserInfoService.pageList(page,vo);
+        return RestResponse.success(list);
+    }
+
+    //todo 获取全部用户列表
+    @GetMapping("/getAllUserList")
+    @Operation(summary = "获取所有用户接口")
+    public RestResponse getAllUserList() {
+        List<BusUserInfoEntity> list = busUserInfoService.list();
         return RestResponse.success(list);
     }
 

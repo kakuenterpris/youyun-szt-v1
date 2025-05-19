@@ -38,8 +38,7 @@ public class MenuController {
     @Autowired
     private SysRoleMenuRepo sysRoleMenuRepo;
 
-//   todo 菜单管理
-    //todo 创建菜单
+
     @PostMapping("/createMenu")
     @Operation(summary = "创建菜单接口")
     public RestResponse createMenu(SysMenuEntity menu) {

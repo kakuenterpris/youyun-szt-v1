@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -49,7 +46,7 @@ public class RuleTagController {
 
     @PostMapping("/deleteBatchRuleTag")
     @Operation(summary = "批量删除规则标签接口")
-    public RestResponse deleteBatchRuleTag(List<Integer> id) {
+    public RestResponse deleteBatchRuleTag(@RequestParam("ruleTagIds") List<Integer> id) {
         try {
             sysRuleTagRepo.removeBatchByIds(id);
             return RestResponse.success("删除规则标签成功");

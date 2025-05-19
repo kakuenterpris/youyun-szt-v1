@@ -49,7 +49,7 @@ public class RoleController {
     //todo 删除角色（逻辑删除）
     @PostMapping("/deleteRole")
     @Operation(summary = "删除角色接口")
-    public RestResponse deleteRole(List<Integer> roleId) {
+    public RestResponse deleteRole(@RequestBody List<Integer> roleId) {
         try {
             sysRoleRepo.removeBatchByIds(roleId);
             return RestResponse.success("删除角色成功");

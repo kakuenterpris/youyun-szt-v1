@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -54,7 +55,7 @@ public class MenuController {
 
     @PostMapping("/deleteMenu")
     @Operation(summary = "删除菜单接口")
-    public RestResponse deleteMenu(Integer menuId) {
+    public RestResponse deleteMenu(@RequestBody Integer menuId) {
         return sysMenuRepoImpl.deleteMenu(menuId);
     }
 

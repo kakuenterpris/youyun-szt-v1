@@ -46,7 +46,7 @@ public class UserController {
     //todo 删除用户（逻辑删除）
     @PostMapping("/deleteUser")
     @Operation(summary = "删除用户接口")
-    public RestResponse deleteUser(Integer userId) {
+    public RestResponse deleteUser(@RequestBody Integer userId) {
         try {
             busUserInfoService.removeById(userId);
         }catch (Exception e) {

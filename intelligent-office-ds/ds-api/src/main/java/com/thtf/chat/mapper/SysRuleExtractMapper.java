@@ -2,6 +2,7 @@ package com.thtf.chat.mapper;
 
 import com.thtf.chat.entity.SysRuleExtractEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import feign.Param;
 
 /**
 * @author cheng
@@ -10,6 +11,14 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @Entity com.thtf.chat.entity.SysRuleExtractEntity
 */
 public interface SysRuleExtractMapper extends BaseMapper<SysRuleExtractEntity> {
+
+    /**
+     * 根据规则提取 ID 查询关联表的数据个数
+     *
+     * @param ruleExtractId 规则提取 ID
+     * @return 关联表的数据个数
+     */
+    Integer countRuleTagByRuleExtractId(@Param("ruleExtractId") Long ruleExtractId);
 
 }
 

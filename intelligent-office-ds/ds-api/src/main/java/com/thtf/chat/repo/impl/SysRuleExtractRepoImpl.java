@@ -3,17 +3,17 @@ package com.thtf.chat.repo.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.thtf.access.dto.SysRoleDto;
 import com.thtf.access.dto.SysRuleExtractDto;
-import com.thtf.chat.entity.SysRoleEntity;
 import com.thtf.chat.entity.SysRuleExtractEntity;
 import com.thtf.chat.mapper.SysRuleExtractMapper;
 import com.thtf.chat.repo.SysRuleExtractRepo;
 import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 /**
 * @author cheng
@@ -24,6 +24,9 @@ import java.util.Date;
 public class SysRuleExtractRepoImpl extends ServiceImpl<SysRuleExtractMapper, SysRuleExtractEntity>
     implements SysRuleExtractRepo {
 
+    @Autowired
+    private SysRuleExtractMapper sysRuleExtractMapper;
+
     @Override
     public RestResponse pageList(Page<SysRuleExtractEntity> page, SysRuleExtractDto dto) {
         try {
@@ -32,6 +35,22 @@ public class SysRuleExtractRepoImpl extends ServiceImpl<SysRuleExtractMapper, Sy
             roleQuery.eq(dto.getCode() != null, SysRuleExtractEntity::getCode, dto.getCode());
             return RestResponse.success(this.page(page, roleQuery));
         }catch (Exception e){
+            return RestResponse.error("查询失败");
+        }
+    }
+
+    @Override
+    public RestResponse list(SysRuleExtractDto dto) {
+        try {
+            LambdaQueryWrapper<SysRuleExtractEntity> roleQuery = new LambdaQueryWrapper<>();
+            roleQuery.eq(dto.getName() != null, SysRuleExtractEntity::getName, dto.getName());
+            roleQuery.eq(dto.getCode() != null, SysRuleExtractEntity::getCode, dto.getCode());
+            List<SysRuleExtractEntity> list = this.list(roleQuery);
+            for (SysRuleExtractEntity entity : list) {
+                entity.setTagCount(sysRuleExtractMapper.countRuleTagByRuleExtractId(entity.getId()));
+            }
+            return RestResponse.success(list);
+        } catch (Exception e) {
             return RestResponse.error("查询失败");
         }
     }

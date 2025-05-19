@@ -46,5 +46,11 @@ public class SysRuleExtractEntity implements Serializable {
     @TableField(value = "CREATE_TIME")
     private Date createTime;
 
+    /**
+     * 标签数量
+     */
+    @TableField(exist = false)
+    private Integer tagCount;
+
 
 }

@@ -1,6 +1,5 @@
 package com.thtf.chat.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.access.dto.SysRuleTagDto;
 import com.thtf.chat.entity.SysRuleTagEntity;
 import com.thtf.chat.repo.SysRuleTagRepo;
@@ -58,8 +57,8 @@ public class RuleTagController {
 
     @GetMapping("/getRuleTagList")
     @Operation(summary = "获取规则标签列表接口")
-    public RestResponse getRuleTagList(Page<SysRuleTagEntity> page, SysRuleTagDto dto) {
-        return sysRuleTagRepo.pageList(page, dto);
+    public RestResponse getRuleTagList(SysRuleTagDto dto) {
+        return sysRuleTagRepo.list(dto);
     }
 
     @PostMapping("/updateRuleTag")

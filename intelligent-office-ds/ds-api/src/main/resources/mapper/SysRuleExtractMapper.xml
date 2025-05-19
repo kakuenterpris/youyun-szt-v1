@@ -15,4 +15,11 @@
     <sql id="Base_Column_List">
         ID,NAME,CODE,CREATOR,CREATE_TIME
     </sql>
+
+    <select id="countRuleTagByRuleExtractId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM SYS_RULE_TAG
+        WHERE RULE_EXTRACT_ID = #{ruleExtractId}
+    </select>
+
 </mapper>

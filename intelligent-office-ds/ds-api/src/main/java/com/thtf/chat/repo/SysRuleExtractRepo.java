@@ -18,4 +18,6 @@ public interface SysRuleExtractRepo extends IService<SysRuleExtractEntity> {
     RestResponse pageList(Page<SysRuleExtractEntity> page, SysRuleExtractDto vo);
 
     RestResponse saveRuleExtract(SysRuleExtractEntity entity);
+
+    RestResponse list(SysRuleExtractDto dto);
 }

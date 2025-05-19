@@ -14,11 +14,11 @@ import com.thtf.global.common.rest.RestResponse;
 */
 public interface SysRuleTagRepo extends IService<SysRuleTagEntity> {
 
-
     RestResponse pageList(Page<SysRuleTagEntity> page, SysRuleTagDto vo);
 
     RestResponse saveRuleTag(SysRuleTagEntity entity);
 
-
     RestResponse sortRuleTag(Long id, Boolean isUp);
+
+    RestResponse list(SysRuleTagDto dto);
 }

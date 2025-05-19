@@ -37,6 +37,17 @@ public class SysRuleTagRepoImpl extends ServiceImpl<SysRuleTagMapper, SysRuleTag
         }
     }
 
+    @Override
+    public RestResponse list(SysRuleTagDto dto) {
+        try {
+            LambdaQueryWrapper<SysRuleTagEntity> roleQuery = new LambdaQueryWrapper<>();
+            roleQuery.eq(dto.getRuleExtractId() != null, SysRuleTagEntity::getRuleExtractId, dto.getRuleExtractId());
+            return RestResponse.success(this.list(roleQuery));
+        } catch (Exception e) {
+            return RestResponse.error("查询失败");
+        }
+    }
+
 
     public RestResponse saveRuleTag(SysRuleTagEntity entity) {
         if (entity.getRuleExtractId() == null) {

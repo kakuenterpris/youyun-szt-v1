@@ -17,7 +17,7 @@ import java.util.Date;
 
 /**
 * @author cheng
-* @description 针对表【SYS_RULE_EXTRACT_CONFIG(知识规则提取配置)】的数据库操作Service实现
+ * @description 针对表【SYS_RULE_EXTRACT(知识规则提取配置)】的数据库操作Service实现
 * @createDate 2025-05-15 17:47:15
 */
 @Service

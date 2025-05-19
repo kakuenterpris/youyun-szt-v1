@@ -6,9 +6,9 @@ import org.apache.ibatis.annotations.Select;
 
 /**
 * @author cheng
-* @description 针对表【SYS_RULE_EXTRACT_CONFIG_DATA】的数据库操作Mapper
+ * @description 针对表【SYS_RULE_Tag】的数据库操作Mapper
 * @createDate 2025-05-15 17:58:23
-* @Entity com.thtf.chat.entity.SysRuleExtractConfigDataEntity
+ * @Entity com.thtf.chat.entity.SysRuleTagEntity
 */
 public interface SysRuleTagMapper extends BaseMapper<SysRuleTagEntity> {
 

@@ -34,16 +34,13 @@ public class UserController {
     @Autowired
     private SysUserRoleRepo sysUserRoleRepo;
 
-
-    //    用户管理
-    //todo 创建用户
     @PostMapping("/createUser")
     @Operation(summary = "创建用户接口")
     public RestResponse createUser(UserInfoDto user) {
         return busUserInfoService.addUser(user);
     }
 
-    //todo 删除用户（逻辑删除）
+
     @PostMapping("/deleteUser")
     @Operation(summary = "删除用户接口")
     public RestResponse deleteUser(@RequestBody Integer userId) {
@@ -56,7 +53,7 @@ public class UserController {
         return RestResponse.success("删除用户成功");
     }
 
-    //todo 获取用户列表
+
     @GetMapping("/getUserList")
     @Operation(summary = "获取用户列表接口")
     public RestResponse getUserList(Page<UserInfoDto> page,UserInfoVO vo) {
@@ -64,7 +61,7 @@ public class UserController {
         return RestResponse.success(list);
     }
 
-    //todo 获取全部用户列表
+
     @GetMapping("/getAllUserList")
     @Operation(summary = "获取所有用户接口")
     public RestResponse getAllUserList() {
@@ -72,7 +69,7 @@ public class UserController {
         return RestResponse.success(list);
     }
 
-    //todo 获取用户信息
+
     @GetMapping("/getUserInfo")
     @Operation(summary = "获取用户信息接口")
     public RestResponse getUserInfo(Integer userId) {
@@ -81,14 +78,14 @@ public class UserController {
         // 实现获取用户信息的逻辑
     }
 
-    //todo 更新用户信息（包括角色）
+
     @PostMapping("/updateUser")
     @Operation(summary = "更新用户信息（包括角色）接口")
     public RestResponse updateUser(@RequestBody UpdateUserInfoDto user) {
         return busUserInfoService.updateByUserId(user);
     }
 
-    //todo 获取用户权限
+
     @GetMapping("/getUserPermissions")
     @Operation(summary = "获取用户权限接口")
     public RestResponse getUserPermissions(Integer userId) {

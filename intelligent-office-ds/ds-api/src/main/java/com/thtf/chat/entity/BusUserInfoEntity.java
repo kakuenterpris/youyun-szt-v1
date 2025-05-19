@@ -137,7 +137,7 @@ public class BusUserInfoEntity {
      * 人员密级
      */
     @TableField(value = "SECRET_LEVEL")
-    private String secretLevel;
+    private Integer secretLevel;
 
     @Override
     public String toString() {

@@ -27,7 +27,7 @@ public class RuleTagController {
 
     @PostMapping("/createRuleTag")
     @Operation(summary = "创建规则标签接口")
-    public RestResponse createRuleTag(@Validated SysRuleTagEntity entity) {
+    public RestResponse createRuleTag(SysRuleTagEntity entity) {
         return sysRuleTagRepo.saveRuleTag(entity);
     }
 
@@ -63,7 +63,7 @@ public class RuleTagController {
 
     @PostMapping("/updateRuleTag")
     @Operation(summary = "更新规则标签接口")
-    public RestResponse updateRuleTag(@Validated SysRuleTagEntity entity) {
+    public RestResponse updateRuleTag(@RequestBody SysRuleTagEntity entity) {
         try {
             sysRuleTagRepo.updateById(entity);
             return RestResponse.success("更新规则标签成功");
@@ -75,7 +75,7 @@ public class RuleTagController {
 
     @PostMapping("/sortRuleTag")
     @Operation(summary = "排序规则标签接口")
-    public RestResponse sortRuleTag(Long id, Boolean isUp) {
+    public RestResponse sortRuleTag(@RequestParam("id") Long id, @RequestParam("isUp") Boolean isUp) {
         return sysRuleTagRepo.sortRuleTag(id, isUp);
     }
 

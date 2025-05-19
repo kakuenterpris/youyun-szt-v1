@@ -34,7 +34,7 @@ public class RuleExtractController {
 
     @PostMapping("/deleteRuleExtract")
     @Operation(summary = "删除提取规则接口")
-    public RestResponse deleteUser(Integer id) {
+    public RestResponse deleteUser(@RequestBody Integer id) {
         try {
             sysRuleExtractRepo.removeById(id);
         } catch (Exception e) {
@@ -64,7 +64,7 @@ public class RuleExtractController {
 
     @PostMapping("/updateRuleExtract")
     @Operation(summary = "更新提取规则接口")
-    public RestResponse updateUser(@Validated SysRuleExtractEntity entity) {
+    public RestResponse updateUser(@RequestBody SysRuleExtractEntity entity) {
         try {
             sysRuleExtractRepo.updateById(entity);
             return RestResponse.success("更新提取规则成功");

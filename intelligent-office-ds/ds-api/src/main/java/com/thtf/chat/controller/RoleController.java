@@ -3,7 +3,9 @@ package com.thtf.chat.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.access.dto.SysRoleDto;
 import com.thtf.chat.dto.UpdateRoleDto;
+import com.thtf.chat.entity.FolderAuthEntity;
 import com.thtf.chat.entity.SysRoleEntity;
+import com.thtf.chat.repo.FolderAuthRepo;
 import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.global.common.rest.RestResponse;
@@ -32,12 +34,20 @@ public class RoleController {
     @Autowired
     private SysRoleMenuRepo sysRoleMenuRepo;
 
+    @Autowired
+    private FolderAuthRepo folderAuthRepo;
+
 
     @PostMapping("/createRole")
     @Operation(summary = "创建角色接口")
     public RestResponse createRole(SysRoleEntity role) {
         try {
             sysRoleRepo.save(role);
+            List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
+            for (FolderAuthEntity folderAuthEntity : folderAuthList) {
+                folderAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
+            }
+            folderAuthRepo.saveBatch(folderAuthList);
             return RestResponse.success("创建角色成功");
         }catch (Exception e) {
             log.error("创建角色失败", e);

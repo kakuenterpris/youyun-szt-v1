@@ -106,4 +106,7 @@ public class SysRoleEntity implements Serializable {
 
     @TableField(exist = false)
     private List<SysRoleMenuEntity> sysMenuEntityList;
+
+    @TableField(exist = false)
+    private List<FolderAuthEntity> FolderAuthList;
 }

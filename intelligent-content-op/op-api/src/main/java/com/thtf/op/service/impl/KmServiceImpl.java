@@ -458,6 +458,7 @@ public class KmServiceImpl implements KmService {
         //判断权限
         //新建子文件夹权限：父文件夹需设置可以建子文件夹，操作人需要是父文件夹成员或管理员（本级或上级）或者父文件夹为公开文件夹
         //编辑文件夹权限：操作人需要是文件夹的管理员（本级或上级或系统管理员）或者文件夹为公开文件夹
+        //todo 判断父文件夹权限重写
         boolean parentOperateAuth = this.checkSystemAdminAuth(userId) || this.checkFolderAdminAuth(Math.toIntExact(parent.getId()), userId)
                 || this.checkUpFolderAdminAuth(Math.toIntExact(parent.getId()), userId, true) || this.checkMemberViewAuth(Math.toIntExact(parent.getId()), userId);
         if (!parent.getCanAddSub()
@@ -513,18 +514,6 @@ public class KmServiceImpl implements KmService {
             });
         }
         memberRepo.add(dto.getMemberList(), folderId);
-
-        //备份向量化参数
-//        FileEmbeddingConfigDTO embeddingConfig;
-//        String fileEmbeddingConfigCode = StringUtils.isEmpty(dto.getEmbeddingConfigCode()) ? "" : dto.getEmbeddingConfigCode();
-//        embeddingConfig = this.getEmbeddingConfigByConfigCode(fileEmbeddingConfigCode, null);
-//        BusResourceEmbeddingDTO busResourceEmbeddingDTO = embeddingMapping.configDto2Dto(embeddingConfig);
-//        busResourceEmbeddingDTO.setResourceId(Math.toIntExact(folderId));
-//        //文件表和文件夹表拆分后 用 两个表的guid 关联
-//        busResourceEmbeddingDTO.setResourceGuid(newDTO.getGuid());
-//        embeddingRepo.delete(newDTO.getGuid());
-//        embeddingRepo.add(busResourceEmbeddingDTO);
-
         //记录操作日志
         String operateType = edit ? OperateTypeEnum.EDIT.getName() : OperateTypeEnum.ADD.getName();
         ResourceTypeEnum resourceTypeEnum = ResourceTypeEnum.RESOURCE_FOLDER;
@@ -554,10 +543,10 @@ public class KmServiceImpl implements KmService {
             return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "上级文件夹未找到");
         }
         //判断权限
-        BusResourceMemberDTO fileAuth = this.getFileAuth(dto.getFolderId());
-        if (!fileAuth.getIsAdmin() && !fileAuth.getUploadAuth()){
-            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
-        }
+//        BusResourceMemberDTO fileAuth = this.getFileAuth(dto.getFolderId());
+//        if (!fileAuth.getIsAdmin() && !fileAuth.getUploadAuth()){
+//            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
+//        }
 
         List<RagProcessDTO> fileIdList = new ArrayList<>(); // 用于将文件同步到ragflow
         List<ConvertMarkdownDTO> mdList = new ArrayList<>(); // 用于将文件转换为md文件

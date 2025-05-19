@@ -9,6 +9,7 @@ import com.thtf.chat.dto.AssignRolesDTO;
 import com.thtf.chat.dto.UpdateRoleDto;
 import com.thtf.chat.dto.UpdateUserInfoDto;
 import com.thtf.chat.entity.SysRoleEntity;
+import com.thtf.chat.entity.SysRoleMenuEntity;
 import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.chat.mapper.SysRoleMapper;
@@ -35,6 +36,7 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
     @Autowired
     private SysRoleMenuRepo sysRoleMenuRepo;
 
+
     @Override
     public List<SysRoleEntity> getRoleByUserId(Integer userId) {
         return sysRoleMapper.getRoleByUserId(userId);
@@ -46,7 +48,16 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
             LambdaQueryWrapper<SysRoleEntity> roleQuery = new LambdaQueryWrapper<>();
             roleQuery.eq(vo.getRoleName() != null, SysRoleEntity::getRoleName, vo.getRoleName());
             roleQuery.eq(vo.getStatus() != null, SysRoleEntity::getStatus, vo.getStatus());
-            return RestResponse.success(this.page(page, roleQuery));
+            Page<SysRoleEntity> page1 = this.page(page, roleQuery);
+            page1.getRecords().stream().forEach(item -> {
+                Integer roleId = Math.toIntExact(item.getRoleId());
+                LambdaQueryWrapper<SysRoleMenuEntity> sysRoleMenuQuery = new LambdaQueryWrapper<>();
+                sysRoleMenuQuery.eq(SysRoleMenuEntity::getRoleId, roleId);
+                List<SysRoleMenuEntity> list = sysRoleMenuRepo.list(sysRoleMenuQuery);
+                item.setSysMenuEntityList(list);
+            });
+
+            return RestResponse.success(page1);
         }catch (Exception e){
             return RestResponse.error("查询失败");
         }

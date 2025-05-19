@@ -40,11 +40,12 @@
 --         version,is_deleted
     </sql>
     <select id="selectListForLeft" resultType="com.thtf.resource.dto.BusResourceManageListDTO">
-        SELECT *,EXISTS(select id from `bus_resource_favorite`
-                                  where `bus_resource_favorite`.is_deleted=0
-                                    and `bus_resource_favorite`.create_user_id=#{userId}
-                                    and `bus_resource_favorite`.resource_type = sum.resource_type
-                                    and `bus_resource_favorite`.resource_id = sum.id) as favorite
+        SELECT *
+--              ,EXISTS(select 1 from "bus_resource_favorite"
+--         where "bus_resource_favorite".is_deleted=0
+--         and "bus_resource_favorite".create_user_id=#{userId}
+--         and "bus_resource_favorite".resource_type = subquery.resource_type
+--         and "bus_resource_favorite".resource_id = subquery.id) as favorite
         from
         (
         <if test="folderIdList != null and folderIdList.size > 0">
@@ -64,7 +65,7 @@
             </if>
 
             <if test="name != null and name != ''">
-                and `name` like concat('%', #{name}, '%')
+                and "name" like concat('%', #{name}, '%')
             </if>
             and id IN
             <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
@@ -86,7 +87,7 @@
                 a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus
             FROM
             bus_resource_file a
-            LEFT JOIN rel_user_resource b ON a.id = b.resource_file_id
+            LEFT JOIN rel_user_resource as b ON a.id = b.resource_file_id
             WHERE
             a.folder_id = #{parentId}
 
@@ -95,7 +96,7 @@
             </if>
 
             <if test="name != null and name != ''">
-                and a.`name` like concat('%', #{name}, '%')
+                and a."name" like concat('%', #{name}, '%')
             </if>
             <if test="fileYearList != null and fileYearList.size > 0">
                 and a.file_year IN
@@ -110,15 +111,15 @@
                 </foreach>
             </if>
         </if>
-        ) as sum
-        order by sum.resource_type,
+        ) as subquery
+        order by subquery.resource_type,
         <if test="timeSort != ''and timeSort != null">
-             sum.update_time ${timeSort},
+            subquery.update_time ${timeSort},
         </if>
         <if test="nameSort != ''and nameSort != null">
-            sum.name ${nameSort},
+            subquery.name ${nameSort},
         </if>
-        sum.sort
+        subquery.sort
         LIMIT #{begin}, #{end}
     </select>
 

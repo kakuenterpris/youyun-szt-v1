@@ -25,6 +25,7 @@ public class SysRoleMenuEntity implements Serializable {
     private Long menuId;
 
 //    管理权限
+    @TableField(value = "manage_auth")
     private Integer manageAuth;
 
     @TableField(exist = false)

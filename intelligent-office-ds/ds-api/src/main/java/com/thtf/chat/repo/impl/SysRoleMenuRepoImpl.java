@@ -57,7 +57,6 @@ public class SysRoleMenuRepoImpl extends ServiceImpl<SysRoleMenuMapper, SysRoleM
     public RestResponse getByRoleId(Integer roleId) {
         try {
             LambdaQueryWrapper<SysRoleMenuEntity> sysRoleMenuQuery = new LambdaQueryWrapper<>();
-            sysRoleMenuQuery.select(SysRoleMenuEntity::getMenuId);
             sysRoleMenuQuery.eq(SysRoleMenuEntity::getRoleId, roleId);
             return RestResponse.success(this.list(sysRoleMenuQuery));
         } catch (Exception e) {

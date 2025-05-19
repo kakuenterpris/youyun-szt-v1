@@ -27,13 +27,13 @@ public class RuleTagController {
 
     @PostMapping("/createRuleTag")
     @Operation(summary = "创建规则标签接口")
-    public RestResponse createRuleTag(SysRuleTagEntity entity) {
+    public RestResponse createRuleTag(@RequestBody SysRuleTagEntity entity) {
         return sysRuleTagRepo.saveRuleTag(entity);
     }
 
     @PostMapping("/deleteRuleTag")
     @Operation(summary = "删除规则标签接口")
-    public RestResponse deleteRuleTag(Integer id) {
+    public RestResponse deleteRuleTag(@RequestBody Long id) {
         try {
             sysRuleTagRepo.removeById(id);
         } catch (Exception e) {
@@ -45,7 +45,7 @@ public class RuleTagController {
 
     @PostMapping("/deleteBatchRuleTag")
     @Operation(summary = "批量删除规则标签接口")
-    public RestResponse deleteBatchRuleTag(@RequestParam("ruleTagIds") List<Integer> id) {
+    public RestResponse deleteBatchRuleTag(@RequestParam("ruleTagIds") List<Long> id) {
         try {
             sysRuleTagRepo.removeBatchByIds(id);
             return RestResponse.success("删除规则标签成功");

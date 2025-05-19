@@ -5,16 +5,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.thtf.access.dto.SysRoleDto;
 import com.thtf.chat.dto.AssignMenusDTO;
-import com.thtf.chat.dto.AssignRolesDTO;
 import com.thtf.chat.dto.UpdateRoleDto;
-import com.thtf.chat.dto.UpdateUserInfoDto;
 import com.thtf.chat.entity.SysRoleEntity;
 import com.thtf.chat.entity.SysRoleMenuEntity;
 import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.chat.mapper.SysRoleMapper;
 import com.thtf.global.common.rest.RestResponse;
-import org.apache.ibatis.annotations.Select;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +51,7 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
                 LambdaQueryWrapper<SysRoleMenuEntity> sysRoleMenuQuery = new LambdaQueryWrapper<>();
                 sysRoleMenuQuery.eq(SysRoleMenuEntity::getRoleId, roleId);
                 List<SysRoleMenuEntity> list = sysRoleMenuRepo.list(sysRoleMenuQuery);
-                item.setSysMenuEntityList(list);
+                item.setMenuAuth(list);
             });
 
             return RestResponse.success(page1);

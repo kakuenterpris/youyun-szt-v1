@@ -5,6 +5,7 @@ import com.thtf.access.dto.SysRoleDto;
 import com.thtf.chat.dto.UpdateRoleDto;
 import com.thtf.chat.entity.FolderAuthEntity;
 import com.thtf.chat.entity.SysRoleEntity;
+import com.thtf.chat.entity.SysRoleMenuEntity;
 import com.thtf.chat.repo.FolderAuthRepo;
 import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,14 +42,26 @@ public class RoleController {
 
     @PostMapping("/createRole")
     @Operation(summary = "创建角色接口")
-    public RestResponse createRole(SysRoleEntity role) {
+    @Transactional(rollbackFor = Exception.class)
+    public RestResponse createRole(@RequestBody SysRoleEntity role) {
         try {
-            sysRoleRepo.save(role);
-            List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
-            for (FolderAuthEntity folderAuthEntity : folderAuthList) {
-                folderAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
+                sysRoleRepo.save(role);
+                System.out.println(role);
+                List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
+                if (folderAuthList != null && folderAuthList.isEmpty()) {
+                for (FolderAuthEntity folderAuthEntity : folderAuthList) {
+                    folderAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
+                    folderAuthEntity.setId(null); // 清空ID，避免更新
+                }
+                folderAuthRepo.saveBatch(folderAuthList);
             }
-            folderAuthRepo.saveBatch(folderAuthList);
+                if (role.getMenuAuth() != null && role.getMenuAuth().isEmpty()) {
+                    List<SysRoleMenuEntity> menuAuth = role.getMenuAuth();
+                    for (SysRoleMenuEntity sysRoleMenu : menuAuth) {
+                        sysRoleMenu.setRoleId(role.getRoleId());
+                    }
+                    sysRoleMenuRepo.saveBatch(role.getMenuAuth());
+                }
             return RestResponse.success("创建角色成功");
         }catch (Exception e) {
             log.error("创建角色失败", e);

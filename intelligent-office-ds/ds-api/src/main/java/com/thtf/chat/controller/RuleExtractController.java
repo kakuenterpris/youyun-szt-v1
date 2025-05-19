@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -61,8 +58,8 @@ public class RuleExtractController {
 
     @GetMapping("/getRuleExtractList")
     @Operation(summary = "获取提取规则列表接口")
-    public RestResponse getRuleExtractList(Page<SysRuleExtractEntity> page, SysRuleExtractDto dto) {
-        return sysRuleExtractRepo.pageList(page, dto);
+    public RestResponse getRuleExtractList(SysRuleExtractDto dto) {
+        return sysRuleExtractRepo.list(dto);
     }
 
     @PostMapping("/updateRuleExtract")

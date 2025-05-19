@@ -133,23 +133,36 @@ public class BusUserInfoEntity {
     @TableField(value = "locked")
     private Boolean locked;
 
-
+    /**
+     * 人员密级
+     */
+    @TableField(value = "SECRET_LEVEL")
+    private Integer secretLevel;
 
     @Override
     public String toString() {
-//        返回json格式的字符串
-
-        return "{"
-                + "\"id\":" + (id != null ? id : "null") + ","
-                + "\"userId\":\"" + (userId != null ? userId.replace("\"", "\\\"") : "") + "\","
-                + "\"userNum\":\"" + (userNum != null ? userNum.replace("\"", "\\\"") : "") + "\","
-                + "\"loginId\":\"" + (loginId != null ? loginId.replace("\"", "\\\"") : "") + "\","
-                + "\"userName\":\"" + (userName != null ? userName.replace("\"", "\\\"") : "") + "\","
-                + "\"depCode\":\"" + (depCode != null ? depCode.replace("\"", "\\\"") : "") + "\","
-                + "\"depNum\":\"" + (depNum != null ? depNum.replace("\"", "\\\"") : "") + "\","
-                + "\"depName\":\"" + (depName != null ? depName.replace("\"", "\\\"") : "") + "\","
-                + "\"post\":\"" + (post != null ? post.replace("\"", "\\\"") : "") + "\","
-                + "\"specialAuth\":\"" + (specialAuth != null ? specialAuth.replace("\"", "\\\"") : "") + "\""
-                + "}";
+        return "BusUserInfoEntity{" +
+                "id=" + id +
+                ", userId='" + userId + '\'' +
+                ", userNum='" + userNum + '\'' +
+                ", loginId='" + loginId + '\'' +
+                ", encryptLoginId='" + encryptLoginId + '\'' +
+                ", userName='" + userName + '\'' +
+                ", password='" + password + '\'' +
+                ", depCode='" + depCode + '\'' +
+                ", depNum='" + depNum + '\'' +
+                ", depName='" + depName + '\'' +
+                ", postNum='" + postNum + '\'' +
+                ", post='" + post + '\'' +
+                ", mobilePhone='" + mobilePhone + '\'' +
+                ", phone='" + phone + '\'' +
+                ", email='" + email + '\'' +
+                ", specialAuth='" + specialAuth + '\'' +
+                ", createTime=" + createTime +
+                ", lastLogInTime=" + lastLogInTime +
+                ", deleted=" + deleted +
+                ", locked=" + locked +
+                ", secretLevel='" + secretLevel + '\'' +
+                '}';
     }
 }

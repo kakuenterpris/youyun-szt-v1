@@ -33,8 +33,6 @@ public class RoleController {
     private SysRoleMenuRepo sysRoleMenuRepo;
 
 
-    // todo 角色管理
-    //todo 创建角色
     @PostMapping("/createRole")
     @Operation(summary = "创建角色接口")
     public RestResponse createRole(SysRoleEntity role) {
@@ -46,12 +44,12 @@ public class RoleController {
             return RestResponse.error("创建角色失败");
         }
     }
-    //todo 删除角色（逻辑删除）
+
     @PostMapping("/deleteRole")
     @Operation(summary = "删除角色接口")
-    public RestResponse deleteRole(@RequestBody List<Integer> roleId) {
+    public RestResponse deleteRole(@RequestBody List<Integer> roleIds) {
         try {
-            sysRoleRepo.removeBatchByIds(roleId);
+            sysRoleRepo.removeBatchByIds(roleIds);
             return RestResponse.success("删除角色成功");
         }catch (Exception e) {
             log.error("删除角色失败", e);
@@ -59,14 +57,14 @@ public class RoleController {
         }
     }
 
-    //todo 获取角色列表
+
     @GetMapping("/getRoleList")
     @Operation(summary = "获取角色列表接口")
     public RestResponse getRoleList(Page<SysRoleEntity> page, SysRoleDto vo) {
         return sysRoleRepo.pageList(page,vo);
     }
 
-    //todo 获取所有角色列表
+
     @GetMapping("/getRoleAllList")
     @Operation(summary = "获取所有角色列表接口")
     public RestResponse getRoleAllList() {
@@ -80,7 +78,7 @@ public class RoleController {
         return RestResponse.success(list);
     }
 
-    //todo 获取角色信息
+
     @GetMapping("/getRoleInfo")
     @Operation(summary = "获取角色信息接口")
     public RestResponse getRoleInfo(Integer roleId) {
@@ -91,7 +89,7 @@ public class RoleController {
             return RestResponse.error("获取角色信息失败");
         }
     }
-    //todo 更新角色信息
+
     @PostMapping("/updateRole")
     @Operation(summary = "更新角色信息接口")
     public RestResponse updateRole(@RequestBody UpdateRoleDto role) {
@@ -103,7 +101,7 @@ public class RoleController {
             return RestResponse.error("更新角色信息失败");
         }
     }
-    //todo 获取角色菜单id
+
     @GetMapping("/getRoleMenus")
     @Operation(summary = "获取角色菜单id接口")
     public RestResponse getRoleMenus(Integer roleId) {

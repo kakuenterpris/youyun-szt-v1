@@ -1,6 +1,5 @@
 package com.thtf.chat.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.access.dto.SysRuleTagDto;
 import com.thtf.chat.entity.SysRuleTagEntity;
 import com.thtf.chat.repo.SysRuleTagRepo;
@@ -11,10 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -49,7 +45,7 @@ public class RuleTagController {
 
     @PostMapping("/deleteBatchRuleTag")
     @Operation(summary = "批量删除规则标签接口")
-    public RestResponse deleteBatchRuleTag(List<Integer> id) {
+    public RestResponse deleteBatchRuleTag(@RequestParam("ruleTagIds") List<Integer> id) {
         try {
             sysRuleTagRepo.removeBatchByIds(id);
             return RestResponse.success("删除规则标签成功");
@@ -61,8 +57,8 @@ public class RuleTagController {
 
     @GetMapping("/getRuleTagList")
     @Operation(summary = "获取规则标签列表接口")
-    public RestResponse getRuleTagList(Page<SysRuleTagEntity> page, SysRuleTagDto dto) {
-        return sysRuleTagRepo.pageList(page, dto);
+    public RestResponse getRuleTagList(SysRuleTagDto dto) {
+        return sysRuleTagRepo.list(dto);
     }
 
     @PostMapping("/updateRuleTag")

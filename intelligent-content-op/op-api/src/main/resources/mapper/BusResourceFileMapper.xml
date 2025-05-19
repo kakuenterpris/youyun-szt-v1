@@ -41,11 +41,6 @@
     </sql>
     <select id="selectListForLeft" resultType="com.thtf.resource.dto.BusResourceManageListDTO">
         SELECT *
---              ,EXISTS(select 1 from "bus_resource_favorite"
---         where "bus_resource_favorite".is_deleted=0
---         and "bus_resource_favorite".create_user_id=#{userId}
---         and "bus_resource_favorite".resource_type = subquery.resource_type
---         and "bus_resource_favorite".resource_id = subquery.id) as favorite
         from
         (
         <if test="folderIdList != null and folderIdList.size > 0">

@@ -141,28 +141,17 @@ public class BusUserInfoEntity {
 
     @Override
     public String toString() {
-        return "BusUserInfoEntity{" +
-                "id=" + id +
-                ", userId='" + userId + '\'' +
-                ", userNum='" + userNum + '\'' +
-                ", loginId='" + loginId + '\'' +
-                ", encryptLoginId='" + encryptLoginId + '\'' +
-                ", userName='" + userName + '\'' +
-                ", password='" + password + '\'' +
-                ", depCode='" + depCode + '\'' +
-                ", depNum='" + depNum + '\'' +
-                ", depName='" + depName + '\'' +
-                ", postNum='" + postNum + '\'' +
-                ", post='" + post + '\'' +
-                ", mobilePhone='" + mobilePhone + '\'' +
-                ", phone='" + phone + '\'' +
-                ", email='" + email + '\'' +
-                ", specialAuth='" + specialAuth + '\'' +
-                ", createTime=" + createTime +
-                ", lastLogInTime=" + lastLogInTime +
-                ", deleted=" + deleted +
-                ", locked=" + locked +
-                ", secretLevel='" + secretLevel + '\'' +
-                '}';
+        return "{"
+                + "\"id\":" + (id != null ? id : "null") + ","
+                + "\"userId\":\"" + (userId != null ? userId.replace("\"", "\\\"") : "") + "\","
+                + "\"userNum\":\"" + (userNum != null ? userNum.replace("\"", "\\\"") : "") + "\","
+                + "\"loginId\":\"" + (loginId != null ? loginId.replace("\"", "\\\"") : "") + "\","
+                + "\"userName\":\"" + (userName != null ? userName.replace("\"", "\\\"") : "") + "\","
+                + "\"depCode\":\"" + (depCode != null ? depCode.replace("\"", "\\\"") : "") + "\","
+                + "\"depNum\":\"" + (depNum != null ? depNum.replace("\"", "\\\"") : "") + "\","
+                + "\"depName\":\"" + (depName != null ? depName.replace("\"", "\\\"") : "") + "\","
+                + "\"post\":\"" + (post != null ? post.replace("\"", "\\\"") : "") + "\","
+                + "\"specialAuth\":\"" + (specialAuth != null ? specialAuth.replace("\"", "\\\"") : "") + "\""
+                + "}";
     }
 }

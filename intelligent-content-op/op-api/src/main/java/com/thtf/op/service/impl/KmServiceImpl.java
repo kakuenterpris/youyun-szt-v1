@@ -1063,6 +1063,79 @@ public class KmServiceImpl implements KmService {
         return map;
     }
 
+    /**
+     * 移动文件夹
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public RestResponse moveFolder(BusResourceFolderDTO dto) {
+        SystemUser currentUser = ContextUtil.currentUser();
+        String userId = currentUser.getUserId();
+        if (null == dto) {
+            return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "参数为空");
+        }
+        BusResourceFolderEntity origin = folderRepo.getById(dto.getId());
+        Long folderId = origin.getId();
+
+        // 查父ID文件类型
+        BusResourceFolderEntity parent = folderRepo.getById(dto.getParentId());
+        if (null == parent) {
+            return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "上级文件夹未找到");
+        }
+        //判断权限
+        //编辑文件夹权限：操作人需要是文件夹的管理员（本级或上级或系统管理员）
+//        if (!parent.getCanAddSub()){
+//            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "移动失败，所选上级文件夹下不允许创建下级文件夹");
+//        }
+//        Boolean systemAdminAuth = this.checkSystemAdminAuth(userId);
+//        boolean openView = FolderViewTypeEnum.OPEN.getCode().equals(parent.getOpenView());
+//        boolean parentOperateAuth = systemAdminAuth || this.checkFolderAdminAuth(Math.toIntExact(parent.getId()), userId)
+//                || this.checkUpFolderAdminAuth(Math.toIntExact(parent.getId()), userId, true)
+//                || (parent.getCanAddSub() && (openView || this.checkMemberAuth(Math.toIntExact(parent.getId()), userId)));
+//        boolean currentOperateAuth = systemAdminAuth || this.checkFolderAdminAuth(Math.toIntExact(folderId), userId)
+//                || this.checkUpFolderAdminAuth(Math.toIntExact(folderId), userId, true);
+//        if (!parentOperateAuth || !currentOperateAuth) {
+//            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
+//        }
+        dto.setParentGuid(parent.getGuid());
+
+        //编辑
+        if (origin.getParentId().equals(dto.getParentId())) {
+            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "请选择新的上级文件夹");
+        }
+        //检查循环
+        List<BusResourceManageListDTO> allList = Linq.select(folderRepo.listAll(true), folderMapping::dto2ListDto);
+        List<BusResourceManageListDTO> childList = TreeNodeServiceImpl.getChildrenList(allList, Math.toIntExact(origin.getId()));
+        List<Integer> idList = Linq.select(childList, BusResourceManageListDTO::getId);
+        idList.add(Math.toIntExact(origin.getId()));
+        if (idList.contains(dto.getParentId())) {
+            return RestResponse.fail(DefaultErrorCode.UPDATE_ERROR.getCode(), "修改失败，上级文件夹选择不符合规范");
+        }
+
+        boolean a=folderRepo.updateParent(dto);
+
+        // 原父节点
+        BusResourceFolderEntity parentRepo = folderRepo.getById(origin.getParentId());
+
+        //记录操作日志
+        String optType = OperateTypeEnum.MOVE.getName();
+        ResourceTypeEnum resourceTypeEnum = ResourceTypeEnum.RESOURCE_FOLDER;
+        String operateContent = "将" + origin.getName() + resourceTypeEnum.getName() + "从" + parentRepo.getName() + "文件夹" + optType + "到" + parent.getName() + "文件夹";
+        // 移动之前文件的父节点的所有日志
+        boolean b = sysOptLogRepo.saveLogByIdAndParentId(folderId, Long.valueOf(origin.getParentId()), Long.valueOf(parentRepo.getParentId()));
+        // 移动日志
+        boolean b1 = sysOptLogRepo.saveLog(operateContent, Long.valueOf(origin.getParentId()), Long.valueOf(parentRepo.getParentId()), optType, resourceTypeEnum.getCode());
+
+        // 记录日志前更新文件日志的原父节点为新父节点（避免移动文件后丢失原操作日志）
+        sysOptLogRepo.updateParentId(folderId, Long.valueOf(origin.getParentId()), Long.valueOf(dto.getParentId()));
+
+        // 移动之后文件的日志
+        boolean b2 = sysOptLogRepo.saveLog(operateContent, folderId, Long.valueOf(dto.getParentId()), optType, resourceTypeEnum.getCode());
+        String msg = ContextUtil.getUserName() + operateContent;
+        log.info("{}，操作结果：{}", msg, b && b1 && b2 ? "成功" : "失败");
+        return RestResponse.success(origin.getGuid());
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

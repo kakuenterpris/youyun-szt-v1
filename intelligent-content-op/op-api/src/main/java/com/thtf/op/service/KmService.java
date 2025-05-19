@@ -115,4 +115,6 @@ public interface KmService {
      *
      */
     RestResponse syncDifyDocument(String datasetId, Integer parentId);
+
+    RestResponse moveFolder(BusResourceFolderDTO dto);
 }

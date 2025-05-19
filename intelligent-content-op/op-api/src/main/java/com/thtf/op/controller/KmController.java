@@ -199,6 +199,11 @@ public class KmController {
         return service.getResourceEmbedInfo(resourceGuid);
     }
 
+    @PostMapping("/moveFolder")
+    public RestResponse moveFolder(@RequestBody BusResourceFolderDTO dto) {
+        return service.moveFolder(dto);
+    }
+
     /**
      * 移动节点
      *

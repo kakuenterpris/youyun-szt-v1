@@ -127,6 +127,16 @@ public class BusResourceFolderRepoImpl extends ServiceImpl<BusResourceFolderMapp
                 .list();
         return Linq.select(list, folderMapping::entity2Dto);
     }
+
+    @Override
+    public boolean updateParent(BusResourceFolderDTO dto) {
+        return lambdaUpdate()
+                .set(BusResourceFolderEntity::getParentId, dto.getParentId())
+                .set(BusResourceFolderEntity::getParentGuid, dto.getParentGuid())
+                .eq(BusResourceFolderEntity::getId, dto.getId())
+                .eq(BusResourceFolderEntity::getDeleted, false)
+                .update(new BusResourceFolderEntity());
+    }
 }
 
 

@@ -56,4 +56,5 @@ public interface BusResourceFolderRepo extends IService<BusResourceFolderEntity>
 
     List<BusResourceFolderDTO> listByParentId(Long parentId);
 
+    boolean updateParent(BusResourceFolderDTO dto);
 }

@@ -2,8 +2,11 @@ package com.thtf.access.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class SysRuleTagDto {
+    private List<Long> ids;
 
     private Long id;
 

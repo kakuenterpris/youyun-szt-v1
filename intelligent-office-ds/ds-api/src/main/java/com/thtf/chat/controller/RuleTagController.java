@@ -1,5 +1,6 @@
 package com.thtf.chat.controller;
 
+import com.thtf.access.dto.SysRuleExtractDto;
 import com.thtf.access.dto.SysRuleTagDto;
 import com.thtf.chat.entity.SysRuleTagEntity;
 import com.thtf.chat.repo.SysRuleTagRepo;
@@ -33,9 +34,9 @@ public class RuleTagController {
 
     @PostMapping("/deleteRuleTag")
     @Operation(summary = "删除规则标签接口")
-    public RestResponse deleteRuleTag(@RequestBody Long id) {
+    public RestResponse deleteRuleTag(@RequestBody SysRuleTagDto dto) {
         try {
-            sysRuleTagRepo.removeById(id);
+            sysRuleTagRepo.removeById(dto.getId());
         } catch (Exception e) {
             log.error("删除规则标签失败", e);
             return RestResponse.error("删除规则标签失败");
@@ -75,8 +76,8 @@ public class RuleTagController {
 
     @PostMapping("/sortRuleTag")
     @Operation(summary = "排序规则标签接口")
-    public RestResponse sortRuleTag(@RequestParam("id") Long id, @RequestParam("isUp") Boolean isUp) {
-        return sysRuleTagRepo.sortRuleTag(id, isUp);
+    public RestResponse sortRuleTag(@RequestBody SysRuleTagDto dto) {
+        return sysRuleTagRepo.sortRuleTag(dto.getId(), dto.getIsUp());
     }
 
 

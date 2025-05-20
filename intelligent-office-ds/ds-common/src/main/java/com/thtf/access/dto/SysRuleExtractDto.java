@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class SysRuleExtractDto {
+    private Long id;
 
     private String name;
 

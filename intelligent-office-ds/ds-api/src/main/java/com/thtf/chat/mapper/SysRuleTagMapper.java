@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Select;
 */
 public interface SysRuleTagMapper extends BaseMapper<SysRuleTagEntity> {
 
-    @Select("SELECT MAX(sort) FROM SYS_RULE_TAG")
+    @Select("SELECT NVL(MAX(sort), 0) FROM SYS_RULE_TAG")
     Integer selectMaxSort();
 }
 

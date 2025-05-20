@@ -11,6 +11,7 @@ import com.thtf.chat.mapper.SysRuleTagMapper;
 import com.thtf.chat.repo.SysRuleTagRepo;
 import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
+import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,16 +80,11 @@ public class SysRuleTagRepoImpl extends ServiceImpl<SysRuleTagMapper, SysRuleTag
             }
         }
 
-        //判断是否存在相同排序的标签
-        for (SysRuleTagEntity tag : list) {
-            if (tag.getSort().equals(entity.getSort())) {
-                return RestResponse.error("标签排序已存在");
-            }
-        }
-
         try {
             entity.setCreateTime(new Date());
             entity.setCreator(ContextUtil.getUserId());
+            Integer i = this.baseMapper.selectMaxSort();
+            entity.setSort(i + 1);
             save(entity);
             return RestResponse.success("创建提取规则成功");
         } catch (Exception e) {
@@ -108,13 +104,15 @@ public class SysRuleTagRepoImpl extends ServiceImpl<SysRuleTagMapper, SysRuleTag
 
         LambdaQueryWrapper<SysRuleTagEntity> queryWrapper;
         if (isUp) {
-            if (currentSort <= 1) {
+            if (currentSort <= 0) {
                 // 已经是第一个标签，无需交换排序值
                 return RestResponse.success("已经是第一个标签，无需交换排序值");
             }
             // 查询上一个标签
             queryWrapper = Wrappers.lambdaQuery(SysRuleTagEntity.class)
-                    .eq(SysRuleTagEntity::getSort, currentSort - 1);
+                    .lt(SysRuleTagEntity::getSort, currentSort)
+                    .orderByDesc(SysRuleTagEntity::getSort)
+                    .last("LIMIT 1");
         } else {
             // 查询最大排序值
             Integer maxSort = this.getBaseMapper().selectMaxSort();
@@ -123,7 +121,9 @@ public class SysRuleTagRepoImpl extends ServiceImpl<SysRuleTagMapper, SysRuleTag
             }
             // 查询下一个标签
             queryWrapper = Wrappers.lambdaQuery(SysRuleTagEntity.class)
-                    .eq(SysRuleTagEntity::getSort, currentSort + 1);
+                    .gt(SysRuleTagEntity::getSort, currentSort)
+                    .orderByAsc(SysRuleTagEntity::getSort)
+                    .last("LIMIT 1");
         }
 
         SysRuleTagEntity tag2 = this.getOne(queryWrapper);

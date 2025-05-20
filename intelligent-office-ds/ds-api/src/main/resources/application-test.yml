@@ -88,6 +88,10 @@ ai:
   data-center-chat-api: http://119.254.155.240:18090/v1/chat-messages
 
 
+
+ragflow:
+  commonUrl: http://101.52.216.178/v1
+
 # api-key
 apikey:
   # 智能助手

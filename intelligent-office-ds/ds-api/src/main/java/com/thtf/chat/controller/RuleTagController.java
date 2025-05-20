@@ -46,9 +46,9 @@ public class RuleTagController {
 
     @PostMapping("/deleteBatchRuleTag")
     @Operation(summary = "批量删除规则标签接口")
-    public RestResponse deleteBatchRuleTag(@RequestParam("ruleTagIds") List<Long> id) {
+    public RestResponse deleteBatchRuleTag(@RequestBody SysRuleTagDto dto) {
         try {
-            sysRuleTagRepo.removeBatchByIds(id);
+            sysRuleTagRepo.removeBatchByIds(dto.getIds());
             return RestResponse.success("删除规则标签成功");
         } catch (Exception e) {
             log.error("删除规则标签失败", e);

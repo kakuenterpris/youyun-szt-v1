@@ -207,7 +207,7 @@ public class KmServiceImpl implements KmService {
             List<Integer> canViewList = (List<Integer>) CollectionUtils.intersection(childIds, canViewIds);
             query.setParentId(null);
             result = fileRepo.selectFileList(canViewList, query, notDelete);
-            count = fileRepo.selectFileListCount(canViewList, query, notDelete);
+            count = result.size();
             return RestResponse.success(result, count);
 
 

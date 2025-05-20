@@ -71,9 +71,9 @@ public class RoleController {
 
     @PostMapping("/deleteRole")
     @Operation(summary = "删除角色接口")
-    public RestResponse deleteRole(@RequestBody List<Integer> roleIds) {
+    public RestResponse deleteRole(@RequestBody SysRoleDto dto) {
         try {
-            sysRoleRepo.removeBatchByIds(roleIds);
+            sysRoleRepo.removeBatchByIds(dto.getRoleIds());
             return RestResponse.success("删除角色成功");
         }catch (Exception e) {
             log.error("删除角色失败", e);

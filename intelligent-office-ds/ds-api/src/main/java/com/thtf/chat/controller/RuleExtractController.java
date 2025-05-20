@@ -34,9 +34,9 @@ public class RuleExtractController {
 
     @PostMapping("/deleteRuleExtract")
     @Operation(summary = "删除提取规则接口")
-    public RestResponse deleteUser(@RequestBody Long id) {
+    public RestResponse deleteRuleExtract(@RequestBody SysRuleExtractDto dto) {
         try {
-            sysRuleExtractRepo.removeById(id);
+            sysRuleExtractRepo.removeById(dto.getId());
         } catch (Exception e) {
             log.error("删除提取规则失败", e);
             return RestResponse.error("删除提取规则失败");
@@ -46,7 +46,7 @@ public class RuleExtractController {
 
     @PostMapping("/deleteBatchRuleExtract")
     @Operation(summary = "批量删除提取规则接口")
-    public RestResponse deleteRole(List<Long> id) {
+    public RestResponse deleteBatchRuleExtract(List<Long> id) {
         try {
             sysRuleExtractRepo.removeBatchByIds(id);
             return RestResponse.success("删除提取规则成功");
@@ -64,7 +64,7 @@ public class RuleExtractController {
 
     @PostMapping("/updateRuleExtract")
     @Operation(summary = "更新提取规则接口")
-    public RestResponse updateUser(@RequestBody SysRuleExtractEntity entity) {
+    public RestResponse updateRuleExtract(@RequestBody SysRuleExtractEntity entity) {
         try {
             sysRuleExtractRepo.updateById(entity);
             return RestResponse.success("更新提取规则成功");

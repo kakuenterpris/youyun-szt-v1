@@ -34,6 +34,15 @@ spring:
     multipart:
       max-file-size: 300MB
       max-request-size: 300MB
+
+  # rabbitmq配置
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
   #  # 服务注册与发现配置
   cloud:
     nacos:

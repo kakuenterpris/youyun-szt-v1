@@ -139,6 +139,12 @@ public class BusUserInfoEntity {
     @TableField(value = "SECRET_LEVEL")
     private Integer secretLevel;
 
+    /**
+     * 登录失败次数
+     */
+    @TableField(value = "LOGIN_FAIL_COUNT")
+    private Integer loginFailCount;
+
     @Override
     public String toString() {
         return "{"

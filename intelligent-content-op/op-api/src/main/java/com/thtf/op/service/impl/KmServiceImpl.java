@@ -461,17 +461,17 @@ public class KmServiceImpl implements KmService {
         //新建子文件夹权限：父文件夹需设置可以建子文件夹，操作人需要是父文件夹成员或管理员（本级或上级）或者父文件夹为公开文件夹
         //编辑文件夹权限：操作人需要是文件夹的管理员（本级或上级或系统管理员）或者文件夹为公开文件夹
         //todo 判断父文件夹权限重写
-        boolean parentOperateAuth = this.checkSystemAdminAuth(userId) || this.checkFolderAdminAuth(Math.toIntExact(parent.getId()), userId)
-                || this.checkUpFolderAdminAuth(Math.toIntExact(parent.getId()), userId, true) || this.checkMemberViewAuth(Math.toIntExact(parent.getId()), userId);
-        if (!parent.getCanAddSub()
-                || (!parent.getOpenView() && !parentOperateAuth)){
-            if (!parent.getCanAddSub() || !edit || !origin.getOpenView() && !this.checkFolderAdminAuth(Math.toIntExact(folderId), userId)) {
-                return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
-            }
-        }
+//        boolean parentOperateAuth = this.checkSystemAdminAuth(userId) || this.checkFolderAdminAuth(Math.toIntExact(parent.getId()), userId)
+//                || this.checkUpFolderAdminAuth(Math.toIntExact(parent.getId()), userId, true) || this.checkMemberViewAuth(Math.toIntExact(parent.getId()), userId);
+//        if (!parent.getCanAddSub()
+//                || (!parent.getOpenView() && !parentOperateAuth)){
+//            if (!parent.getCanAddSub() || !edit || !origin.getOpenView() && !this.checkFolderAdminAuth(Math.toIntExact(folderId), userId)) {
+//                return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
+//            }
+//        }
         dto.setParentGuid(parent.getGuid());
 
-        //编辑
+        //编辑移动操作
         if (edit && !origin.getParentId().equals(dto.getParentId())) {
             boolean originOperateAuth = this.checkSystemAdminAuth(userId) || this.checkFolderAdminAuth(Math.toIntExact(folderId), userId)
                     || this.checkUpFolderAdminAuth(Math.toIntExact(folderId), userId, true);
@@ -487,6 +487,7 @@ public class KmServiceImpl implements KmService {
                 return RestResponse.fail(DefaultErrorCode.UPDATE_ERROR.getCode(), "修改失败，上级文件夹选择不符合规范");
             }
         }
+        //改名或者新建操作
         if (!edit || !origin.getName().equals(name)) {
             //处理重复名字
             List<BusResourceFolderDTO> otherCode = folderRepo.listByParentId(parent.getId());

@@ -103,10 +103,14 @@ public class SysRoleEntity implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
-
+    /**
+     * 菜单权限
+     */
     @TableField(exist = false)
     private List<SysRoleMenuEntity> menuAuth;
-
+    /**
+     * 文件夹权限
+     */
     @TableField(exist = false)
-    private List<FolderAuthEntity> FolderAuthList;
+    private List<FolderAuthEntity> folderAuthList;
 }

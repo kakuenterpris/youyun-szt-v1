@@ -74,8 +74,8 @@ spring.ai.openai.base-url: https://api.deepseek.com
 spring.ai.openai.chat.options.model: deepseek-chat
 #file.base.path: /data
 #file.temp.path: /data/temp/
-file.base.path: /data/project/intelligent-office/backend/content/data
-file.temp.path: /data/project/intelligent-office/backend/content/data/temp/
+file.base.path: /home/agentweb/web/intelligent-office/backend/content/data
+file.temp.path: /home/agentweb/web/intelligent-office/backend/content/data/temp/
 
 
 youyun.doc.apikey: dataset-dezUJfSWgpETM8niLddTZboD

@@ -1,10 +1,7 @@
 package com.thtf.op.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.util.Date;
 
 import com.thtf.global.common.entity.BaseEntity;
 import lombok.Data;
@@ -83,4 +80,10 @@ public class BusResourceFileEntity extends BaseEntity {
      */
     @TableField(value = "preview_file_id")
     private String previewFileId;
+
+    /**
+     * 密级
+     */
+    @TableField(value = "level")
+    private Integer level;
 }

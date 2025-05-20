@@ -115,4 +115,9 @@ public class BusResourceFileDTO {
      * 乐观锁版本号
      */
     private Integer version;
+
+    /**
+     * 密级
+     */
+    private Integer level;
 }

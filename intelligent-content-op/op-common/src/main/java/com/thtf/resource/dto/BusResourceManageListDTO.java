@@ -222,4 +222,15 @@ public class BusResourceManageListDTO extends BaseTreeNodeVO {
      */
     private Boolean favorite;
 
+    /**
+     * 密级
+     */
+    private String level;
+
+    /**
+     * 提取状态
+     */
+    private String embedStatus;
+
+
 }

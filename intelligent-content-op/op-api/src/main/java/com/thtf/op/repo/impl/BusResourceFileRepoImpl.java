@@ -154,6 +154,7 @@ public class BusResourceFileRepoImpl extends ServiceImpl<BusResourceFileMapper, 
     public List<BusResourceManageListDTO> selectFileList(List<Integer> folderIdList, QueryDTO query, boolean notDelete) {
         return fileMapper.selectFileList(ContextUtil.getUserId(), query.getName(), query.getFileYearList(),
                 query.getEmbeddingConfigNameList(), folderIdList,
+                query.getLevel(),query.getEmbeddingStatus(),query.getIndexingStatus(),
                 (query.getPageNum() - 1) * query.getPageSize(), query.getPageSize(),
                 query.getTimeSort(), query.getNameSort(), notDelete);
     }

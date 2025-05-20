@@ -26,6 +26,7 @@ public interface BusResourceFileMapper extends BaseMapper<BusResourceFileEntity>
 
     List<BusResourceManageListDTO> selectFileList(String userId, String name, List<Integer> fileYearList,
                                                   List<String> embeddingConfigNameList, List<Integer> folderIdList,
+                                                  Integer level,Integer embeddingStatus,Integer indexingStatus,
                                                   Integer begin, Integer end, String timeSort, String nameSort,
                                                   Boolean notDelete);
     Integer selectFileListCount(String name, List<Integer> fileYearList,

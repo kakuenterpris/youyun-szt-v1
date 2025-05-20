@@ -193,7 +193,7 @@ public class KmServiceImpl implements KmService {
         Integer count = 0;
 
         // 查询操作 查看父文件目录下左右匹配的文件夹和目录
-        if (StringUtils.isNotEmpty(query.getName())) {
+        if (StringUtils.isNotEmpty(query.getName())||query.getIndexingStatus()!=null||query.getEmbeddingStatus()!=null||query.getLevel()!=null) {
             List<BusResourceManageListDTO> childList = TreeNodeServiceImpl.getChildrenList(allList, parentId);
             List<Integer> childIds = Linq.select(childList, BusResourceManageListDTO::getId);
             List<Integer> memberFolderIds = Linq.select(memberRepo.listMemberAndViewAuthByUser(userId), BusResourceMemberDTO::getFolderId);
@@ -209,6 +209,8 @@ public class KmServiceImpl implements KmService {
             result = fileRepo.selectFileList(canViewList, query, notDelete);
             count = fileRepo.selectFileListCount(canViewList, query, notDelete);
             return RestResponse.success(result, count);
+
+
         } else {
             if (systemAdminAuth || this.checkFolderAdminAuth(parentId, userId) ||
                     this.checkUpFolderAdminAuth(parentId, userId, notDelete)) {
@@ -793,11 +795,12 @@ public class KmServiceImpl implements KmService {
         }
 
         fileRepo.delete(id);
+    //todo   知识库删除
 
-        RelUserResourceDTO document = relUserResourceRepo.getOneByResourceFileId(id);
-        if (null != document) {
-            resourceProcessService.delete(Long.valueOf(id), document.getDocumentId(), document.getFileId(), file.getEmbeddingConfigCode());
-        }
+//        RelUserResourceDTO document = relUserResourceRepo.getOneByResourceFileId(id);
+//        if (null != document) {
+//            resourceProcessService.delete(Long.valueOf(id), document.getDocumentId(), document.getFileId(), file.getEmbeddingConfigCode());
+//        }
         relUserResourceRepo.deleteByResourceFileId(id);
 
         //记录操作日志

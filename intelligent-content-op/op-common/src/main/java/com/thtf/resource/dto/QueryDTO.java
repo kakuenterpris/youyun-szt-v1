@@ -66,4 +66,18 @@ public class QueryDTO {
      * 更新时间
      */
     private String timeSort;
+
+    /**
+     * 知识提取状态
+     */
+    private Integer embeddingStatus;
+
+    /**
+     * 向量化状态
+     */
+    private Integer indexingStatus;
+    /**
+     * 文件密级
+     */
+    private Integer level;
 }

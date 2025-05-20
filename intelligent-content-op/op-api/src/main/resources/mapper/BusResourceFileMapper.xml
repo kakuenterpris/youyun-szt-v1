@@ -190,11 +190,7 @@
 
     <!--    搜索-->
     <select id="selectFileList" resultType="com.thtf.resource.dto.BusResourceManageListDTO">
-        SELECT *,EXISTS(select id from `bus_resource_favorite`
-                            where `bus_resource_favorite`.is_deleted=0
-                            and `bus_resource_favorite`.create_user_id=#{userId}
-                            and `bus_resource_favorite`.resource_type = sum.resource_type
-                            and `bus_resource_favorite`.resource_id = sum.id) as favorite
+        SELECT *
         from
         (
         select
@@ -218,8 +214,11 @@
         <if test="notDelete == true">
             AND a.is_deleted = 0
         </if>
+        <if test="level != null and level != ''">
+            and a.level= #{level}
+        </if>
         <if test="name != null and name != ''">
-            and a.`name` like concat('%', #{name}, '%')
+            and a.name like concat('%', #{name}, '%')
         </if>
         <if test="fileYearList != null and fileYearList.size > 0">
             and a.file_year IN
@@ -233,15 +232,15 @@
                 #{embeddingConfigName}
             </foreach>
         </if>
-        ) as sum
-        order by sum.resource_type,
+        ) as subquery
+        order by subquery.resource_type,
         <if test="timeSort != ''and timeSort != null">
-            sum.update_time ${timeSort},
+            subquery.update_time ${timeSort},
         </if>
         <if test="nameSort != ''and nameSort != null">
-            sum.name ${nameSort},
+            subquery.name ${nameSort},
         </if>
-        sum.sort
+        subquery.sort
         LIMIT #{begin}, #{end}
     </select>
 
@@ -261,7 +260,7 @@
             AND a.is_deleted = 0
         </if>
         <if test="name != null and name != ''">
-            and a.`name` like concat('%', #{name}, '%')
+            and a.name like concat('%', #{name}, '%')
         </if>
         <if test="fileYearList != null and fileYearList.size > 0">
             and a.file_year IN

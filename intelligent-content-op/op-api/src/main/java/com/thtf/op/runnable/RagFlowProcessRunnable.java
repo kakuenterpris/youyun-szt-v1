@@ -101,8 +101,8 @@ public class RagFlowProcessRunnable implements Runnable {
         String fileName = fileUploadRecordDTO.getFileName();
         String originalName = fileUploadRecordDTO.getOriginName();
         // 获取文件流全路径
-//        String filePath = fileBasePath + File.separator + path + fileName;
-        String filePath = fileBasePath + path + fileName;
+        String filePath = fileBasePath + File.separator + path + fileName;
+//        String filePath = fileBasePath + path + fileName;
         File file = new File(filePath);
         if (!file.exists()) {
             // 更新资源状态为上传失败

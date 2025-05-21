@@ -122,4 +122,7 @@ public class BusUserInfoEntity {
      */
     @TableField(value = "is_deleted")
     private Boolean isDeleted;
+
+    @TableField(value = "SECRET_LEVEL")
+    private Integer secretLevel;
 }

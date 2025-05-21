@@ -2,6 +2,9 @@ package com.thtf.op.repo;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.thtf.op.entity.FileAuthEntity;
+import com.thtf.resource.dto.BusResourceMemberDTO;
+
+import java.util.List;
 
 
 /**
@@ -10,5 +13,7 @@ import com.thtf.op.entity.FileAuthEntity;
 * @createDate 2025-05-20 18:56:18
 */
 public interface FileAuthRepo extends IService<FileAuthEntity> {
+// 根据用户ID获取文件ID列表
+    List<FileAuthEntity> listFileIdByUser(String userId);
 
 }

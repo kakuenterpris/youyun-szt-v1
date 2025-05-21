@@ -126,4 +126,14 @@ public class BusResourceFileDTO {
      * 知悉范围
      */
     private List<Integer> scope;
+
+    /**
+     * 知悉规则
+     */
+    private String scopeRule;
+
+    /**
+     * 年限
+     */
+    private Integer year;
 }

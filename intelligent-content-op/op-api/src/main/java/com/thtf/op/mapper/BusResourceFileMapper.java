@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.thtf.resource.dto.BusResourceManageListDTO;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,8 +26,8 @@ public interface BusResourceFileMapper extends BaseMapper<BusResourceFileEntity>
 
 
     List<BusResourceManageListDTO> selectFileList(String userId, String name, List<Integer> fileYearList,
-                                                  List<String> embeddingConfigNameList, List<Integer> folderIdList,
-                                                  Integer level,Integer embeddingStatus,Integer indexingStatus,
+                                                  List<String> embeddingConfigNameList, List<Integer> folderIdList,List<Integer> fileIdList,
+                                                  String level, String embeddingStatus, String indexingStatus, Date startTime, Date endTime,
                                                   Integer begin, Integer end, String timeSort, String nameSort,
                                                   Boolean notDelete);
     Integer selectFileListCount(String name, List<Integer> fileYearList,

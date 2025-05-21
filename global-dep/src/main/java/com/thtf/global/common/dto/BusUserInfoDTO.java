@@ -1,5 +1,6 @@
 package com.thtf.global.common.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.util.Date;

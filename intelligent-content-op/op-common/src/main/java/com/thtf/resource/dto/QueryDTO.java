@@ -1,5 +1,6 @@
 package com.thtf.resource.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.util.Date;
@@ -58,6 +59,17 @@ public class QueryDTO {
     private List<String> authDepNumList;
 
     /**
+     * 开始时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date startTime;
+
+    /**
+     * 结束时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date endTime;
+    /**
      * 创建时间
      */
     private String nameSort;
@@ -70,14 +82,14 @@ public class QueryDTO {
     /**
      * 知识提取状态
      */
-    private Integer embeddingStatus;
+    private String embeddingStatus;
 
     /**
      * 向量化状态
      */
-    private Integer indexingStatus;
+    private String indexingStatus;
     /**
      * 文件密级
      */
-    private Integer level;
+    private String level;
 }

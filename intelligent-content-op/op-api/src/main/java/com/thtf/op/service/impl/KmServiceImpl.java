@@ -1,10 +1,12 @@
 package com.thtf.op.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.gson.Gson;
 import com.thtf.emdedding.dto.FileUploadRecordDTO;
 import com.thtf.emdedding.dto.RagProcessDTO;
 import com.thtf.feign.client.FileApi;
+import com.thtf.global.common.dto.BusUserInfoDTO;
 import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.DefaultErrorCode;
@@ -12,6 +14,7 @@ import com.thtf.global.common.rest.RestResponse;
 import com.thtf.global.common.utils.Linq;
 import com.thtf.login.enums.UserSpecialAuthEnum;
 import com.thtf.op.entity.*;
+import com.thtf.op.enums.FileScopeTypeEnum;
 import com.thtf.op.mapper.FileEmbeddingConfigMapper;
 import com.thtf.op.mapper.FileUploadRecordMapper;
 import com.thtf.op.mappings.BusResourceEmbeddingMapping;
@@ -21,6 +24,7 @@ import com.thtf.op.mappings.BusResourceManageMapping;
 import com.thtf.op.properties.AiConfigProperties;
 import com.thtf.op.properties.ApikeyConfigProperties;
 import com.thtf.op.repo.*;
+import com.thtf.op.repo.impl.BusUserInfoRepoImpl;
 import com.thtf.op.runnable.ConvertMarkdownRunnable;
 import com.thtf.op.service.KmService;
 import com.thtf.op.service.RagFlowProcessService;
@@ -198,16 +202,18 @@ public class KmServiceImpl implements KmService {
             List<BusResourceManageListDTO> childList = TreeNodeServiceImpl.getChildrenList(allList, parentId);
             List<Integer> childIds = Linq.select(childList, BusResourceManageListDTO::getId);
             List<Integer> memberFolderIds = Linq.select(memberRepo.listMemberAndViewAuthByUser(userId), BusResourceMemberDTO::getFolderId);
-            List<Integer> canViewIds = memberFolderIds;
-            canViewIds.addAll(adminFolderIds);
-            canViewIds.addAll(Linq.select(Linq.find(childList, BusResourceManageListDTO::getOpenView), BusResourceManageListDTO::getId));
+            List<Integer> canViewFolderIds = memberFolderIds;
+            canViewFolderIds.addAll(adminFolderIds);
+            canViewFolderIds.addAll(Linq.select(Linq.find(childList, BusResourceManageListDTO::getOpenView), BusResourceManageListDTO::getId));
             //要查看的文件夹下的所有层级的有权限查看的文件夹
+            List<Integer> canViewfiles = Linq.select(fileAuthRepo.listFileIdByUser(userId), FileAuthEntity::getFileId);
+            //要查看的文件夹下的所有层级的有权限查看的
             if (systemAdminAuth){
-                canViewIds = childIds;
+                canViewFolderIds = childIds;
             }
-            List<Integer> canViewList = (List<Integer>) CollectionUtils.intersection(childIds, canViewIds);
+            List<Integer> canViewList = (List<Integer>) CollectionUtils.intersection(childIds, canViewFolderIds);
             query.setParentId(null);
-            result = fileRepo.selectFileList(canViewList, query, notDelete);
+            result = fileRepo.selectFileList(canViewList,canViewfiles, query, notDelete);
             count = result.size();
             return RestResponse.success(result, count);
 
@@ -575,7 +581,23 @@ public class KmServiceImpl implements KmService {
                 fileDTO.setFolderId(dto.getFolderId());
                 if (add) {
                     resourceFileId = fileRepo.add(fileDTO);
-//                    保存文件知悉范围
+                    //根据知悉规则设置知悉范围
+                    String scopeRule = fileDTO.getScopeRule();
+                    if (!FileScopeTypeEnum.ONLY_ME.getType().equals(scopeRule)&&!FileScopeTypeEnum.CUSTOM.getType().equals(scopeRule)) {
+                        Integer secretLevel = userInfoRepo.getById(userId).getSecretLevel();
+                        LambdaQueryWrapper<BusUserInfoEntity> levelQuery = new LambdaQueryWrapper<>();
+                        levelQuery.select(BusUserInfoEntity::getId);
+                        if (FileScopeTypeEnum.SAME_SECURITY_LEVEL.getType().equals(scopeRule)){
+                            //同级
+                            levelQuery.eq(BusUserInfoEntity::getSecretLevel, secretLevel);
+                        }else {
+                            //同级及以上
+                            levelQuery.gt(BusUserInfoEntity::getSecretLevel, secretLevel);
+                        }
+                        List<BusUserInfoEntity> someLevel = userInfoRepo.list(levelQuery);
+                        List<Integer> someLevelId = someLevel.stream().map(BusUserInfoEntity::getId).collect(Collectors.toList());
+                        fileDTO.setScope(someLevelId);
+                    }
                     List<Integer> scope = fileDTO.getScope();
                     List<FileAuthEntity> fileAuthEntities = new ArrayList<>();
                     Integer fileId = Math.toIntExact(resourceFileId);
@@ -587,6 +609,39 @@ public class KmServiceImpl implements KmService {
                     });
                     fileAuthRepo.saveBatch(fileAuthEntities);
                 } else {
+                    BusResourceFileEntity source = fileRepo.getById(resourceFileId);
+                    //如果被修改或者是自定义
+                  if (!fileDTO.getScopeRule().equals(source.getScopeRule())||FileScopeTypeEnum.CUSTOM.getType().equals(fileDTO.getScopeRule())){
+                      //                    删除原有的权限
+                      LambdaQueryWrapper<FileAuthEntity> deletequery = new LambdaQueryWrapper<FileAuthEntity>().eq(FileAuthEntity::getFileId, fileDTO.getId());
+                      fileAuthRepo.remove(new LambdaQueryWrapper<FileAuthEntity>().eq(FileAuthEntity::getFileId, fileDTO.getId()));
+                      //根据知悉规则设置知悉范围
+                      String scopeRule = fileDTO.getScopeRule();
+                      if (!FileScopeTypeEnum.ONLY_ME.getType().equals(scopeRule)&&!FileScopeTypeEnum.CUSTOM.getType().equals(scopeRule)) {
+                          Integer secretLevel = userInfoRepo.getById(userId).getSecretLevel();
+                          LambdaQueryWrapper<BusUserInfoEntity> levelQuery = new LambdaQueryWrapper<>();
+                          levelQuery.select(BusUserInfoEntity::getId);
+                          if (FileScopeTypeEnum.SAME_SECURITY_LEVEL.getType().equals(scopeRule)){
+                              //同级
+                              levelQuery.eq(BusUserInfoEntity::getSecretLevel, secretLevel);
+                          }else {
+                              //同级及以上
+                              levelQuery.gt(BusUserInfoEntity::getSecretLevel, secretLevel);
+                          }
+                          List<BusUserInfoEntity> someLevel = userInfoRepo.list(levelQuery);
+                          List<Integer> someLevelId = someLevel.stream().map(BusUserInfoEntity::getId).collect(Collectors.toList());
+                          fileDTO.setScope(someLevelId);
+                      }
+                      List<Integer> scope = fileDTO.getScope();
+                      List<FileAuthEntity> fileAuthEntities = new ArrayList<>();
+                      Integer fileId = Math.toIntExact(resourceFileId);
+                      scope.forEach(x -> {
+                          FileAuthEntity fileAuthEntity = new FileAuthEntity();
+                          fileAuthEntity.setFileId(fileId);
+                          fileAuthEntity.setUserId(x);
+                          fileAuthEntities.add(fileAuthEntity);
+                      });
+                  }
                     fileRepo.update(fileDTO);
                 }
 

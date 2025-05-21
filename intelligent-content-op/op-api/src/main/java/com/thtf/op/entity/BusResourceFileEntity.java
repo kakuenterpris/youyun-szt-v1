@@ -86,4 +86,17 @@ public class BusResourceFileEntity extends BaseEntity {
      */
     @TableField(value = "level")
     private Integer level;
+
+
+    /**
+     * 知悉规则
+     */
+    @TableField(value = "scope_rule")
+    private String scopeRule;
+
+    /**
+     * 年限
+     */
+    @TableField(value = "year")
+    private Integer year;
 }

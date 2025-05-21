@@ -66,7 +66,7 @@ public interface BusResourceFileRepo extends IService<BusResourceFileEntity> {
     /**
      * 根据 文件名搜索
      */
-    List<BusResourceManageListDTO> selectFileList(List<Integer> folderIdList, QueryDTO query, boolean notDelete);
+    List<BusResourceManageListDTO> selectFileList(List<Integer> folderIdList,List<Integer> fileIdList, QueryDTO query, boolean notDelete);
 
     Integer selectFileListCount(List<Integer> folderIdList, QueryDTO query, boolean notDelete);
 

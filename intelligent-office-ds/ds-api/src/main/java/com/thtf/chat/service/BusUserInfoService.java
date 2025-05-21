@@ -25,4 +25,6 @@ public interface BusUserInfoService extends IService<BusUserInfoEntity> {
     Page<UserInfoVO> pageList(Page<UserInfoDto> pages, UserInfoVO dto);
 
     RestResponse updateByUserId(UpdateUserInfoDto user);
+
+    RestResponse unlockUser(Integer userId, Boolean unlock);
 }

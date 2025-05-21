@@ -71,26 +71,31 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
 
     @Override
     public RestResponse login(HttpServletRequest request, HttpServletResponse response, LoginDTO loginDTO) {
+        BusUserInfoEntity user = this.getOne(new QueryWrapper<BusUserInfoEntity>().eq("login_id", loginDTO.getAccount()));
+        if (null == user) {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.not.exists")));
+            throw new CustomException(DefaultErrorCode.NAME_ERROR);
+        }
+
         // 验证码
         if (StringUtils.isNotEmpty(loginDTO.getUuid()) && StringUtils.isNotEmpty(loginDTO.getVerifyCode())){
             //return RestResponse.fail(1004, "请输入验证码！");
             Object o1 = redisUtil.get(loginDTO.getUuid());
             if (Objects.isNull(o1)){
                 AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire")));
+                addLoginErrorCount(user.getId());
                 return RestResponse.fail(1004, "验证码已过期！");
             }
             if (!StringUtils.equalsIgnoreCase(Objects.toString(o1), loginDTO.getVerifyCode())){
                 AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error")));
+                addLoginErrorCount(user.getId());
                 return RestResponse.fail(1004, "验证码错误！");
             }
         }
-        BusUserInfoEntity user= this.getOne(new QueryWrapper<BusUserInfoEntity>().eq("login_id", loginDTO.getAccount()));
-        if (null == user) {
-            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.not.exists")));
-            throw new CustomException(DefaultErrorCode.NAME_ERROR);
-        }
+
         if (!BcryptUtil.match(loginDTO.getPassword(), user.getPassword())) {
             AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.password.error")));
+            addLoginErrorCount(user.getId());
             throw new CustomException(DefaultErrorCode.USERNAME_PASSWORD_WRONG);
         }
         SystemUser userInfo = bs2User(user);
@@ -117,6 +122,12 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         }catch (Exception e){
             e.printStackTrace();
         }
+
+        if (user.getLocked()) {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.blocked")));
+            return RestResponse.fail(1004, "用户已锁定，请联系管理员解锁！");
+        }
+
         AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success")));
         return RestResponse.success(token);
     }
@@ -271,6 +282,56 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         systemUser.specialAuth( param.getSpecialAuth() );
 
         return systemUser.build();
+    }
+
+    @Override
+    public RestResponse unlockUser(Integer userId, Boolean unlock) {
+        try {
+            // 解锁用户 根据userId获取用户信息，只取一个用户信息
+            LambdaQueryWrapper<BusUserInfoEntity> busUserInfoQuery = new LambdaQueryWrapper<>();
+            busUserInfoQuery.eq(BusUserInfoEntity::getId, userId);
+            BusUserInfoEntity busUserInfoEntity = this.getOne(busUserInfoQuery);
+            busUserInfoEntity.setLocked(!unlock);
+            this.updateById(busUserInfoEntity);
+            if (unlock) {
+                return RestResponse.success("解锁用户成功");
+            } else {
+                return RestResponse.success("锁定用户成功");
+            }
+        } catch (Exception e) {
+            if (unlock) {
+                return RestResponse.success("解锁用户失败");
+            } else {
+                return RestResponse.success("锁定用户失败");
+            }
+
+        }
+    }
+
+    /**
+     * 增加用户登陆错误次数
+     *
+     * @param id
+     * @return
+     */
+    public RestResponse addLoginErrorCount(Integer id) {
+        try {
+            // 增加用户登陆错误次数
+            LambdaQueryWrapper<BusUserInfoEntity> busUserInfoQuery = new LambdaQueryWrapper<>();
+            busUserInfoQuery.eq(BusUserInfoEntity::getId, id);
+            BusUserInfoEntity busUserInfoEntity = this.getOne(busUserInfoQuery);
+            busUserInfoEntity.setLoginFailCount(busUserInfoEntity.getLoginFailCount() == null ? 0 : busUserInfoEntity.getLoginFailCount() + 1);
+            this.updateById(busUserInfoEntity);
+            // 如果登陆错误次数大于3，锁定用户,次数从字典获取
+            if (busUserInfoEntity.getLoginFailCount() >= 3) {
+                busUserInfoEntity.setLocked(true);
+                this.updateById(busUserInfoEntity);
+                return RestResponse.error("用户登陆错误次数过多，账号已被锁定");
+            }
+            return RestResponse.success("增加用户登陆错误次数成功");
+        } catch (Exception e) {
+            return RestResponse.error("增加用户登陆错误次数失败");
+        }
     }
 
 }

@@ -7,10 +7,18 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
+import com.thtf.global.common.cache.RedisUtil;
+import com.thtf.global.common.dto.SystemUser;
+import com.thtf.global.common.rest.ContextUtil;
+import com.thtf.global.common.rest.RestResponse;
+import com.thtf.op.entity.RagflowEntity;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
 import com.thtf.op.service.RagFlowProcessService;
+import com.thtf.op.util.OKHttpUtils;
+import com.thtf.resource.dto.BusResourceManageDTO;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,6 +43,13 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
     @Autowired
     RagFlowApiConfigProperties ragFlowApiConfigProperties;
 
+    @Autowired
+    private OKHttpUtils okHttpUtils;
+
+    @Autowired
+    private RedisUtil redisUtil;
+
+    private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json");
 
     /**
      * 上传文件
@@ -54,36 +69,41 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
                 .build();
         // 根据资源id,查询对应的ragflow知识库id
 
-        String apiKey = ragFlowApiConfigProperties.getApiKey();
+        String apiKey = (String) redisUtil.get("ragflow:authHeader");
+        if (StrUtil.isEmpty(apiKey)) {
+            RagflowEntity ragflowEntity = new RagflowEntity();
+            ragflowEntity.setEmail("M@M.test");
+            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
+            apiKey = loginRagFlow(ragflowEntity);
+        }
+
         // String datasetId = ragFlowApiConfigProperties.getDatasetId();
-        String url = ragFlowApiConfigProperties.getUploadUrl();
+        String url = ragFlowApiConfigProperties.getLoginUrl();
         if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
             log.error("上传文档得url或key为空");
             return null;
         }
-        url = String.format(url, datasetId);
+
+        RequestBody fileBody = RequestBody.create(MediaType.parse("application/octet-stream"), file);
         RequestBody requestBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM) // 表单类型
-                .addFormDataPart(
-                        "file",
-                        file.getName(),
-                        RequestBody.create(MediaType.parse("application/octet-stream"), file)
-                )
-                //.addFormDataPart("otherParam", "value") // 可选：添加其他表单参数
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("kb_id", datasetId)
+                .addFormDataPart("file", file.getName(), fileBody)
                 .build();
+
         Request request = new Request.Builder()
-                .url(url)
-                .addHeader("Authorization", "Bearer " + apiKey)
+                .url(url+"/document/upload")
+                .addHeader("Authorization", apiKey)
                 .post(requestBody)
                 .build();
         Response response = null;
         try {
-            StopWatch watch = new StopWatch("请求临时切片处理接口");
-            watch.start();
+//            StopWatch watch = new StopWatch("请求临时切片处理接口");
+//            watch.start();
             response = client.newCall(request).execute();
             byte[] responseBytes = response.body().bytes();
             String jsonString = new String(responseBytes);
-            watch.stop();
+//            watch.stop();
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
             if (null != map && (Integer) map.get("code") == 0) {
                 JSONArray jsonArray = (JSONArray) map.get("data");
@@ -122,26 +142,34 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
                 .readTimeout(600, TimeUnit.SECONDS)
                 .writeTimeout(600, TimeUnit.SECONDS)
                 .build();
-        String apiKey = ragFlowApiConfigProperties.getApiKey();
+        String apiKey = (String) redisUtil.get("ragflow:authHeader");  //ragFlowApiConfigProperties.getApiKey();
+        if (StrUtil.isEmpty(apiKey)) {
+            RagflowEntity ragflowEntity = new RagflowEntity();
+            ragflowEntity.setEmail("M@M.test");
+            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
+            apiKey = loginRagFlow(ragflowEntity);
+        }
         // String datasetId = ragFlowApiConfigProperties.getDatasetId();
-        String url = ragFlowApiConfigProperties.getParseUrl();
+        String url = ragFlowApiConfigProperties.getLoginUrl();
         if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
             log.error("上传文档得url或key为空");
             return false;
         }
-        url = String.format(url, datasetId);
+//        url = String.format(url, datasetId);
         Map paramMap = new HashMap(2);
         List<String> fileIdList = new ArrayList<>();
         fileIdList.add(uploadFileId);
-        paramMap.put("document_ids", fileIdList);
+        paramMap.put("doc_ids", fileIdList);
+        paramMap.put("run", 1);
+        paramMap.put("delete",false);
 
         Gson gson = new Gson();
         String json = gson.toJson(paramMap);
         RequestBody body = RequestBody.create(CommonConstants.JSON_MEDIA_TYPE, json);
         Request request = new Request.Builder()
-                .url(url)
+                .url(url+"/document/run")
                 .addHeader("Content-type", "application/json")
-                .addHeader("Authorization", "Bearer " + apiKey)
+                .addHeader("Authorization",  apiKey)
                 .post(body)
                 .build();
         Response response = null;
@@ -439,4 +467,57 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             }
         }
     }
+
+    @Override
+    public String loginRagFlow(RagflowEntity ragflowEntity) {
+        Map<String, String> params = new HashMap<>();
+        String url = ragFlowApiConfigProperties.getLoginUrl() + "/user/login";
+        params.put("email", ragflowEntity.getEmail());
+        params.put("password", ragflowEntity.getPassword());
+
+        Gson gson = new Gson();
+        String json = gson.toJson(params);
+        log.info("调用ragflow方法post请求参数：{}", json);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(300, TimeUnit.SECONDS)
+                .readTimeout(300, TimeUnit.SECONDS)
+                .writeTimeout(300, TimeUnit.SECONDS)
+                .build();
+
+        Response response = null;
+        String authHeader = "";
+        try {
+            response = client.newCall(request).execute();
+            Headers headers = response.headers();
+            authHeader = headers.get("Authorization");
+            redisUtil.set("ragflow:authHeader:" + authHeader, 1800);
+        }catch (Exception e) {
+            log.error("调用ragflow方法post失败，失败原因：" + e.getMessage());
+            e.getMessage();
+            return null;
+        } finally {
+            response.close();
+        }
+
+        return authHeader;
+    }
+
+
+    /**
+     * 解析之前先将配置信息给ragflow
+     * @return
+     */
+    public Map changeParser(){
+
+
+        return null;
+    }
+
 }

@@ -3,14 +3,19 @@ package com.thtf.op.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.github.pagehelper.util.StringUtil;
+import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.emdedding.dto.QueryKmDTO;
 import com.thtf.emdedding.dto.RagProcessDTO;
 import com.thtf.feign.client.KbaseApi;
+import com.thtf.global.common.cache.RedisUtil;
 import com.thtf.global.common.dto.BusUserInfoDTO;
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.op.entity.RagflowEntity;
 import com.thtf.op.mapper.FileEmbeddingConfigMapper;
 import com.thtf.op.mapper.FileUploadRecordMapper;
+import com.thtf.op.properties.RagFlowApiConfigProperties;
+import com.thtf.op.repo.BusResourceDatasetRepo;
 import com.thtf.op.repo.BusUserInfoRepo;
 import com.thtf.op.runnable.RagFlowProcessRunnable;
 import com.thtf.op.runnable.SyncJoinStatusRunnable;
@@ -18,10 +23,16 @@ import com.thtf.op.service.EmbeddingService;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.service.RelUserResourceService;
 import com.thtf.op.service.ResourceProcessService;
+import com.thtf.op.util.OKHttpUtils;
 import com.thtf.resource.enums.IndexingStatusEnum;
 import com.thtf.resource.enums.ResourceErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -56,10 +67,22 @@ public class ResourceProcessServiceImpl implements ResourceProcessService {
     private final FileEmbeddingConfigMapper fileEmbeddingConfigMapper;
 
     private final BusUserInfoRepo userInfoRepo;
-
+    private final BusResourceDatasetRepo datasetRepo;
 
     @Value("${file.base.path}")
     private String fileBasePath;
+
+    private final OKHttpUtils okHttpUtil;
+
+    private final ObjectProvider<ResourceProcessService> resourceProcessServiceProvider;
+
+    private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json");
+
+
+    @Autowired
+    RagFlowApiConfigProperties ragFlowApiConfigProperties;
+    @Autowired
+    private RedisUtil redisUtil;
 
 
     /**
@@ -73,9 +96,16 @@ public class ResourceProcessServiceImpl implements ResourceProcessService {
                 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<Runnable>(1000));
         try {
-            RagFlowProcessRunnable ragFlowProcessRunnable = new RagFlowProcessRunnable(fileIdList, ragFlowProcessService, relUserResourceService, fileUploadRecordMapper, fileEmbeddingConfigMapper, fileBasePath);
-//            SliceAndEmbeddingRunnable permissionTranslateAndCacheRunnable
-//                    = new SliceAndEmbeddingRunnable(resourceList, kbaseApi, embeddingService, fileUploadRecordMapper, fileBasePath);
+            RagFlowProcessRunnable ragFlowProcessRunnable = new RagFlowProcessRunnable(
+                            fileIdList,
+                            ragFlowProcessService,
+                            relUserResourceService,
+                            fileUploadRecordMapper,
+                            fileEmbeddingConfigMapper,
+                            fileBasePath,
+                            datasetRepo,
+                    resourceProcessServiceProvider.getIfAvailable()
+                        );
             singleThreadExecutor.submit(ragFlowProcessRunnable);
 
         } catch (Exception e) {
@@ -368,6 +398,40 @@ public class ResourceProcessServiceImpl implements ResourceProcessService {
         } finally {
             singleThreadExecutor.shutdown();
         }
+    }
+
+    @Override
+    public String createRagFlow(String userId) {
+
+        Map params = new HashMap();
+        params.put("name", userId+"_001");
+        String url = ragFlowApiConfigProperties.getLoginUrl() +"/kb/create";
+                Gson gson = new Gson();
+        String json = gson.toJson(params);
+        String apiKey = (String) redisUtil.get("ragflow:authHeader");
+        if (StrUtil.isEmpty(apiKey)) {
+            RagflowEntity ragflowEntity = new RagflowEntity();
+            ragflowEntity.setEmail("M@M.test");
+            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
+            apiKey = ragFlowProcessService.loginRagFlow(ragflowEntity);
+        }
+        log.info("调用ragflow方法apiKey：{}", apiKey);
+
+        log.info("调用ragflow方法post请求参数：{}", json);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", apiKey)
+                .build();
+
+        Map map = okHttpUtil.doPost(request);
+        if (null!= map && (Integer) map.get("code") == 0) {
+            Map<String, Object> data = (Map<String, Object>) map.get("data");
+            return (String) data.get("kb_id");
+        }
+        return "";
     }
 
     /**

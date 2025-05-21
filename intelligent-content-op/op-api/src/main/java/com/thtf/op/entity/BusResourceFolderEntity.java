@@ -65,4 +65,10 @@ public class BusResourceFolderEntity extends BaseEntity {
      */
     @TableField(value = "can_add_sub")
     private Boolean canAddSub;
+
+    /**
+     * 文件夹类型
+     */
+    @TableField(value = "type")
+    private Integer type;
 }

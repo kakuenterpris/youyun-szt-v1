@@ -2,14 +2,21 @@ package com.thtf.op.runnable;
 
 import cn.hutool.core.io.file.FileNameUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.emdedding.dto.FileUploadRecordDTO;
 import com.thtf.emdedding.dto.RagProcessDTO;
+import com.thtf.global.common.dto.SystemUser;
+import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.op.entity.BusResourceDatasetEntity;
 import com.thtf.op.mapper.FileEmbeddingConfigMapper;
 import com.thtf.op.mapper.FileUploadRecordMapper;
+import com.thtf.op.repo.BusResourceDatasetRepo;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.service.RelUserResourceService;
+import com.thtf.op.service.ResourceProcessService;
+import com.thtf.resource.dto.BusResourceDatasetDTO;
 import com.thtf.resource.enums.IndexingStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,7 +50,14 @@ public class RagFlowProcessRunnable implements Runnable {
 
     private final RelUserResourceService relUserResourceService;
 
+    private final BusResourceDatasetRepo datasetRepo;
+
     FileEmbeddingConfigMapper fileEmbeddingConfigMapper;
+
+    private final ResourceProcessService resourceProcessService;
+
+
+
 
 
     public RagFlowProcessRunnable(List<RagProcessDTO> ragProcessDTOS,
@@ -51,13 +65,15 @@ public class RagFlowProcessRunnable implements Runnable {
                                   RelUserResourceService relUserResourceService,
                                   FileUploadRecordMapper fileUploadRecordMapper,
                                   FileEmbeddingConfigMapper fileEmbeddingConfigMapper,
-                                  String fileBasePath) {
+                                  String fileBasePath, BusResourceDatasetRepo datasetRepo, ResourceProcessService resourceProcessService) {
         this.ragProcessDTOS = ragProcessDTOS;
         this.ragFlowProcessService = ragFlowProcessService;
         this.relUserResourceService = relUserResourceService;
         this.fileUploadRecordMapper = fileUploadRecordMapper;
         this.fileEmbeddingConfigMapper = fileEmbeddingConfigMapper;
         this.fileBasePath = fileBasePath;
+        this.datasetRepo = datasetRepo;
+        this.resourceProcessService = resourceProcessService;
     }
 
     @Override
@@ -85,7 +101,8 @@ public class RagFlowProcessRunnable implements Runnable {
         String fileName = fileUploadRecordDTO.getFileName();
         String originalName = fileUploadRecordDTO.getOriginName();
         // 获取文件流全路径
-        String filePath = fileBasePath + File.separator + path + fileName;
+//        String filePath = fileBasePath + File.separator + path + fileName;
+        String filePath = fileBasePath + path + fileName;
         File file = new File(filePath);
         if (!file.exists()) {
             // 更新资源状态为上传失败
@@ -106,26 +123,55 @@ public class RagFlowProcessRunnable implements Runnable {
             file = originalFile;
         }
         // 知识化状态配置味空，无法获取到知识库id
-        if (StrUtil.isEmpty(ragProcessDTO.getEmbeddingConfigCode())) {
-            relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatusName());
-            log.error("知识化配置为空，无法上传文件");
-            return;
+//        if (StrUtil.isEmpty(ragProcessDTO.getEmbeddingConfigCode())) {
+//            relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatusName());
+//            log.error("知识化配置为空，无法上传文件");
+//            return;
+//        }
+
+        // 获取知识库id
+        BusResourceDatasetDTO busResourceDatasetDTO = datasetRepo.getByCode(ContextUtil.currentUser().getUserId());
+        // 如果没有知识库则创建
+        String datesetId = "";
+        if (null == busResourceDatasetDTO) {
+            datesetId = resourceProcessService.createRagFlow(ContextUtil.getUserId());
+            if (StrUtil.isEmpty(datesetId)) {
+                relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CREATE_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_ERROR.getIndexingStatusName());
+                log.error("创建ragflow知识库id失败，无法上传文件,用户id为{}", ContextUtil.getUserId());
+                return;
+            }
+            boolean add = datasetRepo.add("user", ContextUtil.getUserId(), datesetId);
+            if (!add) {
+                relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_ERROR.getIndexingStatusName());
+                log.error("添加ragflow知识库id失败，无法上传文件,用户id为{}",ContextUtil.getUserId());
+                return;
+            }
+        }else {
+            datesetId = busResourceDatasetDTO.getDatasetsId();
         }
-        Map dataSetMap = fileEmbeddingConfigMapper.getDataSetData(ragProcessDTO.getEmbeddingConfigCode());
-        if (null == dataSetMap || StrUtil.isEmpty((CharSequence) dataSetMap.get("rag_dataset_id"))) {
-            relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_ERROR.getIndexingStatusName());
-            log.error("获取ragflow知识库id为空，无法上传文件,知识库编码为{}", ragProcessDTO.getEmbeddingConfigCode());
-            return;
-        }
-        String datesetId = (String) dataSetMap.get("rag_dataset_id");
-        String supportTypeStr = (String) dataSetMap.get("support_type");
-        String[] supportTypeArray = supportTypeStr.split(CommonConstants.split_semicolon);
-        // 判断知识库是否支持当前文件类型解析
-        String suffix = FileNameUtil.getSuffix(file.getName());
-        if (Arrays.stream(supportTypeArray).noneMatch(s -> suffix.equalsIgnoreCase(s))) {
-            log.info("当前文档{}类型不在{}知识库解析范围，跳过", suffix, ragProcessDTO.getEmbeddingConfigCode());
-            return;
-        }
+
+        // 获取文件所在文件夹的配置规则
+        String fileId = ragProcessDTO.getFileId();
+
+
+
+//        Map dataSetMap = fileEmbeddingConfigMapper.getDataSetData(ragProcessDTO.getEmbeddingConfigCode());
+//        if (null == dataSetMap || StrUtil.isEmpty((CharSequence) dataSetMap.get("rag_dataset_id"))) {
+//            relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_ERROR.getIndexingStatusName());
+//            log.error("获取ragflow知识库id为空，无法上传文件,知识库编码为{}", ragProcessDTO.getEmbeddingConfigCode());
+//            return;
+//        }
+//
+////        String datesetId = (String) dataSetMap.get("rag_dataset_id");
+//        String supportTypeStr = (String) dataSetMap.get("support_type");
+//        String[] supportTypeArray = supportTypeStr.split(CommonConstants.split_semicolon);
+//        // 判断知识库是否支持当前文件类型解析
+//        String suffix = FileNameUtil.getSuffix(file.getName());
+//        if (Arrays.stream(supportTypeArray).noneMatch(s -> suffix.equalsIgnoreCase(s))) {
+//            log.info("当前文档{}类型不在{}知识库解析范围，跳过", suffix, ragProcessDTO.getEmbeddingConfigCode());
+//            return;
+//        }
+
         // 将文件上传到ragflow
         String uploadFileId = ragFlowProcessService.uploadFile(datesetId, file);
         if (StrUtil.isEmpty(uploadFileId)) {

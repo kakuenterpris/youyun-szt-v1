@@ -156,14 +156,15 @@ apikey:
   chunks: app-4uVaJhHbBYpPd5dAIVoRI89X
 
 ragflow:
-  upload-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
-  parse-url: http://10.10.93.125:8000/api/v1/datasets/%s/chunks
-  chunks-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents/%s/chunks
-  chunks-status-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
-  delete-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
-  #api-key: ragflow-YzMzg2Y2IyMTViYjExZjA5NTRkYWVmZD
-  api-key: ragflow-JjNWQ3NzdhMTkxMTExZjA5YTc2YWVmZD
-  dataset-id: 79b40f1015ba11f0838aaefd37d94fab
+  login-url: http://101.52.216.178/v1
+#  upload-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
+#  parse-url: http://10.10.93.125:8000/api/v1/datasets/%s/chunks
+#  chunks-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents/%s/chunks
+#  chunks-status-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
+#  delete-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
+#  #api-key: ragflow-YzMzg2Y2IyMTViYjExZjA5NTRkYWVmZD
+#  api-key: ragflow-JjNWQ3NzdhMTkxMTExZjA5YTc2YWVmZD
+#  dataset-id: 79b40f1015ba11f0838aaefd37d94fab
 
 feign:
   client:
@@ -215,5 +216,5 @@ springdoc:
 knife4j:
   enable: true
 
-file.base.path: D:\data\
+file.base.path: D:\data
 file.temp.path: D:\data\temp

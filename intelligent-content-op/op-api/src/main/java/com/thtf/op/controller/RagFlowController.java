@@ -10,6 +10,7 @@ import com.thtf.op.service.EmbeddingService;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.service.ResourceProcessService;
 import com.thtf.resource.dto.BusResourceManageDTO;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -77,7 +78,14 @@ public class RagFlowController {
         return RestResponse.success(embeddingStr);
     }
 
+
+    /**
+     * ragflow 将文件保存到ragflow上解析
+     * @param fileIdList
+     * @return
+     */
     @PostMapping("/executeRag")
+    @Operation(summary = "知识化提取")
     public RestResponse executeRag(@RequestBody List<RagProcessDTO> fileIdList) {
         resourceProcessService.execute(fileIdList);
         return RestResponse.SUCCESS;
@@ -101,5 +109,7 @@ public class RagFlowController {
 //        boolean bool = resourceProcessService.deleteByFolderId(folderId, embeddingConfigCode);
 //        return RestResponse.success(bool);
 //    }
+
+
 
 }

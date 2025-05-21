@@ -1,20 +1,14 @@
 package com.thtf.op.repo.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
 import com.thtf.global.common.rest.RestResponse;
-import com.thtf.global.common.utils.Linq;
-import com.thtf.login.dto.BusDepInfoDTO;
-import com.thtf.op.entity.BusDepInfoEntity;
-import com.thtf.op.mapper.BusDepInfoMapper;
-import com.thtf.op.mappings.BusDepInfoMapping;
-import com.thtf.op.repo.BusDepInfoRepo;
+import com.thtf.op.entity.BusResourceFolderEntity;
+import com.thtf.op.mapper.BusResourceFolderMapper;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +16,8 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class WonderfulPenSyncRepoImpl implements WonderfulPenSyncRepo {
+public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMapper, BusResourceFolderEntity>
+        implements WonderfulPenSyncRepo {
 
     @Override
     public RestResponse pushFile(WonderfulPenSyncDTO dto) {
@@ -33,7 +28,9 @@ public class WonderfulPenSyncRepoImpl implements WonderfulPenSyncRepo {
 
     @Override
     public RestResponse getFileByUserId(WonderfulPenSyncDTO dto) {
-        return RestResponse.success("检索成功");
+
+        List<BusResourceFolderEntity> busResourceFolderEntities = baseMapper.listByUserIdAndTypeFolder(dto.getUserId(), dto.getType());
+        return RestResponse.success(busResourceFolderEntities);
     }
 
     @Override

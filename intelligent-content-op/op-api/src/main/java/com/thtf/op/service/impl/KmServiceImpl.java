@@ -80,6 +80,7 @@ public class KmServiceImpl implements KmService {
     private final ResourceProcessService resourceProcessService;
     private final FileEmbeddingConfigMapper fileEmbeddingConfigMapper;
     private final RagFlowProcessService ragFlowProcessService;
+    private final FileAuthRepo fileAuthRepo;
     // 操作日志
     private final SysOptLogRepo sysOptLogRepo;
 
@@ -545,7 +546,7 @@ public class KmServiceImpl implements KmService {
         if (null == parent) {
             return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "上级文件夹未找到");
         }
-        //判断权限
+        //todo判断权限
 //        BusResourceMemberDTO fileAuth = this.getFileAuth(dto.getFolderId());
 //        if (!fileAuth.getIsAdmin() && !fileAuth.getUploadAuth()){
 //            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
@@ -574,6 +575,17 @@ public class KmServiceImpl implements KmService {
                 fileDTO.setFolderId(dto.getFolderId());
                 if (add) {
                     resourceFileId = fileRepo.add(fileDTO);
+//                    保存文件知悉范围
+                    List<Integer> scope = fileDTO.getScope();
+                    List<FileAuthEntity> fileAuthEntities = new ArrayList<>();
+                    Integer fileId = Math.toIntExact(resourceFileId);
+                    scope.forEach(x -> {
+                        FileAuthEntity fileAuthEntity = new FileAuthEntity();
+                        fileAuthEntity.setFileId(fileId);
+                        fileAuthEntity.setUserId(x);
+                        fileAuthEntities.add(fileAuthEntity);
+                    });
+                    fileAuthRepo.saveBatch(fileAuthEntities);
                 } else {
                     fileRepo.update(fileDTO);
                 }
@@ -595,7 +607,7 @@ public class KmServiceImpl implements KmService {
                     relUserResourceDTO.setDatasetsId("");
                     relUserResourceDTO.setFileId(fileDTO.getFileId());
                     relUserResourceRepo.add(relUserResourceDTO);
-
+                    //提取规则
                     FileEmbeddingConfigDTO embeddingConfig;
                     String fileEmbeddingConfigCode = StringUtils.isEmpty(fileDTO.getEmbeddingConfigCode()) ? "" : fileDTO.getEmbeddingConfigCode();
                     embeddingConfig = this.getEmbeddingConfigByConfigCode(fileEmbeddingConfigCode, null);

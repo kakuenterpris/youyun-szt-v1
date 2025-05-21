@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 文件表
@@ -120,4 +121,9 @@ public class BusResourceFileDTO {
      * 密级
      */
     private Integer level;
+
+    /**
+     * 知悉范围
+     */
+    private List<Integer> scope;
 }

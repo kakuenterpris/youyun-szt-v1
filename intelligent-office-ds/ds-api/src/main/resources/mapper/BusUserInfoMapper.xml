@@ -29,14 +29,13 @@
         email,create_time,last_log_in_time,is_deleted,secret_level
     </sql>
     <select id="selectPageByVO" resultType="com.thtf.chat.entity.BusUserInfoEntity">
-        SELECT u.* FROM bus_user_info u
-        <if test="vo != null">
-            <if test="vo.roleId != null">
-               LEFT JOIN sys_user_role r ON u.user_id = r.user_id AND r.role_id=#{vo.roleId}
-            </if>
-        </if>
+        SELECT u.* r.role_id FROM bus_user_info u
+        LEFT JOIN sys_user_role r ON u.user_id = r.user_id
         WHERE u.is_deleted = 0
         <if test="vo != null">
+            <if test="vo.roleId != null">
+                AND r.role_id=#{vo.roleId}
+            </if>
             <if test="vo.userName != null">
                 AND u.user_name LIKE CONCAT(CONCAT('%',#{vo.userName}),'%')
             </if>

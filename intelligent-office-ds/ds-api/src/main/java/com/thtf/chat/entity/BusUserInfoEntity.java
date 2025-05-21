@@ -145,6 +145,12 @@ public class BusUserInfoEntity {
     @TableField(value = "LOGIN_FAIL_COUNT")
     private Integer loginFailCount;
 
+    /**
+     * 角色
+     */
+    @TableField(exist = false)
+    private Integer roleId;
+
     @Override
     public String toString() {
         return "{"

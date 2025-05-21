@@ -185,7 +185,8 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
     @Override
     public RestResponse updateByUserId(UpdateUserInfoDto user) {
         try {
-            if (user.getRoleIds().size()>0) {
+//            分配角色
+            if (user.getRoleIds()!=null&&user.getRoleIds().size()>0) {
                 LambdaQueryWrapper<SysUserRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
                 queryWrapper.eq(SysUserRoleEntity::getUserId, user.getId());
                 sysUserRoleRepo.remove(queryWrapper);

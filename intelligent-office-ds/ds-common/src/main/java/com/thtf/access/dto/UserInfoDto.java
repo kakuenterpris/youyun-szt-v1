@@ -108,4 +108,9 @@ public class UserInfoDto {
      */
     private String secretLevel;
 
+    /**
+     * 是否解锁
+     */
+    private Boolean unlock;
+
 }

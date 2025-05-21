@@ -7,17 +7,14 @@ import com.thtf.chat.dto.UpdateUserInfoDto;
 import com.thtf.chat.entity.BusUserInfoEntity;
 import com.thtf.chat.repo.SysUserRoleRepo;
 import com.thtf.chat.service.BusUserInfoService;
+import com.thtf.global.common.dto.BusUserInfoDTO;
 import com.thtf.global.common.rest.RestResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -90,6 +87,14 @@ public class UserController {
     @Operation(summary = "获取用户权限接口")
     public RestResponse getUserPermissions(Integer userId) {
       return sysUserRoleRepo.getUserPermissions(userId);
+    }
+
+
+    @PostMapping("/lockOrUnlockUser")
+    @Operation(summary = "获取用户权限接口")
+    public RestResponse unlockUser(@RequestBody UserInfoDto dto) {
+
+        return busUserInfoService.unlockUser(dto.getId(), dto.getUnlock());
     }
 
 

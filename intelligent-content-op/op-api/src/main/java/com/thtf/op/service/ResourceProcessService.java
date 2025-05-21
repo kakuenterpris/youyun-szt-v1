@@ -26,4 +26,5 @@ public interface ResourceProcessService {
 
     // boolean deleteByFolderId(String folderId, String embeddingConfigCode);
 
+    String createRagFlow(String userId);
 }

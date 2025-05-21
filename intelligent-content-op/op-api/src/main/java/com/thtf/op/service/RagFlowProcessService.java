@@ -1,5 +1,7 @@
 package com.thtf.op.service;
 
+import com.thtf.op.entity.RagflowEntity;
+import com.thtf.resource.dto.BusResourceManageDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -25,4 +27,6 @@ public interface RagFlowProcessService {
     boolean delete(String documentId, String datasetId);
 
     boolean delete(List<String> documentIdList, String datasetId);
+
+    String loginRagFlow(RagflowEntity ragflowEntity);
 }

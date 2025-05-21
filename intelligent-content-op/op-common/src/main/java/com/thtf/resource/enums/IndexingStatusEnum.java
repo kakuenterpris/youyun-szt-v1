@@ -26,6 +26,7 @@ public enum IndexingStatusEnum {
     DELETE_CHUNKS_ERROR("deleteChunksError", "删除切片文档失败"),
     DELETE_EMBEDDING_ERROR("deleteEmbeddingError", "删除向量化数据失败"),
     SYNC_JOIN_QUERY_ERROR("joinQueryError", "现行有效状态同步失败"),
+    RAG_CREATE_ERROR("ragCreateError", "创建知识库失败"),
     COMPLETED("completed", "完成");
 
     // 枚举字段

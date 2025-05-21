@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 @Data
 public class RagFlowApiConfigProperties {
 
+
+    private String loginUrl;
+
     /**
      * 上传url
      */

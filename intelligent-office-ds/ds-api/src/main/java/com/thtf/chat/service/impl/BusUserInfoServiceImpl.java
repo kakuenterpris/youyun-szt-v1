@@ -179,6 +179,7 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         userInfoVO.setUserPhone( param.getMobilePhone() );
         userInfoVO.setUserEmail( param.getEmail() );
         userInfoVO.setLocked( param.getLocked() );
+        userInfoVO.setRoleId( param.getRoleId()==null? "": param.getRoleId().toString() );
         return userInfoVO;
     }
 

@@ -148,7 +148,7 @@ public class BusUserInfoEntity {
     /**
      * 角色
      */
-    @TableField(exist = false)
+    @TableField(exist = false,value = "role_id")
     private Integer roleId;
 
     @Override

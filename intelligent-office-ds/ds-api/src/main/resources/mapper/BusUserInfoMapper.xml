@@ -29,8 +29,8 @@
         email,create_time,last_log_in_time,is_deleted,secret_level
     </sql>
     <select id="selectPageByVO" resultType="com.thtf.chat.entity.BusUserInfoEntity">
-        SELECT u.* r.role_id FROM bus_user_info u
-        LEFT JOIN sys_user_role r ON u.user_id = r.user_id
+        SELECT u.* , r.role_id FROM bus_user_info u
+        LEFT JOIN sys_user_role r ON u.id = r.user_id
         WHERE u.is_deleted = 0
         <if test="vo != null">
             <if test="vo.roleId != null">

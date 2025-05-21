@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 常用语表 DTO
@@ -231,6 +232,16 @@ public class BusResourceManageListDTO extends BaseTreeNodeVO {
      * 提取状态
      */
     private String embedStatus;
+
+    /**
+     * 知悉范围
+     */
+    private List<Integer> scope;
+
+    /**
+     * 知悉规则
+     */
+    private String scopeRule;
 
 
 }

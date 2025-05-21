@@ -88,6 +88,8 @@ public class KmServiceImpl implements KmService {
     // 操作日志
     private final SysOptLogRepo sysOptLogRepo;
 
+    private final FolderAuthRepo folderAuthRepo;
+
     private final FileUploadRecordMapper fileUploadRecordMapper;
     @Value("${file.base.path}")
     private String fileBasePath;
@@ -122,39 +124,25 @@ public class KmServiceImpl implements KmService {
                 dto.setAddFolderAuth(dto.getCanAddSub());
             }
         } else {
-            List<Integer> adminFolderIds = Linq.select(memberRepo.listAdminByUser(userId), BusResourceMemberDTO::getFolderId);
-            List<Integer> memberFolderIds = Linq.select(memberRepo.listMemberByUser(userId), BusResourceMemberDTO::getFolderId);
-            //公开的文件夹： 向上递归
-            List<BusResourceManageListDTO> openViewList = Linq.find(allList, BusResourceManageListDTO::getOpenView);
-            //有管理员权限的文件夹：向上 和 向下递归
+            List<Integer> adminFolderIds = Linq.select(folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, userId)), FolderAuthEntity::getFolderId);
+            //有权限的文件夹：向上 和 向下递归
             List<BusResourceManageListDTO> adminFolderList = Linq.find(allList, x -> !x.getOpenView() && adminFolderIds.contains(x.getId()));
-            //有查看权限的文件夹：向上递归
-            List<BusResourceManageListDTO> memberFolderList = Linq.find(allList, x -> !x.getOpenView() && memberFolderIds.contains(x.getId()));
 
-            //向下递归的文件夹ids
-            List<Integer> downSearchIds = adminFolderIds;
             //向上递归的文件夹ids
-            List<Integer> upSearchIds = Linq.select(openViewList, BusResourceManageListDTO::getId);
-            upSearchIds.addAll(adminFolderIds);
-            upSearchIds.addAll(memberFolderIds);
-            //去重
-            downSearchIds = downSearchIds.stream().distinct().toList();
-            upSearchIds = upSearchIds.stream().distinct().toList();
-
-            List<BusResourceManageListDTO> parentList = TreeNodeServiceImpl.getParentList(allList, upSearchIds);
+            List<BusResourceManageListDTO> parentList = TreeNodeServiceImpl.getParentList(allList, adminFolderIds);
             result = parentList;
-            List<BusResourceManageListDTO> childrenList = TreeNodeServiceImpl.getChildrenList(allList, downSearchIds);
+            //向下递归的文件夹ids
+            List<BusResourceManageListDTO> childrenList = TreeNodeServiceImpl.getChildrenList(allList, adminFolderIds);
             result.addAll(childrenList);
             result = result.stream().distinct().sorted(Comparator.comparing(BusResourceManageListDTO::getId)).collect(Collectors.toList());
-
             adminFolderList.addAll(childrenList);
-            for (BusResourceManageListDTO dto : result) {
-                dto.setViewLogAuth(dto.getCreateUserId().equals(userId));
-                boolean adminAuth = adminFolderList.contains(dto);
-                dto.setEditAuth(adminAuth);
-                dto.setMoveAuth(adminAuth);
-                dto.setAddFolderAuth(dto.getCanAddSub() && (adminAuth || memberFolderList.contains(dto)));
-            }
+//            for (BusResourceManageListDTO dto : result) {
+//                dto.setViewLogAuth(dto.getCreateUserId().equals(userId));
+//                boolean adminAuth = adminFolderList.contains(dto);
+//                dto.setEditAuth(adminAuth);
+//                dto.setMoveAuth(adminAuth);
+//                dto.setAddFolderAuth(dto.getCanAddSub() && (adminAuth || memberFolderList.contains(dto)));
+//            }
         }
         return result;
     }

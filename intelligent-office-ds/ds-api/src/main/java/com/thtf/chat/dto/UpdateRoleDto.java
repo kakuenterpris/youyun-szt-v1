@@ -14,4 +14,7 @@ public class UpdateRoleDto extends SysRoleEntity {
 
     @Schema(description = "菜单ID列表")
     private List<SysRoleMenuEntity> menuAuth;
+
+    @Schema(description = "知识库列表")
+    private List<Long> dataAuth;
 }

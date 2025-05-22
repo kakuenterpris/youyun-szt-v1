@@ -74,14 +74,11 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
 //            分配知识库权限
             // 删除原有的权限
             folderAuthRepo.remove(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, role.getRoleId()));
-            List<Long> dataAuth = role.getDataAuth();
-            List<FolderAuthEntity> fileAuthEntities = new ArrayList<>();
-            dataAuth.forEach(item -> {
-                FolderAuthEntity fileAuth = new FolderAuthEntity();
-                fileAuth.setRoleId(Math.toIntExact(role.getRoleId()));
-                fileAuth.setFolderId(Math.toIntExact(item));
-                fileAuthEntities.add(fileAuth);
-            });
+            List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
+            List<FolderAuthEntity> fileAuthEntities = folderAuthList;
+            for (FolderAuthEntity fileAuthEntity : fileAuthEntities) {
+                fileAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
+            }
             folderAuthRepo.saveBatch(fileAuthEntities);
             assignMenus(role);
         }catch (Exception e){

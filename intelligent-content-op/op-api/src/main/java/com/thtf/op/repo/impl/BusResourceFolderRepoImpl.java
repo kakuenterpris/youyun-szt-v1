@@ -85,6 +85,7 @@ public class BusResourceFolderRepoImpl extends ServiceImpl<BusResourceFolderMapp
         if (notDelete) {
             LambdaQueryChainWrapper<BusResourceFolderEntity> wrapper = lambdaQuery();
             wrapper.eq(BusResourceFolderEntity::getDeleted, false);
+            wrapper.in(BusResourceFolderEntity::getType, type, 0);
 
             list = wrapper.list();
         } else {

@@ -48,7 +48,7 @@ public class RoleController {
                 sysRoleRepo.save(role);
                 System.out.println(role);
                 List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
-                if (folderAuthList != null && folderAuthList.isEmpty()) {
+                if (folderAuthList != null && !folderAuthList.isEmpty()) {
                 for (FolderAuthEntity folderAuthEntity : folderAuthList) {
                     folderAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
                     folderAuthEntity.setId(null); // 清空ID，避免更新

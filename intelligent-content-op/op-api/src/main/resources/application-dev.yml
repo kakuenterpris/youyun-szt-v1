@@ -216,5 +216,8 @@ springdoc:
 knife4j:
   enable: true
 
-file.base.path: D:\data
-file.temp.path: D:\data\temp
+# file.base.path: D:\data
+# file.temp.path: D:\data\temp
+
+file.base.path: /data
+file.temp.path: /data/temp

@@ -101,8 +101,8 @@ public class RagFlowProcessRunnable implements Runnable {
         String fileName = fileUploadRecordDTO.getFileName();
         String originalName = fileUploadRecordDTO.getOriginName();
         // 获取文件流全路径
-        String filePath = fileBasePath + File.separator + path + fileName;
-        log.info("文件全路径为{}", filePath);
+        String filePath = fileBasePath + path + fileName;
+        System.out.println("filePath:===>" + filePath);
 //        String filePath = fileBasePath + path + fileName;
         File file = new File(filePath);
         if (!file.exists()) {
@@ -112,7 +112,7 @@ public class RagFlowProcessRunnable implements Runnable {
             return;
         }
         // 重命名文件
-        String originalPath = fileBasePath + File.separator + path + originalName;
+        String originalPath = fileBasePath + path + originalName;
         File originalFile = new File(originalPath);
         try {
             Files.copy(file.toPath(), originalFile.toPath());

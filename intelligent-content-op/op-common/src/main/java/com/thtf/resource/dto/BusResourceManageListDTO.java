@@ -243,5 +243,10 @@ public class BusResourceManageListDTO extends BaseTreeNodeVO {
      */
     private String scopeRule;
 
+    /**
+     * 文件夹类型
+     */
+    private Integer type;
+
 
 }

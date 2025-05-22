@@ -36,7 +36,7 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Override
     public RestResponse getFileByUserId(WonderfulPenSyncDTO dto) {
 
-        List<BusResourceManageListDTO> busResourceManageListDTOS = TreeNodeServiceImpl.assembleTree(kmService.getResourceListLeft("wonderfulPen", dto.getType()));
+        List<BusResourceManageListDTO> busResourceManageListDTOS = TreeNodeServiceImpl.assembleTree(kmService.getResourceListLeft());
         return RestResponse.success(busResourceManageListDTOS);
     }
 

@@ -1207,6 +1207,79 @@ public class KmServiceImpl implements KmService {
         return RestResponse.success(origin.getGuid());
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public RestResponse moveBachFile(SaveFileParam dto) {
+        SystemUser currentUser = ContextUtil.currentUser();
+        String userId = currentUser.getUserId();
+        Boolean systemAdminAuth = this.checkSystemAdminAuth(userId);
+        if (null == dto) {
+            return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "参数为空");
+        }
+//检查父文件
+        BusResourceFolderEntity parent = folderRepo.getById(dto.getFolderId());
+        if (null == parent) {
+            return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "上级文件夹未找到");
+        }
+
+        if (!systemAdminAuth){
+            //todo 判断文件和文件夹夹权限
+            //用户文件权限
+            //获取用户角色
+            Integer roleId=1;
+            List<FileAuthEntity> fileList = fileAuthRepo.list(new LambdaQueryWrapper<FileAuthEntity>().eq(FileAuthEntity::getUserId, userId));
+            List<FolderAuthEntity> folderList = folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId,roleId));
+            List<Integer> fileListId = Linq.select(fileList, FileAuthEntity::getFileId);
+            List<Integer> folderListId = Linq.select(folderList, FolderAuthEntity::getFolderId);
+//        判断 select是否包含dto.getFileList()
+            if (dto.getFileList()!=null){
+                for (BusResourceFileDTO busResourceFileDTO : dto.getFileList()) {
+                    if (!fileListId.contains(busResourceFileDTO.getId())) {
+                        return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "包含无操作权限的文件");
+                    }
+                }
+            }
+            //todo 判断目标文件夹权限
+            if (dto.getFolderList()!=null){
+                for (BusResourceFolderDTO busResourceFolderDTO : dto.getFolderList()) {
+                    if (!folderListId.contains(busResourceFolderDTO.getId())) {
+                        return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "包含无操作权限文件夹");
+                    }
+                }
+            }
+            if (!folderListId.contains(dto.getFolderList())){
+                return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无权限操作目标文件夹");
+            }
+        }
+        //文件移动
+        ArrayList<BusResourceFileEntity> updataFile = new ArrayList<>();
+        for (BusResourceFileDTO busResourceFileDTO : dto.getFileList()) {
+            BusResourceFileEntity busResourceFileEntity = new BusResourceFileEntity();
+            busResourceFileEntity.setId(Long.valueOf(busResourceFileDTO.getId()));
+            busResourceFileEntity.setFolderId(dto.getFolderId());
+            busResourceFileDTO.setFolderId(dto.getFolderId());
+            updataFile.add(busResourceFileEntity);
+        }
+        fileRepo.updateBatchById(updataFile);
+        //文件夹移动
+        List<BusResourceFolderDTO> folderList = dto.getFolderList();
+        List<BusResourceManageListDTO> allList = Linq.select(folderRepo.listAll(true), folderMapping::dto2ListDto);
+        for (BusResourceFolderDTO busResourceFolderDTO : folderList) {
+            BusResourceFolderEntity origin = folderRepo.getById(busResourceFolderDTO.getId());
+            busResourceFolderDTO.setParentGuid(parent.getGuid());
+            //检查循环更新的父节点不能为原来节点和本身节点
+            List<BusResourceManageListDTO> childList = TreeNodeServiceImpl.getChildrenList(allList, Math.toIntExact(origin.getId()));
+            List<Integer> idList = Linq.select(childList, BusResourceManageListDTO::getId);
+            idList.add(Math.toIntExact(origin.getId()));
+            if (idList.contains(dto.getFolderId())) {
+                return RestResponse.fail(DefaultErrorCode.UPDATE_ERROR.getCode(), "修改失败，上级文件夹选择不符合规范");
+            }
+            busResourceFolderDTO.setParentId(dto.getFolderId());
+            folderRepo.updateParent(busResourceFolderDTO);
+        }
+        return RestResponse.success(parent.getGuid());
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

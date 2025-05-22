@@ -2,6 +2,7 @@ package com.thtf.resource.param;
 
 import com.thtf.global.common.validation.ValidGroup;
 import com.thtf.resource.dto.BusResourceFileDTO;
+import com.thtf.resource.dto.BusResourceFolderDTO;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -21,4 +22,9 @@ public class SaveFileParam {
      * 文件
      */
     private List<BusResourceFileDTO> fileList;
+
+    /**
+     * 文件
+     */
+    private List<BusResourceFolderDTO> folderList;
 }

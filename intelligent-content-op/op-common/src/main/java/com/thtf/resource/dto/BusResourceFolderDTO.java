@@ -104,4 +104,9 @@ public class BusResourceFolderDTO {
      * 成员列表
      */
     private List<BusResourceMemberDTO> memberList;
+
+    /**
+     * 文件夹类型
+     */
+    private Integer type;
 }

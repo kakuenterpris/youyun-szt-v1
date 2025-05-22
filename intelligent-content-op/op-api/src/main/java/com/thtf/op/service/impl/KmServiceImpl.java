@@ -100,18 +100,23 @@ public class KmServiceImpl implements KmService {
     @Override
     public RestResponse resourceTreeListLeft() {
         // 将左侧文件夹列表组装成树形结构
-        return RestResponse.success(TreeNodeServiceImpl.assembleTree(getResourceListLeft()));
+        return RestResponse.success(TreeNodeServiceImpl.assembleTree(getResourceListLeft("", null)));
     }
 
     /**
      * 左侧文件夹列表
      */
     @Override
-    public List<BusResourceManageListDTO> getResourceListLeft() {
+    public List<BusResourceManageListDTO> getResourceListLeft(String requestType, Integer folderType) {
         SystemUser currentUser = ContextUtil.currentUser();
         String userId = StringUtils.isBlank(currentUser.getUserId()) ? ServiceConstants.DEFAULT_USER_ID : currentUser.getUserId();
         List<BusResourceManageListDTO> result = new ArrayList<>();
-        List<BusResourceManageListDTO> allList = Linq.select(folderRepo.listAll(true), folderMapping::dto2ListDto);
+        List<BusResourceManageListDTO> allList = new ArrayList<>();
+        if ("wonderfulPen".equals(requestType)) {
+            Linq.select(folderRepo.listAllByType(true, folderType), folderMapping::dto2ListDto);
+        } else {
+            Linq.select(folderRepo.listAll(true), folderMapping::dto2ListDto);
+        }
         Boolean systemAdminAuth = this.checkSystemAdminAuth(userId);
         if (systemAdminAuth) {
             //系统管理员可查看所有文件夹(系统管理员不在文件夹成员里的话，不可查看该文件夹下的文件，但可查看该文件夹下的文件夹)

@@ -232,5 +232,10 @@ public class BusResourceManageListDTO extends BaseTreeNodeVO {
      */
     private String embedStatus;
 
+    /**
+     * 文件夹类型
+     */
+    private Integer type;
+
 
 }

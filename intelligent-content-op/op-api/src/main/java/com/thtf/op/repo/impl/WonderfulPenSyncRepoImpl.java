@@ -7,7 +7,11 @@ import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.BusResourceFolderEntity;
 import com.thtf.op.mapper.BusResourceFolderMapper;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
+import com.thtf.op.service.impl.KmServiceImpl;
+import com.thtf.op.service.impl.TreeNodeServiceImpl;
+import com.thtf.resource.dto.BusResourceManageListDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,6 +23,9 @@ import java.util.List;
 public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMapper, BusResourceFolderEntity>
         implements WonderfulPenSyncRepo {
 
+    @Autowired
+    private KmServiceImpl kmService;
+
     @Override
     public RestResponse pushFile(WonderfulPenSyncDTO dto) {
 
@@ -29,8 +36,8 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Override
     public RestResponse getFileByUserId(WonderfulPenSyncDTO dto) {
 
-        List<BusResourceFolderEntity> busResourceFolderEntities = baseMapper.listByUserIdAndTypeFolder(dto.getUserId(), dto.getType());
-        return RestResponse.success(busResourceFolderEntities);
+        List<BusResourceManageListDTO> busResourceManageListDTOS = TreeNodeServiceImpl.assembleTree(kmService.getResourceListLeft());
+        return RestResponse.success(busResourceManageListDTOS);
     }
 
     @Override

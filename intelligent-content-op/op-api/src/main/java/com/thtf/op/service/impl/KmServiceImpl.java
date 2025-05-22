@@ -114,6 +114,7 @@ public class KmServiceImpl implements KmService {
         String userId = StringUtils.isBlank(currentUser.getUserId()) ? ServiceConstants.DEFAULT_USER_ID : currentUser.getUserId();
         List<BusResourceManageListDTO> result = new ArrayList<>();
         List<BusResourceManageListDTO> allList = Linq.select(folderRepo.listAll(true), folderMapping::dto2ListDto);
+
         Boolean systemAdminAuth = this.checkSystemAdminAuth(userId);
         if (systemAdminAuth) {
             //系统管理员可查看所有文件夹(系统管理员不在文件夹成员里的话，不可查看该文件夹下的文件，但可查看该文件夹下的文件夹)

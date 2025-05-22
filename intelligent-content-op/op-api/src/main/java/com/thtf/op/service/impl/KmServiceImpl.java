@@ -115,9 +115,9 @@ public class KmServiceImpl implements KmService {
         List<BusResourceManageListDTO> result = new ArrayList<>();
         List<BusResourceManageListDTO> allList = new ArrayList<>();
         if ("wonderfulPen".equals(requestType)) {
-            Linq.select(folderRepo.listAllByType(true, folderType), folderMapping::dto2ListDto);
+            allList = Linq.select(folderRepo.listAllByType(true, folderType), folderMapping::dto2ListDto);
         } else {
-            Linq.select(folderRepo.listAll(true), folderMapping::dto2ListDto);
+            allList = Linq.select(folderRepo.listAll(true), folderMapping::dto2ListDto);
         }
         Boolean systemAdminAuth = this.checkSystemAdminAuth(userId);
         if (systemAdminAuth) {

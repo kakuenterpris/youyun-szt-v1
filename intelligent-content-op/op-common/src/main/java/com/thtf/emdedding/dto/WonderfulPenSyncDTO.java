@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 public class WonderfulPenSyncDTO {
 
-    private Integer userId;
+    private String userId;
 
     private Integer fileId;
 

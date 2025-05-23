@@ -89,6 +89,7 @@ public class KmServiceImpl implements KmService {
     private final SysOptLogRepo sysOptLogRepo;
 
     private final FolderAuthRepo folderAuthRepo;
+    private final SysUserRoleRepo sysUserRoleRepo;
 
     private final FileUploadRecordMapper fileUploadRecordMapper;
     @Value("${file.base.path}")
@@ -129,7 +130,10 @@ public class KmServiceImpl implements KmService {
                 dto.setAddFolderAuth(dto.getCanAddSub());
             }
         } else {
-            List<Integer> adminFolderIds = Linq.select(folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, userId)), FolderAuthEntity::getFolderId);
+//            用户角色
+
+            Long roleId = sysUserRoleRepo.getOne(new LambdaQueryWrapper<SysUserRoleEntity>().eq(SysUserRoleEntity::getUserId, currentUser.getId())).getRoleId();
+            List<Integer> adminFolderIds = Linq.select(folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, roleId)), FolderAuthEntity::getFolderId);
             //有权限的文件夹：向上 和 向下递归
             List<BusResourceManageListDTO> adminFolderList = Linq.find(allList, x -> !x.getOpenView() && adminFolderIds.contains(x.getId()));
 

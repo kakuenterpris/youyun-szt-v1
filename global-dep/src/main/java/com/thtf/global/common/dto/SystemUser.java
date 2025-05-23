@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class SystemUser {
 
+    private String id;
 
     private String userId;
 

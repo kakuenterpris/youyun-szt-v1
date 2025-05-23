@@ -2,6 +2,9 @@ package com.thtf.emdedding.dto;
 
 import lombok.Data;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author zhangwei
  * @date 2025年03月25日
@@ -20,4 +23,6 @@ public class WonderfulPenSyncDTO {
     private String query;
 
     private Integer folderId;
+
+    private List<Map<Integer, String>> folderIds;
 }

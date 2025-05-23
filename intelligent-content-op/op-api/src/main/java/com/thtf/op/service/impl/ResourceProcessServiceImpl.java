@@ -1,7 +1,11 @@
 package com.thtf.op.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.pagehelper.util.StringUtil;
 import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
@@ -10,13 +14,14 @@ import com.thtf.emdedding.dto.RagProcessDTO;
 import com.thtf.feign.client.KbaseApi;
 import com.thtf.global.common.cache.RedisUtil;
 import com.thtf.global.common.dto.BusUserInfoDTO;
+import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.RagflowEntity;
+import com.thtf.op.entity.RelUserResourceEntity;
 import com.thtf.op.mapper.FileEmbeddingConfigMapper;
 import com.thtf.op.mapper.FileUploadRecordMapper;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
-import com.thtf.op.repo.BusResourceDatasetRepo;
-import com.thtf.op.repo.BusUserInfoRepo;
+import com.thtf.op.repo.*;
 import com.thtf.op.runnable.RagFlowProcessRunnable;
 import com.thtf.op.runnable.SyncJoinStatusRunnable;
 import com.thtf.op.service.EmbeddingService;
@@ -28,9 +33,8 @@ import com.thtf.resource.enums.IndexingStatusEnum;
 import com.thtf.resource.enums.ResourceErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.RequestBody;
+import okhttp3.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +44,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -69,20 +74,18 @@ public class ResourceProcessServiceImpl implements ResourceProcessService {
     private final BusUserInfoRepo userInfoRepo;
     private final BusResourceDatasetRepo datasetRepo;
 
+    private final BusResourceFileRepo busResourceFileRepo;
+
+    private final BusResourceFolderRepo busResourceFolderRepo;
+
+    private final SysRuleTagRepo sysRuleTagRepo;
+
+
     @Value("${file.base.path}")
     private String fileBasePath;
 
-    private final OKHttpUtils okHttpUtil;
-
     private final ObjectProvider<ResourceProcessService> resourceProcessServiceProvider;
 
-    private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json");
-
-
-    @Autowired
-    RagFlowApiConfigProperties ragFlowApiConfigProperties;
-    @Autowired
-    private RedisUtil redisUtil;
 
 
     /**
@@ -91,7 +94,7 @@ public class ResourceProcessServiceImpl implements ResourceProcessService {
      * @param fileIdList
      */
     @Override
-    public void execute(List<RagProcessDTO> fileIdList) {
+    public RestResponse execute(List<RagProcessDTO> fileIdList) {
         ThreadPoolExecutor singleThreadExecutor = new ThreadPoolExecutor(1, 1,
                 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<Runnable>(1000));
@@ -104,13 +107,25 @@ public class ResourceProcessServiceImpl implements ResourceProcessService {
                             fileEmbeddingConfigMapper,
                             fileBasePath,
                             datasetRepo,
-                    resourceProcessServiceProvider.getIfAvailable()
+                    resourceProcessServiceProvider.getIfAvailable(),
+                    sysRuleTagRepo,
+                    busResourceFileRepo,
+                    busResourceFolderRepo
                         );
-            singleThreadExecutor.submit(ragFlowProcessRunnable);
-
+//            singleThreadExecutor.submit(ragFlowProcessRunnable);
+            // 使用Future获取返回值
+            // 提交任务并获取Future
+            Future<RestResponse> future = singleThreadExecutor.submit(() -> {
+                ragFlowProcessRunnable.run();
+                return ragFlowProcessRunnable.getProcessResult(); // 新增结果获取方法
+            });
+            RestResponse result = future.get(60, TimeUnit.SECONDS);
+            return RestResponse.success(result.getData());
         } catch (Exception e) {
             e.printStackTrace();
             log.error("将资源上传到ragflow解析任务失败,失败原因:" + e);
+            return RestResponse.fail(500, "任务处理超时");
+
         } finally {
             singleThreadExecutor.shutdown();
         }
@@ -209,50 +224,6 @@ public class ResourceProcessServiceImpl implements ResourceProcessService {
         return null;
     }
 
-    /**
-     * 查询向量库中关联的文档
-     *
-     * @param queryKmDTO
-     */
-//    @Override
-//    public RestResponse query(QueryKmDTO queryKmDTO) {
-//        if (StrUtil.isEmpty(queryKmDTO.getContent()) || StrUtil.isEmpty(queryKmDTO.getUserId())) {
-//            return RestResponse.fail(ResourceErrorCode.PARAM_NULL.getCode(), "参数为空，无法进行向量查询");
-//        }
-//        boolean isQueryCustom = queryKmDTO.isQueryCustom();
-//        boolean isQueryDepartment = queryKmDTO.isQueryDepartment();
-//        boolean isQueryCompany = queryKmDTO.isQueryCompany();
-//        String userId = queryKmDTO.getUserId();
-//        String content = queryKmDTO.getContent();
-//        if (!isQueryCustom && !isQueryDepartment && !isQueryCompany) {
-//            return RestResponse.fail(ResourceErrorCode.PARAM_NULL.getCode(), "向量库标识参数为空，无法进行向量查询");
-//        }
-//        // 查询用户是否存在
-//        BusUserInfoDTO busUserInfoDTO = userInfoRepo.getByUserId(userId);
-//        if (null == busUserInfoDTO) {
-//            return RestResponse.fail(ResourceErrorCode.PARAM_NULL.getCode(), "用户不存在，无法进行向量查询");
-//        }
-//        Map resultMap = new HashMap();
-//        if (isQueryCustom) {
-//            List<Map> customList = this.queryPersonal(content, userId);
-//            resultMap.put("custom", customList);
-//        } else {
-//            resultMap.put("custom", null);
-//        }
-//        if (isQueryDepartment) {
-//            List<Map> departmentList = this.queryDepartment(content, busUserInfoDTO.getDepNum());
-//            resultMap.put("department", departmentList);
-//        } else {
-//            resultMap.put("department", null);
-//        }
-//        if (isQueryCompany) {
-//            List<Map> companyList = this.queryCompany(content, "5");
-//            resultMap.put("company", companyList);
-//        } else {
-//            resultMap.put("company", null);
-//        }
-//        return RestResponse.success(resultMap);
-//    }
 
     /**
      * 查询当前用户相关知识库
@@ -398,40 +369,6 @@ public class ResourceProcessServiceImpl implements ResourceProcessService {
         } finally {
             singleThreadExecutor.shutdown();
         }
-    }
-
-    @Override
-    public String createRagFlow(String userId) {
-
-        Map params = new HashMap();
-        params.put("name", userId+"_001");
-        String url = ragFlowApiConfigProperties.getLoginUrl() +"/kb/create";
-                Gson gson = new Gson();
-        String json = gson.toJson(params);
-        String apiKey = (String) redisUtil.get("ragflow:authHeader");
-        if (StrUtil.isEmpty(apiKey)) {
-            RagflowEntity ragflowEntity = new RagflowEntity();
-            ragflowEntity.setEmail("M@M.test");
-            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
-            apiKey = ragFlowProcessService.loginRagFlow(ragflowEntity);
-        }
-        log.info("调用ragflow方法apiKey：{}", apiKey);
-
-        log.info("调用ragflow方法post请求参数：{}", json);
-        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", apiKey)
-                .build();
-
-        Map map = okHttpUtil.doPost(request);
-        if (null!= map && (Integer) map.get("code") == 0) {
-            Map<String, Object> data = (Map<String, Object>) map.get("data");
-            return (String) data.get("kb_id");
-        }
-        return "";
     }
 
     /**

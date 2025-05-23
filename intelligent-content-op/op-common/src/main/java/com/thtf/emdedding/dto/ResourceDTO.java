@@ -21,7 +21,7 @@ public class ResourceDTO {
 
     private String category;
 
-    private Integer size;
+    private Long size;
 
     private String fileType;
 

@@ -10,15 +10,22 @@ import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.BusResourceDatasetEntity;
+import com.thtf.op.entity.BusResourceFileEntity;
+import com.thtf.op.entity.BusResourceFolderEntity;
+import com.thtf.op.entity.SysRuleTagEntity;
 import com.thtf.op.mapper.FileEmbeddingConfigMapper;
 import com.thtf.op.mapper.FileUploadRecordMapper;
 import com.thtf.op.repo.BusResourceDatasetRepo;
+import com.thtf.op.repo.BusResourceFileRepo;
+import com.thtf.op.repo.BusResourceFolderRepo;
+import com.thtf.op.repo.SysRuleTagRepo;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.service.RelUserResourceService;
 import com.thtf.op.service.ResourceProcessService;
 import com.thtf.resource.dto.BusResourceDatasetDTO;
 import com.thtf.resource.enums.IndexingStatusEnum;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,10 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author zhangwei
@@ -54,9 +58,21 @@ public class RagFlowProcessRunnable implements Runnable {
 
     FileEmbeddingConfigMapper fileEmbeddingConfigMapper;
 
-    private final ResourceProcessService resourceProcessService;
+
+    private final SysRuleTagRepo sysRuleTagRepo;
+
+    private final BusResourceFileRepo busResourceFileRepo;
+
+    private final BusResourceFolderRepo busResourceFolderRepo;
 
 
+    // 新增结果字段
+    private RestResponse processResult;
+
+    // 新增结果获取方法
+    public RestResponse getProcessResult() {
+        return processResult;
+    }
 
 
 
@@ -65,7 +81,11 @@ public class RagFlowProcessRunnable implements Runnable {
                                   RelUserResourceService relUserResourceService,
                                   FileUploadRecordMapper fileUploadRecordMapper,
                                   FileEmbeddingConfigMapper fileEmbeddingConfigMapper,
-                                  String fileBasePath, BusResourceDatasetRepo datasetRepo, ResourceProcessService resourceProcessService) {
+                                  String fileBasePath, BusResourceDatasetRepo datasetRepo,
+                                  ResourceProcessService resourceProcessService,
+                                  SysRuleTagRepo sysRuleTagRepo,
+                                  BusResourceFileRepo busResourceFileRepo,
+                                  BusResourceFolderRepo busResourceFolderRepo) {
         this.ragProcessDTOS = ragProcessDTOS;
         this.ragFlowProcessService = ragFlowProcessService;
         this.relUserResourceService = relUserResourceService;
@@ -73,29 +93,54 @@ public class RagFlowProcessRunnable implements Runnable {
         this.fileEmbeddingConfigMapper = fileEmbeddingConfigMapper;
         this.fileBasePath = fileBasePath;
         this.datasetRepo = datasetRepo;
-        this.resourceProcessService = resourceProcessService;
+        this.sysRuleTagRepo = sysRuleTagRepo;
+        this.busResourceFileRepo = busResourceFileRepo;
+        this.busResourceFolderRepo = busResourceFolderRepo;
     }
 
     @Override
     public void run() {
-        this.handler();
-    }
-
-    private void handler() {
-        for (RagProcessDTO ragProcessDTO : ragProcessDTOS) {
-            // 将文档上传到ragflow并触发解析
-            this.uploadAndParse(ragProcessDTO);
+        try {
+            this.handler();
+            // 成功时构造响应
+            this.processResult = this.handler();
+        }catch (Exception e){
+            log.error("文件处理失败", e);
+            // 失败时构造错误响应
+            this.processResult = RestResponse.fail(500, "文件处理失败：" + e.getMessage());
         }
     }
 
-    private void uploadAndParse(RagProcessDTO ragProcessDTO) {
+    private RestResponse handler() {
+
+        List<String> successFiles = new ArrayList<>();
+        List<String> failedFiles = new ArrayList<>();
+        for (RagProcessDTO ragProcessDTO : ragProcessDTOS) {
+            // 将文档上传到ragflow并触发解析
+            RestResponse response =this.uploadAndParse(ragProcessDTO);
+            if (response.getCode() == 200) {
+                successFiles.add(ragProcessDTO.getFileId());
+            } else {
+                failedFiles.add(ragProcessDTO.getFileId());
+            }
+        }
+        // 构建最终处理结果
+        Map<String, Object> result = new HashMap<>();
+        result.put("successCount", successFiles.size());
+        result.put("failedCount", failedFiles.size());
+        result.put("successFiles", successFiles);
+        result.put("failedFiles", failedFiles);
+        return RestResponse.success(result);
+    }
+
+    private RestResponse  uploadAndParse(RagProcessDTO ragProcessDTO) {
         // 获取上传的文件路径
         FileUploadRecordDTO fileUploadRecordDTO = fileUploadRecordMapper.getByFileId(ragProcessDTO.getFileId());
         if (null == fileUploadRecordDTO) {
             // 更新资源状态为上传失败
             relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.FILE_ERROR.getIndexingStatus(), IndexingStatusEnum.FILE_ERROR.getIndexingStatusName());
             log.error("上传文件查询为空，文件id{}", ragProcessDTO.getFileId());
-            return;
+            return RestResponse.fail(500, "文件记录不存在");
         }
         String path = fileUploadRecordDTO.getPath();
         String fileName = fileUploadRecordDTO.getFileName();
@@ -103,13 +148,12 @@ public class RagFlowProcessRunnable implements Runnable {
         // 获取文件流全路径
         String filePath = fileBasePath + path + fileName;
         System.out.println("filePath:===>" + filePath);
-//        String filePath = fileBasePath + path + fileName;
         File file = new File(filePath);
         if (!file.exists()) {
             // 更新资源状态为上传失败
             relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.FILE_ERROR.getIndexingStatus(), IndexingStatusEnum.FILE_ERROR.getIndexingStatusName());
             log.error("上传文件不存在，文件id{}", ragProcessDTO.getFileId());
-            return;
+            return RestResponse.fail(500, "文件不存在");
         }
         // 重命名文件
         String originalPath = fileBasePath + path + originalName;
@@ -123,36 +167,58 @@ public class RagFlowProcessRunnable implements Runnable {
         if (originalFile.exists()) {
             file = originalFile;
         }
-        // 知识化状态配置味空，无法获取到知识库id
-//        if (StrUtil.isEmpty(ragProcessDTO.getEmbeddingConfigCode())) {
-//            relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatusName());
-//            log.error("知识化配置为空，无法上传文件");
-//            return;
-//        }
-
         // 获取知识库id
         BusResourceDatasetDTO busResourceDatasetDTO = datasetRepo.getByCode(ContextUtil.currentUser().getUserId());
         // 如果没有知识库则创建
         String datesetId = "";
         if (null == busResourceDatasetDTO) {
-            datesetId = resourceProcessService.createRagFlow(ContextUtil.getUserId());
+            datesetId = ragFlowProcessService.createRagFlow(ContextUtil.getUserId());
             if (StrUtil.isEmpty(datesetId)) {
                 relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CREATE_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_ERROR.getIndexingStatusName());
                 log.error("创建ragflow知识库id失败，无法上传文件,用户id为{}", ContextUtil.getUserId());
-                return;
+                return RestResponse.fail(500, "创建ragflow知识库id失败");
             }
             boolean add = datasetRepo.add("user", ContextUtil.getUserId(), datesetId);
             if (!add) {
                 relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_ERROR.getIndexingStatusName());
                 log.error("添加ragflow知识库id失败，无法上传文件,用户id为{}",ContextUtil.getUserId());
-                return;
+                return RestResponse.fail(500, "添加ragflow知识库id失败");
             }
         }else {
             datesetId = busResourceDatasetDTO.getDatasetsId();
         }
 
-        // 获取文件所在文件夹的配置规则
-        String fileId = ragProcessDTO.getFileId();
+        // 设置抽取的规则
+        List<SysRuleTagEntity> ruleTagList = new ArrayList<>();
+        LambdaQueryWrapper<SysRuleTagEntity> queryWrapper = new LambdaQueryWrapper<>();
+        // 知识化状态配置味空，无法获取到知识库id
+        if (StrUtil.isEmpty(ragProcessDTO.getEmbeddingConfigCode())) {
+            // 获取文件所在文件夹的配置规则
+            BusResourceFileEntity fileEntity = busResourceFileRepo.getById(ragProcessDTO.getResourceId());
+            if(StringUtils.isNotEmpty(fileEntity.getEmbeddingConfigCode())  && StringUtils.isNotEmpty(fileEntity.getEmbeddingConfigName())){
+                queryWrapper.eq(SysRuleTagEntity::getRuleExtractId,fileEntity.getEmbeddingConfigCode());
+                queryWrapper.orderBy(true, true, SysRuleTagEntity::getSort);
+                ruleTagList = sysRuleTagRepo.list(queryWrapper);
+            }else{
+                // 获取文件所在文件夹的配置规则
+                BusResourceFolderEntity folderEntity = busResourceFolderRepo.getById(fileEntity.getFolderId());
+                if(StringUtils.isNotEmpty(folderEntity.getEmbeddingConfigCode())  && StringUtils.isNotEmpty(folderEntity.getEmbeddingConfigName())){
+                    queryWrapper.eq(SysRuleTagEntity::getRuleExtractId, folderEntity.getEmbeddingConfigCode());
+                    queryWrapper.orderBy(true, true, SysRuleTagEntity::getSort);
+                    ruleTagList = sysRuleTagRepo.list(queryWrapper);
+                }else{
+                    // 更新资源状态为上传失败
+                    relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.UPLOAD_RAG_FAIL.getIndexingStatusName());
+                    return RestResponse.fail(500, "上传ragflow失败");
+                }
+            }
+        }else {
+            queryWrapper.eq(SysRuleTagEntity::getRuleExtractId,ragProcessDTO.getEmbeddingConfigCode());
+            queryWrapper.orderBy(true, true, SysRuleTagEntity::getSort);
+            ruleTagList = sysRuleTagRepo.list(queryWrapper);
+        }
+        // ragFlowProcessService.changeParser(ruleTagList, datesetId);
+
 
 
 
@@ -178,7 +244,7 @@ public class RagFlowProcessRunnable implements Runnable {
         if (StrUtil.isEmpty(uploadFileId)) {
             // 更新资源状态为上传失败
             relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.UPLOAD_RAG_FAIL.getIndexingStatus(), IndexingStatusEnum.UPLOAD_RAG_FAIL.getIndexingStatusName());
-            return;
+            return RestResponse.fail(500, "上传ragflow失败");
         } else {
             // 保存ragflow的文件id
             relUserResourceService.updateDocumentId(uploadFileId, ragProcessDTO.getResourceId(), ragProcessDTO.getFileId());
@@ -193,5 +259,6 @@ public class RagFlowProcessRunnable implements Runnable {
             relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.PARSING.getIndexingStatus(), IndexingStatusEnum.PARSING.getIndexingStatusName());
 
         }
+        return RestResponse.success("上传成功");
     }
 }

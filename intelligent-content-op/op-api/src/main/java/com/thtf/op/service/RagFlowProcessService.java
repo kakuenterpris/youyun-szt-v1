@@ -1,6 +1,8 @@
 package com.thtf.op.service;
 
+import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.RagflowEntity;
+import com.thtf.op.entity.SysRuleTagEntity;
 import com.thtf.resource.dto.BusResourceManageDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,4 +31,14 @@ public interface RagFlowProcessService {
     boolean delete(List<String> documentIdList, String datasetId);
 
     String loginRagFlow(RagflowEntity ragflowEntity);
+
+    String createRagFlow(String userId);
+
+    String changeParser(List<SysRuleTagEntity> ruleTagList,String docId);
+
+    RestResponse getRagFlowStatus(String docId);
+
+    String getRagFlowMD(String docId);
+
+    String getRagFlowPDF(String docId);
 }

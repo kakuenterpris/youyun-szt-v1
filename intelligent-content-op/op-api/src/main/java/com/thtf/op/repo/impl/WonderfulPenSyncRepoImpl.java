@@ -1,15 +1,20 @@
 package com.thtf.op.repo.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
 import com.thtf.global.common.cache.RedisUtil;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.BusResourceFolderEntity;
 import com.thtf.op.entity.RagflowEntity;
+import com.thtf.op.mapper.BusResourceDatasetMapper;
 import com.thtf.op.mapper.BusResourceFolderMapper;
+import com.thtf.op.mapper.RelUserResourceMapper;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
 import com.thtf.op.service.impl.KmServiceImpl;
@@ -29,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 
@@ -49,6 +55,12 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
     @Autowired
     RagFlowApiConfigProperties ragFlowApiConfigProperties;
+
+    @Autowired
+    BusResourceDatasetMapper busResourceDatasetMapper;
+
+    @Autowired
+    RelUserResourceMapper relUserResourceMapper;
 
     @Override
     public RestResponse pushFile(WonderfulPenSyncDTO dto) {
@@ -79,13 +91,8 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 .writeTimeout(600, TimeUnit.SECONDS)
                 .build();
 
-        String apiKey = "ragflow-RiZDg3ZjBjMzQ2MTExZjBiNTE0YmU3ZG"; //(String) redisUtil.get("ragflow:authHeader");  //ragFlowApiConfigProperties.getApiKey();
-        if (StrUtil.isEmpty(apiKey)) {
-            RagflowEntity ragflowEntity = new RagflowEntity();
-            ragflowEntity.setEmail("M@M.test");
-            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
-            apiKey = ragFlowProcessServiceImpl.loginRagFlow(ragflowEntity);
-        }
+        String apiKey = ragFlowApiConfigProperties.getApiKey();
+
         // String datasetId = ragFlowApiConfigProperties.getDatasetId();
         String url = ragFlowApiConfigProperties.getRagflowUrl();
         if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
@@ -124,10 +131,31 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         try {
 
             response = client.newCall(request).execute();
-            byte[] responseBytes = response.body().bytes();
-            String jsonString = new String(responseBytes);
+            JSONObject jsonObject = JSONObject.parseObject(response.body().string());
+//            byte[] responseBytes = response.body().bytes();
+//            String jsonString = new String(responseBytes);
+            if (jsonObject.get("data") != null) {
+                JSONObject data = jsonObject.getJSONObject("data");
+            }
 
-            return RestResponse.success(jsonString);
+            JSONObject jsonObject1 = jsonObject.getJSONObject("data");
+            JSONArray chunks = jsonObject1.getJSONArray("chunks");
+            List<Map<String, Object>> list2 = new ArrayList();
+            for (int i = 0; i < chunks.size(); i++) {
+                Map<String, Object> map = new HashMap<>();
+                JSONObject chunk = chunks.getJSONObject(i);
+                map.put("content", chunk.get("content"));
+                map.put("image_id", chunk.get("image_id"));
+                map.put("term_similarity", chunk.get("term_similarity"));
+                map.put("vector_similarity", chunk.get("vector_similarity"));
+                map.put("similarity", chunk.get("similarity"));
+                String documentId = relUserResourceMapper.getFileIdByDocumentId(chunk.get("document_id").toString());
+                map.put("document_id", documentId);
+                map.put("document_keyword", chunk.get("document_keyword"));
+                list2.add(map);
+            }
+
+            return RestResponse.success(list2);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -143,7 +171,78 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
     @Override
     public RestResponse getFileInfo(WonderfulPenSyncDTO dto) {
-        return RestResponse.success("预览成功");
+
+
+        String fileId = dto.getFileId();
+        String userId = dto.getUserId();
+
+        //通过userid和fileid查询ragflow表
+//        String datasetId = busResourceDatasetMapper.listDatasetsIdByCreateUserId(userId);
+        String datasetId = "51b9b08c361711f0a8f03e04d146f0ba";
+
+//        String documentId = relUserResourceMapper.getDocumentIdByFileId(fileId);
+        String documentId = "ea8b4cb836e811f0aaa00a7f8ad6111b";
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(600, TimeUnit.SECONDS)
+                .readTimeout(600, TimeUnit.SECONDS)
+                .writeTimeout(600, TimeUnit.SECONDS)
+                .build();
+
+        String apiKey = ragFlowApiConfigProperties.getApiKey();
+
+        String url = ragFlowApiConfigProperties.getRagflowUrl();
+        if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
+            log.error("上传文档得url或key为空");
+            return RestResponse.error("上传文档得url或key为空");
+        }
+
+        String fullUrl = url + "/api/v1/datasets/" + datasetId + "/documents/" + documentId + "/chunks?page=1&page_size=100";
+
+
+        Request request = new Request.Builder()
+                .url(fullUrl)
+                .addHeader("Authorization", "Beare " + apiKey)
+                .get()
+                .build();
+        Response response = null;
+        try {
+
+            response = client.newCall(request).execute();
+            JSONObject jsonObject = JSONObject.parseObject(response.body().string());
+            if (jsonObject.get("data") != null) {
+                JSONObject data = jsonObject.getJSONObject("data");
+            }
+
+            JSONObject jsonObject1 = jsonObject.getJSONObject("data");
+            JSONArray chunks = jsonObject1.getJSONArray("chunks");
+            List<Map<String, Object>> list2 = new ArrayList();
+            for (int i = 0; i < chunks.size(); i++) {
+                Map<String, Object> map = new HashMap<>();
+                JSONObject chunk = chunks.getJSONObject(i);
+                map.put("content", chunk.get("content"));
+                map.put("available", chunk.get("available"));
+                map.put("id", chunk.get("id"));
+                String documentId1 = relUserResourceMapper.getFileIdByDocumentId(chunk.get("document_id").toString());
+                map.put("document_id", documentId1);
+                map.put("document_keyword", chunk.get("document_keyword"));
+                list2.add(map);
+            }
+
+            return RestResponse.success(list2);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            log.error("ragflowragflow向量检索接口失败，失败原因:", e.getMessage());
+            return null;
+        } finally {
+            if (null != response) {
+                response.close();
+            }
+        }
+
+
+//        return RestResponse.success("预览成功");
     }
 }
 

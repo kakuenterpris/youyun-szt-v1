@@ -70,5 +70,5 @@ public class BusResourceFolderEntity extends BaseEntity {
      * 文件夹类型
      */
     @TableField(value = "type")
-    private Integer type;
+    private String type;
 }

@@ -109,7 +109,7 @@ public class KmServiceImpl implements KmService {
      * 左侧文件夹列表
      */
     @Override
-    public List<BusResourceManageListDTO> getResourceListLeft(String requestType, Integer folderType) {
+    public List<BusResourceManageListDTO> getResourceListLeft(String requestType, String folderType) {
         SystemUser currentUser = ContextUtil.currentUser();
         String userId = StringUtils.isBlank(currentUser.getUserId()) ? ServiceConstants.DEFAULT_USER_ID : currentUser.getUserId();
         List<BusResourceManageListDTO> result = new ArrayList<>();

@@ -14,15 +14,15 @@ public class WonderfulPenSyncDTO {
 
     private String userId;
 
-    private Integer fileId;
+    private String fileId;
 
     private Integer parentId;
 
-    private Integer type;
+    private String type;
 
     private String query;
 
     private Integer folderId;
 
-    private List<Map<Integer, String>> folderIds;
+    private List<Map<String, Object>> folderIds;
 }

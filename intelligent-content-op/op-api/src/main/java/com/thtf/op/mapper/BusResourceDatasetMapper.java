@@ -3,6 +3,9 @@ package com.thtf.op.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.thtf.op.entity.BusResourceDatasetEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
 * @author allm
@@ -12,6 +15,11 @@ import org.apache.ibatis.annotations.Mapper;
 */
 @Mapper
 public interface BusResourceDatasetMapper extends BaseMapper<BusResourceDatasetEntity> {
+
+    //通过create_user_id查询datasets_id
+    @Select("select datasets_id from bus_resource_dataset where create_user_id = ${userId}")
+    String listDatasetsIdByCreateUserId(String userId);
+
 
 }
 

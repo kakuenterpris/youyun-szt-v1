@@ -40,7 +40,7 @@ public interface BusResourceFolderRepo extends IService<BusResourceFolderEntity>
     /**
      * 列表（notDelete为true时，查询未删除的文件夹，为false时，查询所有文件夹）
      */
-    List<BusResourceFolderDTO> listAllByType(boolean notDelete, Integer type);
+    List<BusResourceFolderDTO> listAllByType(boolean notDelete, String type);
 
     /**
      * 列表

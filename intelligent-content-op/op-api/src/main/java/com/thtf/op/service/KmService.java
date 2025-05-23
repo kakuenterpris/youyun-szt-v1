@@ -22,7 +22,7 @@ public interface KmService {
     /**
      * 左侧文件夹列表
      */
-    List<BusResourceManageListDTO> getResourceListLeft();
+    List<BusResourceManageListDTO> getResourceListLeft(String requestType, Integer folderType);
 
     /**
      * 右侧树
@@ -117,4 +117,6 @@ public interface KmService {
     RestResponse syncDifyDocument(String datasetId, Integer parentId);
 
     RestResponse moveFolder(BusResourceFolderDTO dto);
+
+    RestResponse moveBachFile(SaveFileParam dto);
 }

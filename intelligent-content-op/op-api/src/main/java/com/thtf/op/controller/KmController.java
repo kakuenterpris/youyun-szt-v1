@@ -116,6 +116,16 @@ public class KmController {
     public RestResponse saveFile(@RequestBody @Validated(value = {ValidGroup.Insert.class, ValidGroup.Update.class}) SaveFileParam dto) {
         return service.saveFile(dto);
     }
+    /**
+     * 批量移动
+     *
+     * @param resourceManageDTO 文件/文件夹入参对象
+     * @return 结果集
+     */
+    @PostMapping("/moveBachFile")
+    public RestResponse moveBachFile(@RequestBody @Validated(value = {ValidGroup.Insert.class, ValidGroup.Update.class}) SaveFileParam dto) {
+        return service.moveBachFile(dto);
+    }
 
     /**
      * 获取MD预览数据

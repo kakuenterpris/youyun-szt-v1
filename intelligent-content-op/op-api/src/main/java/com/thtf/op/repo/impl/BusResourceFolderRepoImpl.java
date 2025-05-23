@@ -79,6 +79,22 @@ public class BusResourceFolderRepoImpl extends ServiceImpl<BusResourceFolderMapp
     }
 
     @Override
+    public List<BusResourceFolderDTO> listAllByType(boolean notDelete, Integer type) {
+        List<BusResourceFolderEntity> list;
+        // notDelete为true时，查询未删除的文件夹，为false时，查询所有文件夹
+        if (notDelete) {
+            LambdaQueryChainWrapper<BusResourceFolderEntity> wrapper = lambdaQuery();
+            wrapper.eq(BusResourceFolderEntity::getDeleted, false);
+            wrapper.in(BusResourceFolderEntity::getType, type, 0);
+
+            list = wrapper.list();
+        } else {
+            list = this.getBaseMapper().listAllIncludeDeletedFolder();
+        }
+        return Linq.select(list, folderMapping::entity2Dto);
+    }
+
+    @Override
     public List<BusResourceFolderDTO> listOpenView() {
         List<BusResourceFolderEntity> list = lambdaQuery()
                 .eq(BusResourceFolderEntity::getOpenView, true)

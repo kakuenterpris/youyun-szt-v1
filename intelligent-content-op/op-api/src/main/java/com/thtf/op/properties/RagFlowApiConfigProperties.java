@@ -16,6 +16,8 @@ public class RagFlowApiConfigProperties {
 
     private String loginUrl;
 
+
+    private String ragflowUrl;
     /**
      * 上传url
      */

@@ -22,7 +22,7 @@ public interface KmService {
     /**
      * 左侧文件夹列表
      */
-    List<BusResourceManageListDTO> getResourceListLeft(String requestType, Integer folderType);
+    List<BusResourceManageListDTO> getResourceListLeft(String requestType, String folderType);
 
     /**
      * 右侧树

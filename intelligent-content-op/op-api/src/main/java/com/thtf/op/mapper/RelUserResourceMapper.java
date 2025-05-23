@@ -5,6 +5,7 @@ import com.thtf.emdedding.dto.ResourceDTO;
 import com.thtf.op.entity.RelUserResourceEntity;
 import com.thtf.resource.dto.RelUserResourceDTO;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,15 @@ public interface RelUserResourceMapper extends BaseMapper<RelUserResourceEntity>
     void updateIndexStatusByFolderId(String folderId, String indexingStatus, String indexingStatusName);
 
     void updateIndexStatusByFileIds(@Param("fileIdList")List<String> fileIdList, @Param("indexingStatus")String indexingStatus, @Param("indexingStatusName")String indexingStatusName);
+
+    //通过file_id获取document_id
+    @Select("select document_id from rel_user_resource where file_id = #{fileId}")
+    String getDocumentIdByFileId(String fileId);
+
+
+    //通过document_id获取file_id
+    @Select("select file_id from rel_user_resource where document_id = #{documentId}")
+    String getFileIdByDocumentId(String documentId);
 }
 
 

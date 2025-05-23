@@ -5,17 +5,19 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.global.common.cache.RedisUtil;
-import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.RagflowEntity;
+import com.thtf.op.entity.RelUserResourceEntity;
+import com.thtf.op.entity.SysRuleTagEntity;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
+import com.thtf.op.repo.impl.RelUserResourceRepoImpl;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.util.OKHttpUtils;
-import com.thtf.resource.dto.BusResourceManageDTO;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
@@ -26,11 +28,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author zhangwei
@@ -44,12 +44,15 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
     RagFlowApiConfigProperties ragFlowApiConfigProperties;
 
     @Autowired
-    private OKHttpUtils okHttpUtils;
-
-    @Autowired
     private RedisUtil redisUtil;
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json");
+    @Autowired
+    private RelUserResourceRepoImpl relUserResourceRepoImpl;
+
+    @Autowired
+    private OKHttpUtils okHttpUtil;
+
 
     /**
      * 上传文件
@@ -507,6 +510,257 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
         }
 
         return authHeader;
+    }
+
+    @Override
+    public String createRagFlow(String userId) {
+
+        Map params = new HashMap();
+        params.put("name", userId+"_001");
+        String url = ragFlowApiConfigProperties.getLoginUrl() +"/kb/create";
+        Gson gson = new Gson();
+        String json = gson.toJson(params);
+        String apiKey = (String) redisUtil.get("ragflow:authHeader");
+        if (StrUtil.isEmpty(apiKey)) {
+            RagflowEntity ragflowEntity = new RagflowEntity();
+            ragflowEntity.setEmail("M@M.test");
+            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
+            apiKey = loginRagFlow(ragflowEntity);
+        }
+        log.info("调用ragflow方法apiKey：{}", apiKey);
+
+        log.info("调用ragflow方法post请求参数：{}", json);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", apiKey)
+                .build();
+
+        Map map = okHttpUtil.doPost(request);
+        if (null!= map && (Integer) map.get("code") == 0) {
+            Map<String, Object> data = (Map<String, Object>) map.get("data");
+            return (String) data.get("kb_id");
+        }
+        return "";
+    }
+
+
+    /**
+     * 调用ragflow方法，修改解析器
+     * @param ruleTagList
+     * @param docId
+     * @return
+     */
+    @Override
+    public String changeParser(List<SysRuleTagEntity> ruleTagList,String docId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("doc_id", docId);
+        String url = ragFlowApiConfigProperties.getLoginUrl() + "/document/change_parser";
+        for (SysRuleTagEntity ruleTagEntity : ruleTagList) {
+            params.put(" ", ruleTagEntity.getTagName());
+        }
+
+        Gson gson = new Gson();
+        String json = gson.toJson(params);
+        log.info("调用ragflow方法post请求参数：{}", json);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(300, TimeUnit.SECONDS)
+                .readTimeout(300, TimeUnit.SECONDS)
+                .writeTimeout(300, TimeUnit.SECONDS)
+                .build();
+
+        Response response = null;
+        String jsonString = null;
+        try {
+            response = client.newCall(request).execute();
+            byte[] responseBytes = response.body().bytes();
+            jsonString = new String(responseBytes);
+            log.info("调用ragflow修改配置响应：{}", jsonString);
+        }catch (Exception e) {
+            log.error("调用ragflow方法修改配置失败，失败原因：" + e.getMessage());
+            e.getMessage();
+            return null;
+        } finally {
+            response.close();
+        }
+        return jsonString;
+
+    }
+
+
+
+    @Override
+    public RestResponse getRagFlowStatus(String docId) {
+//        if (CollUtil.isEmpty(doc_ids)){
+//            return RestResponse.success("未选中数据");
+//        }
+//        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+//        lambdaQueryWrapper.in(RelUserResourceEntity::getFileId, doc_ids);
+//        List<RelUserResourceEntity> userResourceEntityList = relUserResourceRepoImpl.list(lambdaQueryWrapper);
+//        if (userResourceEntityList.isEmpty()){
+//            log.error("获取MD失败，文档ID为空");
+//            return RestResponse.error("获取MD失败，文档ID为空");
+//        }
+//        List<String> documentIds = userResourceEntityList.stream()
+//                .map(RelUserResourceEntity::getDocumentId)
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.toList());
+
+        if (StrUtil.isEmpty(docId)){
+            return RestResponse.success("未选中数据");
+        }
+        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(RelUserResourceEntity::getFileId, docId);
+        RelUserResourceEntity userResourceEntity = relUserResourceRepoImpl.getOne(lambdaQueryWrapper);
+        if (StrUtil.isEmpty(userResourceEntity.getDocumentId())){
+            log.error("还没做知识化提取操作");
+            return RestResponse.error("还没做知识化提取操作");
+        }
+        String apiKey = (String) redisUtil.get("ragflow:authHeader");
+        if (StrUtil.isEmpty(apiKey)) {
+            RagflowEntity ragflowEntity = new RagflowEntity();
+            ragflowEntity.setEmail("M@M.test");
+            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
+            apiKey = loginRagFlow(ragflowEntity);
+        }
+
+        Map<String, String> params = new HashMap<>();
+//        params.put("doc_ids", documentIds.toString());
+        params.put("doc_id", userResourceEntity.getDocumentId());
+        params.put("page", "1");
+        params.put("page_size", "100");
+
+        Gson gson = new Gson();
+        String json = gson.toJson(params);
+        log.info("调用ragflow方法post请求参数：{}", json);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+
+        String url = ragFlowApiConfigProperties.getLoginUrl() +"/document/infos";
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+        String finalUrl = urlBuilder.build().toString();
+        Request request = new Request.Builder()
+                .url(finalUrl)
+                .post(body)
+                .addHeader("Authorization", apiKey)
+                .addHeader("Content-Type","application/json")
+                .addHeader("Connection", "keep-alive ")
+                .build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(300, TimeUnit.SECONDS)
+                .readTimeout(300, TimeUnit.SECONDS)
+                .writeTimeout(300, TimeUnit.SECONDS)
+                .build();
+
+        Response response = null;
+
+        try {
+            response = client.newCall(request).execute();
+            byte[] responseBytes = response.body().bytes();
+            String jsonString = new String(responseBytes);
+            log.info("调用ragflow方法get响应：{}", jsonString);
+            if (StringUtils.isEmpty(jsonString)) {
+                return null;
+            }
+            Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
+            return RestResponse.success(map.get("data"));
+        } catch (Exception e) {
+            log.error("调用ragflow方法get，失败原因：" + e.getMessage());
+            e.getMessage();
+            return null;
+        } finally {
+            response.close();
+        }
+    }
+
+
+    @Override
+    public String getRagFlowMD(String docId) {
+        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(RelUserResourceEntity::getFileId, docId);
+        RelUserResourceEntity userResourceEntity = relUserResourceRepoImpl.getOne(lambdaQueryWrapper);
+        if (StrUtil.isEmpty(userResourceEntity.getDocumentId())){
+            log.error("获取MD失败，文档ID为空");
+            return "获取MD失败，文档ID为空";
+        }
+        String url = ragFlowApiConfigProperties.getLoginUrl() + "/document/get_md/"+userResourceEntity.getDocumentId();
+        String apiKey = (String) redisUtil.get("ragflow:authHeader");
+        if (StrUtil.isEmpty(apiKey)) {
+            RagflowEntity ragflowEntity = new RagflowEntity();
+            ragflowEntity.setEmail("M@M.test");
+            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
+            apiKey = loginRagFlow(ragflowEntity);
+        }
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Content-type", "application/json")
+                .addHeader("Authorization",  apiKey)
+                .get()
+                .build();
+        // 执行请求
+        try (Response response = new OkHttpClient().newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                log.error("PDF请求失败，状态码：{}", response.code());
+                return response.message();
+            }
+
+            // 处理二进制PDF数据
+            byte[] mDBytes = response.body().bytes();
+            return Base64.getEncoder().encodeToString(mDBytes); // 返回Base64编码字符串
+        } catch (IOException e) {
+            log.error("获取PDF失败，原因：{}", e.getMessage());
+            return e.getMessage();
+        }
+    }
+
+    @Override
+    public String getRagFlowPDF(String docId) {
+        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(RelUserResourceEntity::getFileId, docId);
+        RelUserResourceEntity userResourceEntity = relUserResourceRepoImpl.getOne(lambdaQueryWrapper);
+        if (StrUtil.isEmpty(userResourceEntity.getDocumentId())){
+            log.error("获取MD失败，文档ID为空");
+            return "获取PDF失败，文档ID为空";
+        }
+        String url = ragFlowApiConfigProperties.getLoginUrl() + "/document/get_md/"+userResourceEntity.getDocumentId();
+        String apiKey = (String) redisUtil.get("ragflow:authHeader");
+        if (StrUtil.isEmpty(apiKey)) {
+            RagflowEntity ragflowEntity = new RagflowEntity();
+            ragflowEntity.setEmail("M@M.test");
+            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
+            apiKey = loginRagFlow(ragflowEntity);
+        }
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Content-type", "application/json")
+                .addHeader("Authorization",  apiKey)
+                .get()
+                .build();
+        // 执行请求
+        try (Response response = new OkHttpClient().newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                log.error("PDF请求失败，状态码：{}", response.code());
+                return response.message();
+            }
+
+            // 处理二进制PDF数据
+            byte[] pdfBytes = response.body().bytes();
+            return Base64.getEncoder().encodeToString(pdfBytes); // 返回Base64编码字符串
+        } catch (IOException e) {
+            log.error("获取PDF失败，原因：{}", e.getMessage());
+            return e.getMessage();
+        }
     }
 
 

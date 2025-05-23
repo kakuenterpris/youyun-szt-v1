@@ -1,23 +1,22 @@
 package com.thtf.op.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.emdedding.dto.RagProcessDTO;
 import com.thtf.feign.client.KbaseApi;
 import com.thtf.global.common.rest.RestResponse;
-import com.thtf.global.common.validation.ValidGroup;
 import com.thtf.kbase.entity.KmVector;
-import com.thtf.kbase.entity.PersonalVector;
 import com.thtf.op.service.EmbeddingService;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.service.ResourceProcessService;
-import com.thtf.resource.dto.BusResourceManageDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -48,30 +47,6 @@ public class RagFlowController {
         return RestResponse.success(uploadFileId);
     }
 
-//    @PostMapping("/parse")
-//    public RestResponse saveResource(@RequestParam(value = "uploadFileId") String uploadFileId) {
-//        Boolean bool = ragFlowProcessService.parseFile(uploadFileId);
-//        return RestResponse.success(bool);
-//    }
-//
-//    @PostMapping("/chunks")
-//    public RestResponse chunks(@RequestParam(value = "uploadFileId") String uploadFileId) {
-//        List<Map> list = ragFlowProcessService.chunks(uploadFileId);
-//        return RestResponse.success(list);
-//    }
-
-//    @PostMapping("/queryPersonal")
-//    public RestResponse queryPersonal(@RequestParam(value = "content") String content, @RequestParam(value = "userId") String userId) {
-//        List<Map> list = resourceProcessService.queryPersonal(content, userId);
-//        return RestResponse.success(list);
-//    }
-//
-//    @PostMapping("/queryDepartment")
-//    public RestResponse queryDepartment(@RequestParam(value = "content") String content, @RequestParam(value = "depNum") String depNum) {
-//        List<Map> list = resourceProcessService.queryDepartment(content, depNum);
-//        return RestResponse.success(list);
-//    }
-
     @PostMapping("/getEmbedding")
     public RestResponse getEmbedding(@RequestParam(value = "content") String content) {
         String embeddingStr = embeddingService.embedding(content);
@@ -87,8 +62,7 @@ public class RagFlowController {
     @PostMapping("/executeRag")
     @Operation(summary = "知识化提取")
     public RestResponse executeRag(@RequestBody List<RagProcessDTO> fileIdList) {
-        resourceProcessService.execute(fileIdList);
-        return RestResponse.SUCCESS;
+        return resourceProcessService.execute(fileIdList);
     }
 
     @PostMapping("/saveKbase")
@@ -110,6 +84,49 @@ public class RagFlowController {
 //        return RestResponse.success(bool);
 //    }
 
+    /**
+     * 查看向量化状态
+     * @param docId
+     * @return
+     */
+    @GetMapping("/getRagFlowStatus")
+    @Operation(summary = "查看向量化状态")
+    public RestResponse<Page<Object>> getRagFlowStatus(String docId) {
 
+        return ragFlowProcessService.getRagFlowStatus(docId);
+
+    }
+
+
+    /**
+     * 获取RagFlow的MD
+     * @param docId
+     * @return
+     */
+    @GetMapping("/getRagFlowMD")
+    @Operation(summary = "获取RagFlow的MD")
+    public ResponseEntity<byte[]> getRagFlowMD(@RequestParam(value = "docId") String docId) {
+        String base64Md = ragFlowProcessService.getRagFlowMD(docId);
+        byte[] pdfBytes = Base64.getDecoder().decode(base64Md);
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_MARKDOWN)
+                .body(pdfBytes);
+    }
+
+
+    /**
+     * 获取RagFlow的PDF
+     * @param docId
+     * @return
+     */
+    @GetMapping("/getRagFlowPDF")
+    @Operation(summary = "获取RagFlow的PDF")
+    public ResponseEntity<byte[]> getRagFlowPDF(@RequestParam(value = "docId") String docId) {
+        String base64Pdf = ragFlowProcessService.getRagFlowPDF(docId);
+        byte[] pdfBytes = Base64.getDecoder().decode(base64Pdf);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
 
 }

@@ -18,11 +18,13 @@ import com.thtf.op.properties.RagFlowApiConfigProperties;
 import com.thtf.op.repo.impl.RelUserResourceRepoImpl;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.util.OKHttpUtils;
+import com.thtf.resource.enums.IndexingStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -598,33 +600,34 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
 
 
 
-    @Override
-    public RestResponse getRagFlowStatus(String docId) {
-//        if (CollUtil.isEmpty(doc_ids)){
+    @Scheduled(fixedRate = 5000) // 每5秒执行一次
+    public String getRagFlowStatus() {
+        String userId = ContextUtil.getUserId();
+        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(RelUserResourceEntity::getUserId, userId);
+        lambdaQueryWrapper.eq(RelUserResourceEntity::getDeleted, 0);
+        lambdaQueryWrapper.eq(RelUserResourceEntity::getIndexingStatus, IndexingStatusEnum.PARSING.getIndexingStatus());
+        List<RelUserResourceEntity> userResourceEntityList = relUserResourceRepoImpl.list(lambdaQueryWrapper);
+
+        if (CollUtil.isEmpty(userResourceEntityList)){
+            return "全部解析完成！";
+        }
+
+        List<String> documentIds = userResourceEntityList.stream()
+                .map(RelUserResourceEntity::getDocumentId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+//        if (StrUtil.isEmpty(docId)){
 //            return RestResponse.success("未选中数据");
 //        }
 //        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-//        lambdaQueryWrapper.in(RelUserResourceEntity::getFileId, doc_ids);
-//        List<RelUserResourceEntity> userResourceEntityList = relUserResourceRepoImpl.list(lambdaQueryWrapper);
-//        if (userResourceEntityList.isEmpty()){
-//            log.error("获取MD失败，文档ID为空");
-//            return RestResponse.error("获取MD失败，文档ID为空");
+//        lambdaQueryWrapper.eq(RelUserResourceEntity::getFileId, docId);
+//        RelUserResourceEntity userResourceEntity = relUserResourceRepoImpl.getOne(lambdaQueryWrapper);
+//        if (StrUtil.isEmpty(userResourceEntity.getDocumentId())){
+//            log.error("还没做知识化提取操作");
+//            return RestResponse.error("还没做知识化提取操作");
 //        }
-//        List<String> documentIds = userResourceEntityList.stream()
-//                .map(RelUserResourceEntity::getDocumentId)
-//                .filter(Objects::nonNull)
-//                .collect(Collectors.toList());
-
-        if (StrUtil.isEmpty(docId)){
-            return RestResponse.success("未选中数据");
-        }
-        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.eq(RelUserResourceEntity::getFileId, docId);
-        RelUserResourceEntity userResourceEntity = relUserResourceRepoImpl.getOne(lambdaQueryWrapper);
-        if (StrUtil.isEmpty(userResourceEntity.getDocumentId())){
-            log.error("还没做知识化提取操作");
-            return RestResponse.error("还没做知识化提取操作");
-        }
         String apiKey = (String) redisUtil.get("ragflow:authHeader");
         if (StrUtil.isEmpty(apiKey)) {
             RagflowEntity ragflowEntity = new RagflowEntity();
@@ -634,8 +637,8 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
         }
 
         Map<String, String> params = new HashMap<>();
-//        params.put("doc_ids", documentIds.toString());
-        params.put("doc_id", userResourceEntity.getDocumentId());
+        params.put("doc_ids", documentIds.toString());
+//        params.put("doc_id", userResourceEntity.getDocumentId());
         params.put("page", "1");
         params.put("page_size", "100");
 
@@ -672,11 +675,44 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
                 return null;
             }
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
-            return RestResponse.success(map.get("data"));
+            int proNum=0;
+            int failNum=0;
+            int successNum=0;
+            for (Map<String, Object> data : (List<Map<String, Object>>) map.get("data")) {
+                String fileId = (String) data.get("id");
+                Double progress = (Double) data.get("progress");
+                if (StrUtil.isNotEmpty(fileId)) {
+                    for (RelUserResourceEntity userResourceEntity : userResourceEntityList) {
+                        if (fileId.equals(userResourceEntity.getDocumentId())) {
+                            userResourceEntity.setProgress(progress);
+                            // progress ==-1 ,解析异常
+                            if (Double.compare(-1.0, progress) == 0){
+                                failNum++;
+                                userResourceEntity.setIndexingStatus(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatus());
+                                userResourceEntity.setIndexingStatusName(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatusName());
+                            }else {
+                                // progress < 1.0 ,解析中
+                                if (Double.compare(1.0, progress) > 0) {
+                                    proNum++;
+                                    userResourceEntity.setIndexingStatus(IndexingStatusEnum.PARSING.getIndexingStatus());
+                                    userResourceEntity.setIndexingStatusName(IndexingStatusEnum.PARSING.getIndexingStatusName());
+                                }else{
+                                    successNum++;
+                                    // progress == 1.0 ,解析完成
+                                    userResourceEntity.setIndexingStatus(IndexingStatusEnum.COMPLETED.getIndexingStatus());
+                                    userResourceEntity.setIndexingStatusName(IndexingStatusEnum.COMPLETED.getIndexingStatusName());
+                                }
+                            }
+                            relUserResourceRepoImpl.updateById(userResourceEntity);
+                        }
+                    }
+                }
+            }
+            return "本次执行结果：==========>>>"+"解析中"+proNum+"个， ### "+"解析完成"+successNum+"个， ### "+"解析失败"+failNum+"个";
         } catch (Exception e) {
             log.error("调用ragflow方法get，失败原因：" + e.getMessage());
             e.getMessage();
-            return null;
+            return e.getMessage();
         } finally {
             response.close();
         }

@@ -221,5 +221,9 @@ public class BusResourceManageListDTO extends BaseTreeNodeVO {
      * 是否收藏了
      */
     private Boolean favorite;
+    /**
+     *  进度
+     */
+    private Double progress;
 
 }

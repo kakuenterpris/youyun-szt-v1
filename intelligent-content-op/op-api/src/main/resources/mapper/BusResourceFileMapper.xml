@@ -293,4 +293,17 @@
             </foreach>
         </if>
     </select>
+
+
+    <select id="selectFileByIds" resultType="com.thtf.op.entity.BusResourceFileEntity">
+        select
+        file_id, name, level
+        FROM
+        bus_resource_file
+        WHERE 1=1
+        and file_id in
+        <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
+            #{fileId}
+        </foreach>
+    </select>
 </mapper>

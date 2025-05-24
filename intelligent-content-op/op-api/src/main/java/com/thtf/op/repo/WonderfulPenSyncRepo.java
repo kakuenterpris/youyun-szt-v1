@@ -19,4 +19,6 @@ public interface WonderfulPenSyncRepo extends IService<BusResourceFolderEntity> 
     RestResponse getKonwledgeByUserId(WonderfulPenSyncDTO dto);
 
     RestResponse getFileInfo(WonderfulPenSyncDTO dto);
+
+    RestResponse selectFileByIds(WonderfulPenSyncDTO dto);
 }

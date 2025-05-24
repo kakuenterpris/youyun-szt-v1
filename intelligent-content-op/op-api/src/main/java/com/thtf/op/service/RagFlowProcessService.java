@@ -1,5 +1,6 @@
 package com.thtf.op.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.RagflowEntity;
 import com.thtf.op.entity.SysRuleTagEntity;
@@ -36,9 +37,9 @@ public interface RagFlowProcessService {
 
     String changeParser(List<SysRuleTagEntity> ruleTagList,String docId);
 
-    RestResponse getRagFlowStatus(String docId);
-
     String getRagFlowMD(String docId);
 
     String getRagFlowPDF(String docId);
+
+//    String getRagFlowStatus();
 }

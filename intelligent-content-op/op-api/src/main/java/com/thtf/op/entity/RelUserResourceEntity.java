@@ -67,6 +67,10 @@ public class RelUserResourceEntity extends BaseEntity implements Serializable {
     @TableField(value = "indexing_status_name")
     private String indexingStatusName;
 
+    @TableField(value = "progress")
+    private Double progress;
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

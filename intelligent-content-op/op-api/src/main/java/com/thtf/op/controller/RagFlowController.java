@@ -84,18 +84,17 @@ public class RagFlowController {
 //        return RestResponse.success(bool);
 //    }
 
-    /**
-     * 查看向量化状态
-     * @param docId
-     * @return
-     */
-    @GetMapping("/getRagFlowStatus")
-    @Operation(summary = "查看向量化状态")
-    public RestResponse<Page<Object>> getRagFlowStatus(String docId) {
-
-        return ragFlowProcessService.getRagFlowStatus(docId);
-
-    }
+//    /**
+//     * 查看向量化状态
+//     * @param docId
+//     * @return
+//     */
+//    @GetMapping("/getRagFlowStatus")
+//    @Operation(summary = "查看向量化状态")
+//    public RestResponse getRagFlowStatus() {
+//        return RestResponse.success(ragFlowProcessService.getRagFlowStatus()) ;
+//
+//    }
 
 
     /**

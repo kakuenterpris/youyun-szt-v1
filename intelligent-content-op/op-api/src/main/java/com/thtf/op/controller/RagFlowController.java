@@ -11,6 +11,7 @@ import com.thtf.op.service.ResourceProcessService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -106,10 +107,13 @@ public class RagFlowController {
     @Operation(summary = "获取RagFlow的MD")
     public ResponseEntity<byte[]> getRagFlowMD(@RequestParam(value = "docId") String docId) {
         String base64Md = ragFlowProcessService.getRagFlowMD(docId);
-        byte[] pdfBytes = Base64.getDecoder().decode(base64Md);
+        byte[] mdBytes = Base64.getDecoder().decode(base64Md);
+        // 添加下载响应头
+        String fileName = docId + ".md";  // 根据业务需求构造文件名
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_MARKDOWN)
-                .body(pdfBytes);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .body(mdBytes);
     }
 
 

@@ -6,9 +6,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
+import com.thtf.feign.client.FileApi;
+import com.thtf.file.dto.FileUploadRecordDTO;
 import com.thtf.global.common.cache.RedisUtil;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.BusResourceFolderEntity;
@@ -21,19 +22,28 @@ import com.thtf.op.repo.WonderfulPenSyncRepo;
 import com.thtf.op.service.impl.KmServiceImpl;
 import com.thtf.op.service.impl.RagFlowProcessServiceImpl;
 import com.thtf.op.service.impl.TreeNodeServiceImpl;
+import com.thtf.resource.dto.BusResourceFileDTO;
 import com.thtf.resource.dto.BusResourceManageListDTO;
+import com.thtf.resource.param.SaveFileParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -63,10 +73,63 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Autowired
     RelUserResourceMapper relUserResourceMapper;
 
+    private final FileApi fileApi;
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public RestResponse pushFile(WonderfulPenSyncDTO dto) {
 
+        String url="http://minio.miyun.botsmart.cn:9000/mybucket/mb_upload_files/";
+        String fileName = dto.getFileName();
+//        获取后缀
+        String Filetype = fileName.substring(fileName.lastIndexOf("."));
+//        获取文件名（不包含后缀）
+        String subName= fileName.substring(0, fileName.lastIndexOf("."));
+        String param="?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=botsmart%2F20250524%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250524T031311Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=b31e293b731eb5892c9ceed6ad5e8e1cd150c4dc7ce64a91d140acd0b84299e1";
 
+
+        Request request = new Request.Builder()
+                .url(url+fileName+param)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(300, TimeUnit.SECONDS)
+                .readTimeout(300, TimeUnit.SECONDS)
+                .writeTimeout(300, TimeUnit.SECONDS)
+                .build();
+        Response response = null;
+        try {
+//            妙笔请求获取文件
+            response = client.newCall(request).execute();
+            InputStream inputStream = new ByteArrayInputStream(response.body().bytes());
+            MultipartFile file = new MockMultipartFile(ContentType.APPLICATION_OCTET_STREAM.toString(), inputStream);
+//          上传文件
+            RestResponse updateResponse = fileApi.updateFile(file, null, null, null);
+            SaveFileParam saveFileParam = new SaveFileParam();
+            //响应数据
+            LinkedHashMap data = (LinkedHashMap) updateResponse.getData();
+            List<BusResourceFileDTO> fileList = new ArrayList<>();
+            BusResourceFileDTO busResourceFileDTO = new BusResourceFileDTO();
+            busResourceFileDTO.setGuid(data.get("guid").toString());
+            busResourceFileDTO.setName(subName);
+            busResourceFileDTO.setFolderId(dto.getFolderId());
+            busResourceFileDTO.setFileType(Filetype);
+            //默认配置项目
+            busResourceFileDTO.setLevel(1);
+            busResourceFileDTO.setScopeRule("ONLY_ME");
+            //构造参数
+            fileList.add(busResourceFileDTO);
+            saveFileParam.setFileList(fileList);
+            saveFileParam.setFolderId(dto.getFolderId());
+            // 保存文件
+            RestResponse saveResponse = kmService.saveFile(saveFileParam);
+            if (saveResponse.getCode() != 200||saveResponse.getCode() != 200) {
+                return RestResponse.error("推送失败");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return RestResponse.success("推送成功");
     }
 

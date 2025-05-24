@@ -25,4 +25,8 @@ public class WonderfulPenSyncDTO {
     private Integer folderId;
 
     private List<Map<String, Object>> folderIds;
+
+    private String filePath;
+
+    private String fileName;
 }

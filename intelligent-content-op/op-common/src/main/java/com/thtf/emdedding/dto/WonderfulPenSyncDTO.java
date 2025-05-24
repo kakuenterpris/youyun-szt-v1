@@ -16,6 +16,8 @@ public class WonderfulPenSyncDTO {
 
     private String fileId;
 
+    private List<String> fileIds;
+
     private Integer parentId;
 
     private String type;

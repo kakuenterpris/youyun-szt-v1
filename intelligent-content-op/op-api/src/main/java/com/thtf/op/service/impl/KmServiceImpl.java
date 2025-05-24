@@ -745,12 +745,16 @@ public class KmServiceImpl implements KmService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RestResponse getPreview(Integer id) throws IOException {
+    public RestResponse getPreview(Integer id) {
         String content = null;
         BusResourceFileDTO fileDTO = fileRepo.getById(id);
         if (null != fileDTO && StringUtils.isNoneEmpty(fileDTO.getPreviewFileId())) {
             FileUploadRecordDTO preview = fileUploadRecordMapper.getByFileId(fileDTO.getPreviewFileId());
-            content = new String(Files.readAllBytes(Path.of(fileBasePath + File.separator + preview.getPath() + preview.getFileName())));
+            try {
+                content = new String(Files.readAllBytes(Path.of(fileBasePath + File.separator + preview.getPath() + preview.getFileName())));
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
         }
 
         //记录操作日志

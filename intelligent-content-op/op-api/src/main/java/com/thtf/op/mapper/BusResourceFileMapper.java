@@ -4,6 +4,7 @@ import com.thtf.op.entity.BusResourceFileEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.thtf.resource.dto.BusResourceManageListDTO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.Date;
 import java.util.List;
@@ -33,6 +34,14 @@ public interface BusResourceFileMapper extends BaseMapper<BusResourceFileEntity>
     Integer selectFileListCount(String name, List<Integer> fileYearList,
                            List<String> embeddingConfigNameList, List<Integer> folderIdList,
                            String timeSort, String nameSort, Boolean notDelete);
+
+    //根据fileIds查询文件信息
+    @Select("select file_id, name, level from bus_resource_file where file_id in ${fileIds}")
+    List<BusResourceFileEntity> selectFileByIds(List<String> fileIds);
+
+    //根据fileIds查询文件信息
+    @Select("select id from bus_resource_file where file_id = #{fileId}")
+    Integer selectIdByFileId(String fileId);
 }
 
 

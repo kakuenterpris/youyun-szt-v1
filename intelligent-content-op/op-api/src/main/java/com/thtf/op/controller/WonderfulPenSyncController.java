@@ -50,5 +50,11 @@ public class WonderfulPenSyncController {
         return wonderfulPenSyncRepo.getFileInfo(dto);
     }
 
+    @PostMapping("/selectFileByIds")
+    @Operation(summary = "文档列表查询")
+    public RestResponse selectFileByIds(@RequestBody WonderfulPenSyncDTO dto) {
+        return wonderfulPenSyncRepo.selectFileByIds(dto);
+    }
+
 
 }

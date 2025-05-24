@@ -7,7 +7,7 @@ spring:
       datasource:
         primary:
           driver-class-name: dm.jdbc.driver.DmDriver
-          url: jdbc:dm://118.193.126.254:5236/INTELLIGENT_OFFICE?schema=INTELLIGENT_CONTENT&encoding=UTF-8
+          url: jdbc:dm://118.193.126.254:5236/INTELLIGENT_MAX?schema=INTELLIGENT_MAX&encoding=UTF-8
           username: SYSDBA
           password: Sysdba@123
   cloud:

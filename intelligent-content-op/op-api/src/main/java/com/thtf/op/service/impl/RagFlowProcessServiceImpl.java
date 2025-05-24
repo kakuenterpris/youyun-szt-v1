@@ -746,7 +746,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
         // 执行请求
         try (Response response = new OkHttpClient().newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                log.error("PDF请求失败，状态码：{}", response.code());
+                log.error("MD请求失败，状态码：{}", response.code());
                 return response.message();
             }
 
@@ -754,7 +754,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             byte[] mDBytes = response.body().bytes();
             return Base64.getEncoder().encodeToString(mDBytes); // 返回Base64编码字符串
         } catch (IOException e) {
-            log.error("获取PDF失败，原因：{}", e.getMessage());
+            log.error("获取MD失败，原因：{}", e.getMessage());
             return e.getMessage();
         }
     }

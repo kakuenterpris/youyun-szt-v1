@@ -216,8 +216,8 @@ springdoc:
 knife4j:
   enable: true
 
-file.base.path: D:\data
-file.temp.path: D:\data\temp
+#file.base.path: D:\data
+#file.temp.path: D:\data\temp
 
-#file.base.path: /home/agentweb/web/intelligent-office/backend/content/data
-#file.temp.path: /home/agentweb/web/intelligent-office/backend/content/data/temp
+file.base.path: /home/agentweb/web/intelligent-office/backend/content/data
+file.temp.path: /home/agentweb/web/intelligent-office/backend/content/data/temp

@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.pagehelper.util.StringUtil;
 import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
@@ -78,18 +79,17 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RestResponse pushFile(WonderfulPenSyncDTO dto) {
-
-        String url="http://minio.miyun.botsmart.cn:9000/mybucket/mb_upload_files/";
+        String url = dto.getUrl();
+        if (StringUtil.isEmpty(url)){
+            return RestResponse.error("请求路径为空!");
+        }
         String fileName = dto.getFileName();
 //        获取后缀
         String Filetype = fileName.substring(fileName.lastIndexOf("."));
 //        获取文件名（不包含后缀）
         String subName= fileName.substring(0, fileName.lastIndexOf("."));
-        String param="?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=botsmart%2F20250524%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250524T031311Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=b31e293b731eb5892c9ceed6ad5e8e1cd150c4dc7ce64a91d140acd0b84299e1";
-
-
         Request request = new Request.Builder()
-                .url(url+fileName+param)
+                .url(url)
                 .addHeader("Content-Type", "application/json")
                 .build();
 
@@ -113,15 +113,16 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
             BusResourceFileDTO busResourceFileDTO = new BusResourceFileDTO();
             busResourceFileDTO.setGuid(data.get("guid").toString());
             busResourceFileDTO.setName(subName);
-            busResourceFileDTO.setFolderId(dto.getFolderId());
             busResourceFileDTO.setFileType(Filetype);
+            String userId = dto.getUserId();
+            busResourceFileDTO.setCreateUserId(userId);
             //默认配置项目
-            busResourceFileDTO.setLevel(1);
+            busResourceFileDTO.setLevel(Integer.valueOf(dto.getSecurityLevel()));
             busResourceFileDTO.setScopeRule("ONLY_ME");
             //构造参数
             fileList.add(busResourceFileDTO);
             saveFileParam.setFileList(fileList);
-            saveFileParam.setFolderId(dto.getFolderId());
+            saveFileParam.setFolderId(304);
             // 保存文件
             RestResponse saveResponse = kmService.saveFile(saveFileParam);
             if (saveResponse.getCode() != 200||saveResponse.getCode() != 200) {

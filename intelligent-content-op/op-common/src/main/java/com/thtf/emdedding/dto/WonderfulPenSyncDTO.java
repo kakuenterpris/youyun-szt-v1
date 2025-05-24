@@ -29,4 +29,8 @@ public class WonderfulPenSyncDTO {
     private String filePath;
 
     private String fileName;
+
+    private String url;
+
+    private String securityLevel;
 }

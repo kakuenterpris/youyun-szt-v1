@@ -158,14 +158,16 @@ public class RagFlowProcessRunnable implements Runnable {
         // 重命名文件
         String originalPath = fileBasePath + path + originalName;
         File originalFile = new File(originalPath);
-        try {
-            Files.copy(file.toPath(), originalFile.toPath());
-        } catch (IOException e) {
-            e.printStackTrace();
-            log.error("上传ragflow，文件复制失败", e.getMessage());
-        }
-        if (originalFile.exists()) {
-            file = originalFile;
+        if (!originalFile.exists()) {
+            try {
+                Files.copy(file.toPath(), originalFile.toPath(),StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                e.printStackTrace();
+                log.error("上传ragflow，文件复制失败", e.getMessage());
+            }
+            if (originalFile.exists()) {
+                file = originalFile;
+            }
         }
         // 获取知识库id
         BusResourceDatasetDTO busResourceDatasetDTO = datasetRepo.getByCode(ContextUtil.currentUser().getUserId());

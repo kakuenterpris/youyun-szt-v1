@@ -87,6 +87,12 @@ public class BusResourceFileEntity extends BaseEntity {
     @TableField(value = "level")
     private Integer level;
 
+    /**
+     * 密级（妙笔代码）
+     */
+    @TableField(exist = false)
+    private String levelWonderPen;
+
 
     /**
      * 知悉规则

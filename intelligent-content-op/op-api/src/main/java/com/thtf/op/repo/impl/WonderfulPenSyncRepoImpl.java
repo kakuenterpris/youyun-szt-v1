@@ -1,5 +1,6 @@
 package com.thtf.op.repo.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -83,6 +84,7 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         String userId = dto.getUserId();
         String query = dto.getQuery();
 
+//        String datasetId = busResourceDatasetMapper.listDatasetsIdByCreateUserId(userId);
         String datasetId = "51b9b08c361711f0a8f03e04d146f0ba";
 
         OkHttpClient client = new OkHttpClient.Builder()
@@ -107,10 +109,13 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         List<String> list1 = new ArrayList<>();
         list1.add(datasetId);
         params.put("dataset_ids", list1);
-        params.put("question", "物质");
+        params.put("question", "物质"); //query
 
         //文件id集合
         List<String> list = new ArrayList<>();
+
+        //通过folderId和type获取文件id
+
 
         list.add("ddb0407c36d711f0b0020a7f8ad6111b");
         list.add("ec2aa81e36bd11f09635ce6a55565431");
@@ -149,8 +154,10 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 map.put("term_similarity", chunk.get("term_similarity"));
                 map.put("vector_similarity", chunk.get("vector_similarity"));
                 map.put("similarity", chunk.get("similarity"));
+
                 String documentId = relUserResourceMapper.getFileIdByDocumentId(chunk.get("document_id").toString());
-                map.put("document_id", documentId);
+                //测试随机成成id
+                map.put("document_id", RandomUtil.randomString(10));
                 map.put("document_keyword", chunk.get("document_keyword"));
                 list2.add(map);
             }

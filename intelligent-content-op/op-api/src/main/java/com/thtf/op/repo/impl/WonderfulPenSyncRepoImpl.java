@@ -335,6 +335,23 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
         List<BusResourceFileEntity> busResourceFileEntities = busResourceFileMapper.selectFileByIds(dto.getFileIds());
 
+        for (BusResourceFileEntity busResourceFileEntity : busResourceFileEntities) {
+            switch (busResourceFileEntity.getLevel()) {
+                case 1:
+                    busResourceFileEntity.setLevelWonderPen("GK");
+                    break;
+                case 2:
+                    busResourceFileEntity.setLevelWonderPen("NB");
+                    break;
+                case 3:
+                    busResourceFileEntity.setLevelWonderPen("JM");
+                    break;
+                case 4:
+                    busResourceFileEntity.setLevelWonderPen("MM");
+                    break;
+
+            }
+        }
         return RestResponse.success(busResourceFileEntities);
     }
 }

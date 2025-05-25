@@ -610,12 +610,14 @@ public class KmServiceImpl implements KmService {
                     List<Integer> scope = fileDTO.getScope();
                     List<FileAuthEntity> fileAuthEntities = new ArrayList<>();
                     Integer fileId = Math.toIntExact(resourceFileId);
-                    scope.forEach(x -> {
-                        FileAuthEntity fileAuthEntity = new FileAuthEntity();
-                        fileAuthEntity.setFileId(fileId);
-                        fileAuthEntity.setUserId(x);
-                        fileAuthEntities.add(fileAuthEntity);
-                    });
+                    if(scope != null) {
+                        scope.forEach(x -> {
+                            FileAuthEntity fileAuthEntity = new FileAuthEntity();
+                            fileAuthEntity.setFileId(fileId);
+                            fileAuthEntity.setUserId(x);
+                            fileAuthEntities.add(fileAuthEntity);
+                        });
+                    }
                     fileAuthRepo.saveBatch(fileAuthEntities);
                 } else {
                     BusResourceFileEntity source = fileRepo.getById(resourceFileId);
@@ -644,12 +646,15 @@ public class KmServiceImpl implements KmService {
                       List<Integer> scope = fileDTO.getScope();
                       List<FileAuthEntity> fileAuthEntities = new ArrayList<>();
                       Integer fileId = Math.toIntExact(resourceFileId);
-                      scope.forEach(x -> {
-                          FileAuthEntity fileAuthEntity = new FileAuthEntity();
-                          fileAuthEntity.setFileId(fileId);
-                          fileAuthEntity.setUserId(x);
-                          fileAuthEntities.add(fileAuthEntity);
-                      });
+                      if(scope != null) {
+                          scope.forEach(x -> {
+                              FileAuthEntity fileAuthEntity = new FileAuthEntity();
+                              fileAuthEntity.setFileId(fileId);
+                              fileAuthEntity.setUserId(x);
+                              fileAuthEntities.add(fileAuthEntity);
+                          });
+                      }
+
                   }
                     fileRepo.update(fileDTO);
                 }
@@ -702,6 +707,7 @@ public class KmServiceImpl implements KmService {
         } catch (Exception e) {
             e.printStackTrace();
             log.error(e.getMessage());
+            return RestResponse.fail(500, "文件上传失败");
         }
 
         if (CollUtil.isNotEmpty(fileIdList)) {

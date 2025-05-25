@@ -109,6 +109,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             response = client.newCall(request).execute();
             byte[] responseBytes = response.body().bytes();
             String jsonString = new String(responseBytes);
+            System.out.println("ragflow返回值:===>" + jsonString);
 //            watch.stop();
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
             if (null != map && (Integer) map.get("code") == 0) {
@@ -185,6 +186,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             response = client.newCall(request).execute();
             byte[] responseBytes = response.body().bytes();
             String jsonString = new String(responseBytes);
+            System.out.println("请求ragflow解析文档处理接口返回值:===>" + jsonString);
             watch.stop();
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
             if (null == map || (Integer) map.get("code") != 0) {

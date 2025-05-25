@@ -134,6 +134,7 @@ public class RagFlowProcessRunnable implements Runnable {
     }
 
     private RestResponse  uploadAndParse(RagProcessDTO ragProcessDTO) {
+        System.out.println("知识提取方法开始:===>" + ragProcessDTO.getFileId());
         // 获取上传的文件路径
         FileUploadRecordDTO fileUploadRecordDTO = fileUploadRecordMapper.getByFileId(ragProcessDTO.getFileId());
         if (null == fileUploadRecordDTO) {
@@ -173,6 +174,7 @@ public class RagFlowProcessRunnable implements Runnable {
         BusResourceDatasetDTO busResourceDatasetDTO = datasetRepo.getByCode(ContextUtil.currentUser().getUserId());
         // 如果没有知识库则创建
         String datesetId = "";
+        System.out.println("datesetId:===>" + datesetId);
         if (null == busResourceDatasetDTO) {
             datesetId = ragFlowProcessService.createRagFlow(ContextUtil.getUserId());
             if (StrUtil.isEmpty(datesetId)) {
@@ -181,6 +183,7 @@ public class RagFlowProcessRunnable implements Runnable {
                 return RestResponse.fail(500, "创建ragflow知识库id失败");
             }
             boolean add = datasetRepo.add("user", ContextUtil.getUserId(), datesetId);
+            System.out.println("add:===>" + add);
             if (!add) {
                 relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_ERROR.getIndexingStatusName());
                 log.error("添加ragflow知识库id失败，无法上传文件,用户id为{}",ContextUtil.getUserId());
@@ -189,7 +192,7 @@ public class RagFlowProcessRunnable implements Runnable {
         }else {
             datesetId = busResourceDatasetDTO.getDatasetsId();
         }
-
+        System.out.println("datesetId:===>" + datesetId);
         // 设置抽取的规则
         List<SysRuleTagEntity> ruleTagList = new ArrayList<>();
         LambdaQueryWrapper<SysRuleTagEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -243,6 +246,7 @@ public class RagFlowProcessRunnable implements Runnable {
 
         // 将文件上传到ragflow
         String uploadFileId = ragFlowProcessService.uploadFile(datesetId, file);
+        System.out.println("将文件上传到ragflow:===>" + uploadFileId);
         if (StrUtil.isEmpty(uploadFileId)) {
             // 更新资源状态为上传失败
             relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.UPLOAD_RAG_FAIL.getIndexingStatus(), IndexingStatusEnum.UPLOAD_RAG_FAIL.getIndexingStatusName());
@@ -253,6 +257,7 @@ public class RagFlowProcessRunnable implements Runnable {
         }
         // 触发ragflow解析
         boolean parseBoolean = ragFlowProcessService.parseFile(datesetId, uploadFileId);
+        System.out.println("触发ragflow解析:===>" + parseBoolean);
         if (!parseBoolean) {
             // 更新资源状态为解析失败
             relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.PARSE_ERROR.getIndexingStatus(), IndexingStatusEnum.PARSE_ERROR.getIndexingStatusName());

@@ -6,6 +6,7 @@ import com.thtf.global.common.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @TableName rel_user_resource
@@ -68,7 +69,7 @@ public class RelUserResourceEntity extends BaseEntity implements Serializable {
     private String indexingStatusName;
 
     @TableField(value = "progress")
-    private Double progress;
+    private BigDecimal progress;
 
 
     @TableField(exist = false)

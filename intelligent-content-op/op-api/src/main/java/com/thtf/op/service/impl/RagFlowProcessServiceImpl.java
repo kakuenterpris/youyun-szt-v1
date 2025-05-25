@@ -9,12 +9,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.global.common.cache.RedisUtil;
-import com.thtf.global.common.rest.ContextUtil;
-import com.thtf.global.common.rest.RestResponse;
+import com.thtf.op.entity.BusUserInfoEntity;
 import com.thtf.op.entity.RagflowEntity;
 import com.thtf.op.entity.RelUserResourceEntity;
 import com.thtf.op.entity.SysRuleTagEntity;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
+import com.thtf.op.repo.BusUserInfoRepo;
 import com.thtf.op.repo.impl.RelUserResourceRepoImpl;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.util.OKHttpUtils;
@@ -52,6 +52,9 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json");
     @Autowired
     private RelUserResourceRepoImpl relUserResourceRepoImpl;
+
+    @Autowired
+    private BusUserInfoRepo busUserInfoRepo;
 
     @Autowired
     private OKHttpUtils okHttpUtil;
@@ -605,120 +608,126 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
 
     @Scheduled(fixedRate = 5000) // 每5秒执行一次
     public String getRagFlowStatus() {
-        String userId = ContextUtil.getUserId();
-        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.eq(RelUserResourceEntity::getUserId, userId);
-        lambdaQueryWrapper.eq(RelUserResourceEntity::getDeleted, 0);
-        lambdaQueryWrapper.eq(RelUserResourceEntity::getIndexingStatus, IndexingStatusEnum.PARSING.getIndexingStatus());
-        List<RelUserResourceEntity> userResourceEntityList = relUserResourceRepoImpl.list(lambdaQueryWrapper);
+        LambdaQueryWrapper<BusUserInfoEntity> lambdaQuery = new LambdaQueryWrapper<>();
+        lambdaQuery.eq(BusUserInfoEntity::getIsDeleted, 0);
+        List<BusUserInfoEntity> userInfoEntityList = busUserInfoRepo.list(lambdaQuery);
+        for (BusUserInfoEntity userInfoEntity : userInfoEntityList) {
+            String userId = userInfoEntity.getUserId();
+            LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.eq(RelUserResourceEntity::getUserId, userId);
+            lambdaQueryWrapper.eq(RelUserResourceEntity::getDeleted, 0);
+            lambdaQueryWrapper.eq(RelUserResourceEntity::getIndexingStatus, IndexingStatusEnum.PARSING.getIndexingStatus());
+            List<RelUserResourceEntity> userResourceEntityList = relUserResourceRepoImpl.list(lambdaQueryWrapper);
 
-        if (CollUtil.isEmpty(userResourceEntityList)){
-            return "全部解析完成！";
-        }
-
-        List<String> documentIds = userResourceEntityList.stream()
-                .map(RelUserResourceEntity::getDocumentId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-//        if (StrUtil.isEmpty(docId)){
-//            return RestResponse.success("未选中数据");
-//        }
-//        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-//        lambdaQueryWrapper.eq(RelUserResourceEntity::getFileId, docId);
-//        RelUserResourceEntity userResourceEntity = relUserResourceRepoImpl.getOne(lambdaQueryWrapper);
-//        if (StrUtil.isEmpty(userResourceEntity.getDocumentId())){
-//            log.error("还没做知识化提取操作");
-//            return RestResponse.error("还没做知识化提取操作");
-//        }
-        String apiKey = (String) redisUtil.get("ragflow:authHeader");
-        if (StrUtil.isEmpty(apiKey)) {
-            RagflowEntity ragflowEntity = new RagflowEntity();
-            ragflowEntity.setEmail("M@M.test");
-            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
-            apiKey = loginRagFlow(ragflowEntity);
-        }
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("doc_ids", documentIds);
-//        params.put("doc_id", userResourceEntity.getDocumentId());
-        params.put("page", "1");
-        params.put("page_size", "100");
-
-        Gson gson = new Gson();
-        String json = gson.toJson(params);
-        log.info("调用ragflow方法post请求参数：{}", json);
-        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
-
-        String url = ragFlowApiConfigProperties.getLoginUrl() +"/document/infos";
-        HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
-        String finalUrl = urlBuilder.build().toString();
-        Request request = new Request.Builder()
-                .url(finalUrl)
-                .post(body)
-                .addHeader("Authorization", apiKey)
-                .addHeader("Content-Type","application/json")
-                .addHeader("Connection", "keep-alive ")
-                .build();
-
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(300, TimeUnit.SECONDS)
-                .readTimeout(300, TimeUnit.SECONDS)
-                .writeTimeout(300, TimeUnit.SECONDS)
-                .build();
-
-        Response response = null;
-
-        try {
-            response = client.newCall(request).execute();
-            byte[] responseBytes = response.body().bytes();
-            String jsonString = new String(responseBytes);
-            log.info("调用ragflow方法get响应：{}", jsonString);
-            if (StringUtils.isEmpty(jsonString)) {
-                return null;
+            if (CollUtil.isEmpty(userResourceEntityList)){
+                return "全部解析完成！";
             }
-            Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
-            int proNum=0;
-            int failNum=0;
-            int successNum=0;
-            for (Map<String, Object> data : (List<Map<String, Object>>) map.get("data")) {
-                String fileId = (String) data.get("id");
-                BigDecimal progress = (BigDecimal) data.get("progress");
-                if (StrUtil.isNotEmpty(fileId)) {
-                    for (RelUserResourceEntity userResourceEntity : userResourceEntityList) {
-                        if (fileId.equals(userResourceEntity.getDocumentId())) {
-                            userResourceEntity.setProgress(progress);
-                            // progress ==-1 ,解析异常
-                            if (progress.compareTo(new BigDecimal(-1)) == 0){
-                                failNum++;
-                                userResourceEntity.setIndexingStatus(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatus());
-                                userResourceEntity.setIndexingStatusName(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatusName());
-                            }else {
-                                // progress < 1.0 ,解析中
-                                if (progress.compareTo(BigDecimal.ONE) < 0) {
-                                    proNum++;
-                                    userResourceEntity.setIndexingStatus(IndexingStatusEnum.PARSING.getIndexingStatus());
-                                    userResourceEntity.setIndexingStatusName(IndexingStatusEnum.PARSING.getIndexingStatusName());
-                                }else{
-                                    successNum++;
-                                    // progress == 1.0 ,解析完成
-                                    userResourceEntity.setIndexingStatus(IndexingStatusEnum.COMPLETED.getIndexingStatus());
-                                    userResourceEntity.setIndexingStatusName(IndexingStatusEnum.COMPLETED.getIndexingStatusName());
+
+            List<String> documentIds = userResourceEntityList.stream()
+                    .map(RelUserResourceEntity::getDocumentId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+    //        if (StrUtil.isEmpty(docId)){
+    //            return RestResponse.success("未选中数据");
+    //        }
+    //        LambdaQueryWrapper<RelUserResourceEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+    //        lambdaQueryWrapper.eq(RelUserResourceEntity::getFileId, docId);
+    //        RelUserResourceEntity userResourceEntity = relUserResourceRepoImpl.getOne(lambdaQueryWrapper);
+    //        if (StrUtil.isEmpty(userResourceEntity.getDocumentId())){
+    //            log.error("还没做知识化提取操作");
+    //            return RestResponse.error("还没做知识化提取操作");
+    //        }
+            String apiKey = (String) redisUtil.get("ragflow:authHeader");
+            if (StrUtil.isEmpty(apiKey)) {
+                RagflowEntity ragflowEntity = new RagflowEntity();
+                ragflowEntity.setEmail("M@M.test");
+                ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
+                apiKey = loginRagFlow(ragflowEntity);
+            }
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("doc_ids", documentIds);
+    //        params.put("doc_id", userResourceEntity.getDocumentId());
+            params.put("page", "1");
+            params.put("page_size", "100");
+
+            Gson gson = new Gson();
+            String json = gson.toJson(params);
+            log.info("调用ragflow方法post请求参数：{}", json);
+            RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+
+            String url = ragFlowApiConfigProperties.getLoginUrl() +"/document/infos";
+            HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+            String finalUrl = urlBuilder.build().toString();
+            Request request = new Request.Builder()
+                    .url(finalUrl)
+                    .post(body)
+                    .addHeader("Authorization", apiKey)
+                    .addHeader("Content-Type","application/json")
+                    .addHeader("Connection", "keep-alive ")
+                    .build();
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(300, TimeUnit.SECONDS)
+                    .readTimeout(300, TimeUnit.SECONDS)
+                    .writeTimeout(300, TimeUnit.SECONDS)
+                    .build();
+
+            Response response = null;
+
+            try {
+                response = client.newCall(request).execute();
+                byte[] responseBytes = response.body().bytes();
+                String jsonString = new String(responseBytes);
+                log.info("调用ragflow方法get响应：{}", jsonString);
+                if (StringUtils.isEmpty(jsonString)) {
+                    return null;
+                }
+                Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
+                int proNum=0;
+                int failNum=0;
+                int successNum=0;
+                for (Map<String, Object> data : (List<Map<String, Object>>) map.get("data")) {
+                    String fileId = (String) data.get("id");
+                    BigDecimal progress = (BigDecimal) data.get("progress");
+                    if (StrUtil.isNotEmpty(fileId)) {
+                        for (RelUserResourceEntity userResourceEntity : userResourceEntityList) {
+                            if (fileId.equals(userResourceEntity.getDocumentId())) {
+                                userResourceEntity.setProgress(progress);
+                                // progress ==-1 ,解析异常
+                                if (progress.compareTo(new BigDecimal(-1)) == 0){
+                                    failNum++;
+                                    userResourceEntity.setIndexingStatus(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatus());
+                                    userResourceEntity.setIndexingStatusName(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatusName());
+                                }else {
+                                    // progress < 1.0 ,解析中
+                                    if (progress.compareTo(BigDecimal.ONE) < 0) {
+                                        proNum++;
+                                        userResourceEntity.setIndexingStatus(IndexingStatusEnum.PARSING.getIndexingStatus());
+                                        userResourceEntity.setIndexingStatusName(IndexingStatusEnum.PARSING.getIndexingStatusName());
+                                    }else{
+                                        successNum++;
+                                        // progress == 1.0 ,解析完成
+                                        userResourceEntity.setIndexingStatus(IndexingStatusEnum.COMPLETED.getIndexingStatus());
+                                        userResourceEntity.setIndexingStatusName(IndexingStatusEnum.COMPLETED.getIndexingStatusName());
+                                    }
                                 }
+                                relUserResourceRepoImpl.updateById(userResourceEntity);
                             }
-                            relUserResourceRepoImpl.updateById(userResourceEntity);
                         }
                     }
                 }
+                return "本次执行结果：==========>>>"+"解析中"+proNum+"个， ### "+"解析完成"+successNum+"个， ### "+"解析失败"+failNum+"个";
+            } catch (Exception e) {
+                log.error("调用ragflow方法get，失败原因：" + e.getMessage());
+                e.getMessage();
+                return e.getMessage();
+            } finally {
+                response.close();
             }
-            return "本次执行结果：==========>>>"+"解析中"+proNum+"个， ### "+"解析完成"+successNum+"个， ### "+"解析失败"+failNum+"个";
-        } catch (Exception e) {
-            log.error("调用ragflow方法get，失败原因：" + e.getMessage());
-            e.getMessage();
-            return e.getMessage();
-        } finally {
-            response.close();
         }
+        return "解析完成";
     }
 
 

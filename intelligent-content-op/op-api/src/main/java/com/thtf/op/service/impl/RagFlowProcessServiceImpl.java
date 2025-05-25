@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -636,8 +637,8 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             apiKey = loginRagFlow(ragflowEntity);
         }
 
-        Map<String, String> params = new HashMap<>();
-        params.put("doc_ids", documentIds.toString());
+        Map<String, Object> params = new HashMap<>();
+        params.put("doc_ids", documentIds);
 //        params.put("doc_id", userResourceEntity.getDocumentId());
         params.put("page", "1");
         params.put("page_size", "100");
@@ -680,19 +681,19 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             int successNum=0;
             for (Map<String, Object> data : (List<Map<String, Object>>) map.get("data")) {
                 String fileId = (String) data.get("id");
-                Double progress = (Double) data.get("progress");
+                BigDecimal progress = (BigDecimal) data.get("progress");
                 if (StrUtil.isNotEmpty(fileId)) {
                     for (RelUserResourceEntity userResourceEntity : userResourceEntityList) {
                         if (fileId.equals(userResourceEntity.getDocumentId())) {
                             userResourceEntity.setProgress(progress);
                             // progress ==-1 ,解析异常
-                            if (Double.compare(-1.0, progress) == 0){
+                            if (progress.compareTo(new BigDecimal(-1)) == 0){
                                 failNum++;
                                 userResourceEntity.setIndexingStatus(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatus());
                                 userResourceEntity.setIndexingStatusName(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatusName());
                             }else {
                                 // progress < 1.0 ,解析中
-                                if (Double.compare(1.0, progress) > 0) {
+                                if (progress.compareTo(BigDecimal.ONE) < 0) {
                                     proNum++;
                                     userResourceEntity.setIndexingStatus(IndexingStatusEnum.PARSING.getIndexingStatus());
                                     userResourceEntity.setIndexingStatusName(IndexingStatusEnum.PARSING.getIndexingStatusName());

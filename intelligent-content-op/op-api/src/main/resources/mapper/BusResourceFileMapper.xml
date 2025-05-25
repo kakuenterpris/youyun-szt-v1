@@ -51,7 +51,8 @@
                    version,is_deleted,1 as resource_type,
                    parent_id as folder_id,'' as file_id,0 as size,
                    '' as file_type,0 as file_year,false as join_query,
-                   '' as preview_file_id,'' as indexingStatusName,'' as indexingStatus
+                   '' as preview_file_id,'' as indexingStatusName,'' as indexingStatus,
+                   '' as progress
             from bus_resource_folder
             where parent_id=#{parentId}
 
@@ -79,7 +80,8 @@
                 a.version,a.is_deleted,2 as resource_type,
                 a.folder_id,a.file_id,a.size,
                 a.file_type,a.file_year,a.join_query,
-                a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus
+                a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,
+                b.progress
             FROM
             bus_resource_file a
             LEFT JOIN rel_user_resource as b ON a.id = b.resource_file_id

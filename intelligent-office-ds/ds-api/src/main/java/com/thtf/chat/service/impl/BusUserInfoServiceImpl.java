@@ -30,6 +30,7 @@ import com.thtf.global.common.dto.BusUserInfoDTO;
 import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.dto.TokenDTO;
 import com.thtf.global.common.exception.CustomException;
+import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.DefaultErrorCode;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.login.dto.LoginDTO;
@@ -191,10 +192,12 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
     @Override
     public RestResponse updateByUserId(UpdateUserInfoDto user) {
         try {
+            BusUserInfoEntity origin = this.getOne(new LambdaQueryWrapper<BusUserInfoEntity>().eq(BusUserInfoEntity::getUserId, user.getUserId()));
             //获取用户角色
-            SysRoleEntity roleByUserId = getRoleByUserId(Long.valueOf(user.getId()));
-            if (!roleByUserId.getRoleKey().equals("security")&&user.getRoleIds() != null && user.getRoleIds().size() > 0) {
-            //todo 返回错误信息
+            SysRoleEntity roleByUserId = getRoleByUserId();
+            if ((roleByUserId==null||!roleByUserId.getRoleKey().equals("security"))&&(user.getRoleIds() != null||origin.getSecretLevel()!=user.getSecretLevel()||origin.getLocked()!=user.getLocked())) {
+                //todo 返回错误信息
+                return RestResponse.fail(602, "非安全管理员用户不能操作！");
             }
             this.updateById(user);
             assignRoles(user);
@@ -204,10 +207,13 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         return RestResponse.success("修改成功");
     }
 //    获取用户角色
-    private SysRoleEntity getRoleByUserId(Long userId){
-        SysUserRoleEntity sysUserRole = sysUserRoleRepo.getOne(new LambdaQueryWrapper<SysUserRoleEntity>().eq(SysUserRoleEntity::getUserId, userId));
-        return sysRoleRepo.getById(sysUserRole.getRoleId());
+    public SysRoleEntity getRoleByUserId(){
+        SystemUser currentUser = ContextUtil.currentUser();
+        String id = currentUser.getId();
+        SysUserRoleEntity sysUserRole = sysUserRoleRepo.getOne(new LambdaQueryWrapper<SysUserRoleEntity>().eq(SysUserRoleEntity::getUserId, id));
+        return sysUserRole==null?null:sysRoleRepo.getById(sysUserRole.getRoleId());
     }
+
     protected boolean assignRoles(UpdateUserInfoDto dto) {
         // 分配角色
         AssignRolesDTO ard = new AssignRolesDTO();

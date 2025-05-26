@@ -6,6 +6,7 @@ import com.thtf.access.dto.UserInfoDto;
 import com.thtf.access.vo.UserInfoVO;
 import com.thtf.chat.dto.UpdateUserInfoDto;
 import com.thtf.chat.entity.BusUserInfoEntity;
+import com.thtf.chat.entity.SysRoleEntity;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.login.dto.LoginDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,4 +28,6 @@ public interface BusUserInfoService extends IService<BusUserInfoEntity> {
     RestResponse updateByUserId(UpdateUserInfoDto user);
 
     RestResponse unlockUser(Integer userId, Boolean unlock);
+
+    public SysRoleEntity getRoleByUserId();
 }

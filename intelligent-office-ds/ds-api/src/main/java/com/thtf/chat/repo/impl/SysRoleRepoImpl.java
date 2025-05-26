@@ -6,14 +6,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.thtf.access.dto.SysRoleDto;
 import com.thtf.chat.dto.AssignMenusDTO;
 import com.thtf.chat.dto.UpdateRoleDto;
-import com.thtf.chat.entity.FileAuthEntity;
-import com.thtf.chat.entity.FolderAuthEntity;
-import com.thtf.chat.entity.SysRoleEntity;
-import com.thtf.chat.entity.SysRoleMenuEntity;
+import com.thtf.chat.entity.*;
 import com.thtf.chat.repo.FolderAuthRepo;
 import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.chat.mapper.SysRoleMapper;
+import com.thtf.chat.service.BusUserInfoService;
+import com.thtf.global.common.dto.SystemUser;
+import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,6 +39,7 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
 
     @Autowired
     private  FolderAuthRepo folderAuthRepo;
+
 
 
     @Override
@@ -76,16 +77,20 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
             folderAuthRepo.remove(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, role.getRoleId()));
             List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
             List<FolderAuthEntity> fileAuthEntities = folderAuthList;
-            for (FolderAuthEntity fileAuthEntity : fileAuthEntities) {
-                fileAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
+            if (fileAuthEntities != null) {
+                for (FolderAuthEntity fileAuthEntity : fileAuthEntities) {
+                    fileAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
+                }
             }
-            folderAuthRepo.saveBatch(fileAuthEntities);
             assignMenus(role);
+            folderAuthRepo.saveBatch(fileAuthEntities);
+
         }catch (Exception e){
             return RestResponse.fail(1004, "修改失败！" + e.getMessage());
         }
         return RestResponse.success("修改成功");
     }
+
     protected boolean assignMenus(UpdateRoleDto dto) {
         // 分配菜单权限
         AssignMenusDTO amd = new AssignMenusDTO();

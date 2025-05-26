@@ -34,8 +34,9 @@ public class SysRoleMenuRepoImpl extends ServiceImpl<SysRoleMenuMapper, SysRoleM
     public boolean assignMenus(AssignMenusDTO dto) {
         // 删除历史
         List<Long> roleIds = dto.getRoleIds();
+        List<SysRoleMenuEntity> menuAuths = dto.getMenuAuth();
         this.removeBatchByIds(roleIds);
-        if (CollectionUtils.isEmpty(dto.getRoleIds())) {
+        if (CollectionUtils.isEmpty(menuAuths)) {
             // 无需分配角色
             return true;
         }

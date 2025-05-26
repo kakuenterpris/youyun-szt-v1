@@ -49,6 +49,18 @@ public class SysRuleTagRepoImpl extends ServiceImpl<SysRuleTagMapper, SysRuleTag
         }
     }
 
+    public RestResponse updateRuleTag(SysRuleTagEntity entity) {
+        try {
+            entity.setUpdateTime(new Date());
+            entity.setUpdateUserId(ContextUtil.getUserId());
+            entity.setUpdateUser(ContextUtil.getUserName());
+            updateById(entity);
+            return RestResponse.success("修改规则标签成功");
+        } catch (Exception e) {
+            return RestResponse.error("修改规则标签失败");
+        }
+    }
+
 
     public RestResponse saveRuleTag(SysRuleTagEntity entity) {
         if (entity.getRuleExtractId() == null) {
@@ -81,8 +93,11 @@ public class SysRuleTagRepoImpl extends ServiceImpl<SysRuleTagMapper, SysRuleTag
         }
 
         try {
-            entity.setCreateTime(new Date());
+            entity.setUpdateTime(new Date());
+            entity.setUpdateUserId(ContextUtil.getUserId());
+            entity.setUpdateUser(ContextUtil.getUserName());
             entity.setCreator(ContextUtil.getUserId());
+            entity.setCreateTime(new Date());
             Integer i = this.baseMapper.selectMaxSort();
             entity.setSort(i + 1);
             save(entity);

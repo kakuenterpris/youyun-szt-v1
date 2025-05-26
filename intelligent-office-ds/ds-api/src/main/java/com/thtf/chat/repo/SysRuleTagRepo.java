@@ -21,4 +21,6 @@ public interface SysRuleTagRepo extends IService<SysRuleTagEntity> {
     RestResponse sortRuleTag(Long id, Boolean isUp);
 
     RestResponse list(SysRuleTagDto dto);
+
+    RestResponse updateRuleTag(SysRuleTagEntity entity);
 }

@@ -15,12 +15,14 @@ import com.thtf.chat.service.BusUserInfoService;
 import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.global.common.utils.Linq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
 * @author 86187
@@ -54,12 +56,16 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
             roleQuery.eq(vo.getRoleName() != null, SysRoleEntity::getRoleName, vo.getRoleName());
             roleQuery.eq(vo.getStatus() != null, SysRoleEntity::getStatus, vo.getStatus());
             Page<SysRoleEntity> page1 = this.page(page, roleQuery);
+            List<SysRoleEntity> records = page1.getRecords();
+            List<Long> select = Linq.select(records, SysRoleEntity::getRoleId);
+            List<FolderAuthEntity> list1 = folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().in(FolderAuthEntity::getRoleId, select));
             page1.getRecords().stream().forEach(item -> {
                 Integer roleId = Math.toIntExact(item.getRoleId());
                 LambdaQueryWrapper<SysRoleMenuEntity> sysRoleMenuQuery = new LambdaQueryWrapper<>();
                 sysRoleMenuQuery.eq(SysRoleMenuEntity::getRoleId, roleId);
                 List<SysRoleMenuEntity> list = sysRoleMenuRepo.list(sysRoleMenuQuery);
                 item.setMenuAuth(list);
+                item.setFolderAuthList(list1.stream().filter(item1 -> item1.getRoleId().equals(roleId)).collect(Collectors.toList()));
             });
 
             return RestResponse.success(page1);
@@ -84,6 +90,8 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
             }
             assignMenus(role);
             folderAuthRepo.saveBatch(fileAuthEntities);
+
+            this.updateById(role);
 
         }catch (Exception e){
             return RestResponse.fail(1004, "修改失败！" + e.getMessage());

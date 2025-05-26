@@ -76,4 +76,11 @@ public class SysRuleTagEntity implements Serializable {
     @TableField(value = "SORT")
     private Integer sort;
 
+    /**
+     * 是否必填
+     */
+    @TableField(value = "MUST_FILL")
+    private Boolean mustFill;
+
+
 }

@@ -698,8 +698,8 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
                                 // progress ==-1 ,解析异常
                                 if (progress.compareTo(new BigDecimal(-1)) == 0){
                                     failNum++;
-                                    userResourceEntity.setIndexingStatus(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatus());
-                                    userResourceEntity.setIndexingStatusName(IndexingStatusEnum.CHUNKS_ERROR.getIndexingStatusName());
+                                    userResourceEntity.setIndexingStatus(IndexingStatusEnum.PARSE_ERROR.getIndexingStatus());
+                                    userResourceEntity.setIndexingStatusName(IndexingStatusEnum.PARSE_ERROR.getIndexingStatusName());
                                 }else {
                                     // progress < 1.0 ,解析中
                                     if (progress.compareTo(BigDecimal.ONE) < 0) {
@@ -780,7 +780,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             log.error("获取MD失败，文档ID为空");
             return "获取PDF失败，文档ID为空";
         }
-        String url = ragFlowApiConfigProperties.getLoginUrl() + "/document/get_md/"+userResourceEntity.getDocumentId();
+        String url = ragFlowApiConfigProperties.getLoginUrl() + "/document/get_layout/"+userResourceEntity.getDocumentId();
         String apiKey = (String) redisUtil.get("ragflow:authHeader");
         if (StrUtil.isEmpty(apiKey)) {
             RagflowEntity ragflowEntity = new RagflowEntity();

@@ -11,12 +11,14 @@ import com.thtf.chat.dto.AssignRolesDTO;
 import com.thtf.chat.dto.UpdateUserInfoDto;
 import com.thtf.chat.entity.BusUserInfoEntity;
 import com.thtf.chat.entity.SysMenuEntity;
+import com.thtf.chat.entity.SysRoleEntity;
 import com.thtf.chat.entity.SysUserRoleEntity;
 import com.thtf.chat.manager.AsyncManager;
 import com.thtf.chat.manager.factory.AsyncFactory;
 import com.thtf.chat.mapper.BusUserInfoMapper;
 import com.thtf.chat.mapper.SysUserRoleMapper;
 import com.thtf.chat.repo.SysMenuRepo;
+import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.chat.repo.SysUserRoleRepo;
 import com.thtf.chat.service.BusUserInfoService;
 import com.thtf.chat.util.BcryptUtil;
@@ -67,6 +69,9 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
 
     @Autowired
     private SysUserRoleRepo sysUserRoleRepo;
+
+    @Autowired
+    private SysRoleRepo sysRoleRepo;
 
 
     @Override
@@ -186,17 +191,10 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
     @Override
     public RestResponse updateByUserId(UpdateUserInfoDto user) {
         try {
-//            分配角色
-            if (user.getRoleIds()!=null&&user.getRoleIds().size()>0) {
-                LambdaQueryWrapper<SysUserRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
-                queryWrapper.eq(SysUserRoleEntity::getUserId, user.getId());
-                sysUserRoleRepo.remove(queryWrapper);
-                for (Long roleId : user.getRoleIds()) {
-                    SysUserRoleEntity sysUserRoleEntity = new SysUserRoleEntity();
-                    sysUserRoleEntity.setUserId(Long.valueOf(user.getUserId()));
-                    sysUserRoleEntity.setRoleId(roleId);
-                    sysUserRoleRepo.save(sysUserRoleEntity);
-                }
+            //获取用户角色
+            SysRoleEntity roleByUserId = getRoleByUserId(Long.valueOf(user.getId()));
+            if (!roleByUserId.getRoleKey().equals("security")&&user.getRoleIds() != null && user.getRoleIds().size() > 0) {
+            //todo 返回错误信息
             }
             this.updateById(user);
             assignRoles(user);
@@ -204,6 +202,11 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
             return RestResponse.fail(1004, "修改失败！" + e.getMessage());
         }
         return RestResponse.success("修改成功");
+    }
+//    获取用户角色
+    private SysRoleEntity getRoleByUserId(Long userId){
+        SysUserRoleEntity sysUserRole = sysUserRoleRepo.getOne(new LambdaQueryWrapper<SysUserRoleEntity>().eq(SysUserRoleEntity::getUserId, userId));
+        return sysRoleRepo.getById(sysUserRole.getRoleId());
     }
     protected boolean assignRoles(UpdateUserInfoDto dto) {
         // 分配角色

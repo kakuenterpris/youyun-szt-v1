@@ -7,7 +7,7 @@ public enum IndexingStatusEnum {
 
     // 枚举项
     WAITING("waiting", "排队中"),
-    PARSING("parsing", "解析中"),
+    PARSING("4", "提取中"),
     CLEANING("cleaning", "清洗中"),
     SPLITTING("splitting", "拆分中"),
     INDEXING("indexing", "向量中"),
@@ -15,7 +15,7 @@ public enum IndexingStatusEnum {
     ERROR("error", "异常"),
     UPLOAD_RAG_FAIL("uploadRagFail", "上传知识库失败"),
     FILE_ERROR("fileError", "文件为空异常"),
-    PARSE_ERROR("parseError", "触发解析异常"),
+    PARSE_ERROR("3", "提取失败"),
     RAG_CONFIG_ERROR("ragRagError", "知识库配置异常"),
     RAG_ERROR("ragError", "知识库异常"),
     CHUNKS_ERROR("chunksError", "解析异常"),
@@ -27,7 +27,7 @@ public enum IndexingStatusEnum {
     DELETE_EMBEDDING_ERROR("deleteEmbeddingError", "删除向量化数据失败"),
     SYNC_JOIN_QUERY_ERROR("joinQueryError", "现行有效状态同步失败"),
     RAG_CREATE_ERROR("ragCreateError", "创建知识库失败"),
-    COMPLETED("completed", "完成");
+    COMPLETED("2", "提取成功");
 
     // 枚举字段
     private final String indexingStatus;

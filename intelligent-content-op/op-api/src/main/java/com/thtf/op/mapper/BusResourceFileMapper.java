@@ -40,8 +40,8 @@ public interface BusResourceFileMapper extends BaseMapper<BusResourceFileEntity>
     List<BusResourceFileEntity> selectFileByIds(List<String> fileIds);
 
     //根据fileIds查询文件信息
-    @Select("select id from bus_resource_file where file_id = #{fileId}")
-    Integer selectIdByFileId(String fileId);
+    @Select("select level from bus_resource_file where file_id = #{fileId}")
+    Integer selectLevelByFileId(String fileId);
 }
 
 

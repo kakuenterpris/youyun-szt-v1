@@ -21,6 +21,7 @@ import com.thtf.op.mapper.BusResourceFolderMapper;
 import com.thtf.op.mapper.RelUserResourceMapper;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
+import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.service.impl.KmServiceImpl;
 import com.thtf.op.service.impl.RagFlowProcessServiceImpl;
 import com.thtf.op.service.impl.TreeNodeServiceImpl;
@@ -40,14 +41,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 
@@ -79,6 +75,8 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
     @Autowired
     BusResourceFileMapper busResourceFileMapper;
+    @Autowired
+    RagFlowProcessService ragFlowProcessService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -247,9 +245,26 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
     @Override
     public RestResponse getFileInfo(WonderfulPenSyncDTO dto) {
-        Integer id = busResourceFileMapper.selectIdByFileId(dto.getFileId());
-        return kmService.getPreview(id);
+        String base64Md = ragFlowProcessService.getRagFlowMD(dto.getFileId());
+        byte[] mdBytes = Base64.getDecoder().decode(base64Md);
 
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(mdBytes);
+             ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             InputStreamReader isr = new InputStreamReader(bais, StandardCharsets.UTF_8);
+             OutputStreamWriter osw = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
+
+            char[] buffer = new char[1024];
+            int length;
+            while ((length = isr.read(buffer)) != -1) {
+                osw.write(buffer, 0, length);
+            }
+            osw.flush();
+            return RestResponse.success(baos.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+        return RestResponse.error("文件不存在");
     }
 
 

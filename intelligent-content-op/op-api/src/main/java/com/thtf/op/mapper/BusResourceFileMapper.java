@@ -42,6 +42,9 @@ public interface BusResourceFileMapper extends BaseMapper<BusResourceFileEntity>
     //根据fileIds查询文件信息
     @Select("select level from bus_resource_file where file_id = #{fileId}")
     Integer selectLevelByFileId(String fileId);
+
+    @Select("select FILE_ID from bus_resource_file where folder_id = #{folderId}")
+    List<String> selectFileIdsByFolderId(Integer folderId);
 }
 
 

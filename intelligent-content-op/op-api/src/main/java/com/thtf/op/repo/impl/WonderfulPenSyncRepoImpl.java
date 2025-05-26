@@ -11,20 +11,15 @@ import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.emdedding.dto.PushFileDTO;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
 import com.thtf.feign.client.FileApi;
-import com.thtf.file.dto.FileUploadRecordDTO;
-import com.thtf.global.common.cache.RedisUtil;
+import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.BusResourceFileEntity;
 import com.thtf.op.entity.BusResourceFolderEntity;
-import com.thtf.op.mapper.BusResourceDatasetMapper;
-import com.thtf.op.mapper.BusResourceFileMapper;
-import com.thtf.op.mapper.BusResourceFolderMapper;
-import com.thtf.op.mapper.RelUserResourceMapper;
+import com.thtf.op.mapper.*;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.service.impl.KmServiceImpl;
-import com.thtf.op.service.impl.RagFlowProcessServiceImpl;
 import com.thtf.op.service.impl.TreeNodeServiceImpl;
 import com.thtf.resource.dto.BusResourceFileDTO;
 import com.thtf.resource.dto.BusResourceManageListDTO;
@@ -58,12 +53,6 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     private KmServiceImpl kmService;
 
     @Autowired
-    private RedisUtil redisUtil;
-
-    @Autowired
-    private RagFlowProcessServiceImpl ragFlowProcessServiceImpl;
-
-    @Autowired
     RagFlowApiConfigProperties ragFlowApiConfigProperties;
 
     @Autowired
@@ -76,8 +65,15 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
     @Autowired
     BusResourceFileMapper busResourceFileMapper;
+
     @Autowired
     RagFlowProcessService ragFlowProcessService;
+
+    @Autowired
+    BusResourceFolderMapper busResourceFolderMapper;
+
+    @Autowired
+    BusUserInfoMapper busUserInfoMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -143,18 +139,20 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Override
     public RestResponse getFileByUserId(WonderfulPenSyncDTO dto) {
 
-        List<BusResourceManageListDTO> busResourceManageListDTOS = TreeNodeServiceImpl.assembleTree(kmService.getResourceListLeft("wonderfulPen", dto.getType()));
+        SystemUser systemUser = busUserInfoMapper.getUserInfoByUserId(dto.getUserId());
+
+        //测试 写死
+        systemUser.setUserId("798");
+
+        List<BusResourceManageListDTO> busResourceManageListDTOS = TreeNodeServiceImpl.assembleTree(kmService.getResourceListLeft("wonderfulPen", dto.getType(), systemUser));
         return RestResponse.success(busResourceManageListDTOS);
     }
 
     @Override
     public RestResponse getKonwledgeByUserId(WonderfulPenSyncDTO dto) {
 
-
-        String userId = dto.getUserId();
-        String query = dto.getQuery();
-
 //        String datasetId = busResourceDatasetMapper.listDatasetsIdByCreateUserId(userId);
+        //测试 写死
         String datasetId = "51b9b08c361711f0a8f03e04d146f0ba";
 
         OkHttpClient client = new OkHttpClient.Builder()
@@ -165,7 +163,6 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
         String apiKey = ragFlowApiConfigProperties.getApiKey();
 
-        // String datasetId = ragFlowApiConfigProperties.getDatasetId();
         String url = ragFlowApiConfigProperties.getRagflowUrl();
         if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
             log.error("上传文档得url或key为空");
@@ -185,14 +182,21 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         List<String> list = new ArrayList<>();
 
         //通过folderId和type获取文件id
+        List<String> fileIds = new ArrayList<>();
+        for (Map<String, Object> map : dto.getFolderIds()) {
+            String type = map.get("type").toString();
+            String folderIdStr = map.get("folderId").toString();
+            String[] folderIds = folderIdStr.split(",");
+            for (String folderId : folderIds) {
+                fileIds.addAll(getSubFilesRecursively(Integer.valueOf(folderId), Integer.parseInt(type)));
+            }
+        }
 
-
+        //测试 写死
         list.add("ddb0407c36d711f0b0020a7f8ad6111b");
         list.add("ec2aa81e36bd11f09635ce6a55565431");
 
-
         params.put("document_ids", list);
-
 
         String json = gson.toJson(params);
         RequestBody requestBody = RequestBody.create(CommonConstants.JSON_MEDIA_TYPE, json);
@@ -207,11 +211,6 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
             response = client.newCall(request).execute();
             JSONObject jsonObject = JSONObject.parseObject(response.body().string());
-//            byte[] responseBytes = response.body().bytes();
-//            String jsonString = new String(responseBytes);
-            if (jsonObject.get("data") != null) {
-                JSONObject data = jsonObject.getJSONObject("data");
-            }
 
             JSONObject jsonObject1 = jsonObject.getJSONObject("data");
             JSONArray chunks = jsonObject1.getJSONArray("chunks");
@@ -246,6 +245,30 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
     }
 
+    //根据文件夹id递归获取全部子文件
+    private List<String> getSubFilesRecursively(Integer folderId, Integer type) {
+        List<String> subFiles = new ArrayList<>();
+
+        // 获取当前文件夹下的直接子文件
+        List<String> directSubFiles = busResourceFileMapper.selectFileIdsByFolderId(folderId);
+        subFiles.addAll(directSubFiles);
+
+        // 获取当前文件夹下的直接子文件夹
+        List<BusResourceFolderEntity> subFolders = busResourceFolderMapper.listByParentIdAndTypeFolder(folderId, type);
+
+        if (subFiles.isEmpty()) {
+            return subFiles;
+        }
+
+        for (BusResourceFolderEntity subFolder : subFolders) {
+            // 递归调用获取子文件夹下的子文件
+            List<String> subFolderFiles = getSubFilesRecursively(Integer.parseInt(subFolder.getId().toString()), type);
+            subFiles.addAll(subFolderFiles);
+        }
+
+        return subFiles;
+    }
+
 
     @Override
     public RestResponse getFileInfo(WonderfulPenSyncDTO dto) {
@@ -276,83 +299,6 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         }
         return RestResponse.error("文件不存在");
     }
-
-
-//    @Override
-//    public RestResponse getFileInfo(WonderfulPenSyncDTO dto) {
-//
-//
-//        String fileId = dto.getFileId();
-//        String userId = dto.getUserId();
-//
-//        //通过userid和fileid查询ragflow表
-////        String datasetId = busResourceDatasetMapper.listDatasetsIdByCreateUserId(userId);
-//        String datasetId = "51b9b08c361711f0a8f03e04d146f0ba";
-//
-////        String documentId = relUserResourceMapper.getDocumentIdByFileId(fileId);
-//        String documentId = "ea8b4cb836e811f0aaa00a7f8ad6111b";
-//
-//        OkHttpClient client = new OkHttpClient.Builder()
-//                .connectTimeout(600, TimeUnit.SECONDS)
-//                .readTimeout(600, TimeUnit.SECONDS)
-//                .writeTimeout(600, TimeUnit.SECONDS)
-//                .build();
-//
-//        String apiKey = ragFlowApiConfigProperties.getApiKey();
-//
-//        String url = ragFlowApiConfigProperties.getRagflowUrl();
-//        if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
-//            log.error("上传文档得url或key为空");
-//            return RestResponse.error("上传文档得url或key为空");
-//        }
-//
-//        String fullUrl = url + "/api/v1/datasets/" + datasetId + "/documents/" + documentId + "/chunks?page=1&page_size=100";
-//
-//
-//        Request request = new Request.Builder()
-//                .url(fullUrl)
-//                .addHeader("Authorization", "Beare " + apiKey)
-//                .get()
-//                .build();
-//        Response response = null;
-//        try {
-//
-//            response = client.newCall(request).execute();
-//            JSONObject jsonObject = JSONObject.parseObject(response.body().string());
-//            if (jsonObject.get("data") != null) {
-//                JSONObject data = jsonObject.getJSONObject("data");
-//            }
-//
-//            JSONObject jsonObject1 = jsonObject.getJSONObject("data");
-//            JSONArray chunks = jsonObject1.getJSONArray("chunks");
-//            List<Map<String, Object>> list2 = new ArrayList();
-//            for (int i = 0; i < chunks.size(); i++) {
-//                Map<String, Object> map = new HashMap<>();
-//                JSONObject chunk = chunks.getJSONObject(i);
-//                map.put("content", chunk.get("content"));
-//                map.put("available", chunk.get("available"));
-//                map.put("id", chunk.get("id"));
-//                String documentId1 = relUserResourceMapper.getFileIdByDocumentId(chunk.get("document_id").toString());
-//                map.put("document_id", documentId1);
-//                map.put("document_keyword", chunk.get("document_keyword"));
-//                list2.add(map);
-//            }
-//
-//            return RestResponse.success(list2);
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            log.error("ragflowragflow向量检索接口失败，失败原因:", e.getMessage());
-//            return null;
-//        } finally {
-//            if (null != response) {
-//                response.close();
-//            }
-//        }
-//
-//
-////        return RestResponse.success("预览成功");
-//    }
 
 
     public RestResponse selectFileByIds(WonderfulPenSyncDTO dto) {

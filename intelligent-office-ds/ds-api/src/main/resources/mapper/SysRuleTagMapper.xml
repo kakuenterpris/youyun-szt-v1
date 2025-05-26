@@ -15,10 +15,14 @@
             <result property="creator" column="CREATOR" jdbcType="VARCHAR"/>
             <result property="ruleExtractId" column="RULE_EXTRACT_ID" jdbcType="BIGINT"/>
         <result property="sort" column="SORT" jdbcType="INTEGER"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="DATE"/>
+        <result property="updateUser" column="UPDATE_USER" jdbcType="VARCHAR"/>
+        <result property="updateUserId" column="UPDATE_USER_ID" jdbcType="VARCHAR"/>
+        <result property="mustFill" column="MUST_FILL" jdbcType="BIT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         ID,TAG_NAME,TAG_CODE,TAG_TYPE,TAG_LENGTH,TAG_REMARK,
-        CREATE_TIME,CREATOR,RULE_EXTRACT_ID,SORT
+        CREATE_TIME,CREATOR,RULE_EXTRACT_ID,SORT,UPDATE_TIME,UPDATE_USER,UPDATE_USER_ID
     </sql>
 </mapper>

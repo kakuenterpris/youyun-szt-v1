@@ -1,6 +1,5 @@
 package com.thtf.chat.controller;
 
-import com.thtf.access.dto.SysRuleExtractDto;
 import com.thtf.access.dto.SysRuleTagDto;
 import com.thtf.chat.entity.SysRuleTagEntity;
 import com.thtf.chat.repo.SysRuleTagRepo;
@@ -12,8 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/ruleTag")
@@ -65,13 +62,8 @@ public class RuleTagController {
     @PostMapping("/updateRuleTag")
     @Operation(summary = "更新规则标签接口")
     public RestResponse updateRuleTag(@RequestBody SysRuleTagEntity entity) {
-        try {
-            sysRuleTagRepo.updateById(entity);
-            return RestResponse.success("更新规则标签成功");
-        }catch (Exception e) {
-            log.error("更新规则标签失败", e);
-            return RestResponse.error("更新规则标签失败");
-        }
+        sysRuleTagRepo.updateRuleTag(entity);
+        return RestResponse.success("更新规则标签成功");
     }
 
     @PostMapping("/sortRuleTag")

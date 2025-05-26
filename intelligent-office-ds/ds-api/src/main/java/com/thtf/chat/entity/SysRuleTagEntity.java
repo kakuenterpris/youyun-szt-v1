@@ -1,14 +1,10 @@
 package com.thtf.chat.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
-import lombok.NonNull;
 
 /**
  * 
@@ -76,5 +72,31 @@ public class SysRuleTagEntity implements Serializable {
      */
     @TableField(value = "SORT")
     private Integer sort;
+
+    /**
+     * 是否必填
+     */
+    @TableField(value = "MUST_FILL")
+    private String mustFill;
+
+
+    /**
+     * 修改人
+     */
+    @TableField(value = "UPDATE_USER")
+    private String updateUser;
+
+    /**
+     * 修改人ID
+     */
+    @TableField(value = "UPDATE_USER_ID")
+    private String updateUserId;
+
+    /**
+     * 修改时间
+     */
+    @TableField(value = "UPDATE_TIME")
+    private Date updateTime;
+
 
 }

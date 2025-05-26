@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * @author Liyingzheng
  * @data 2025/4/23 11:03
@@ -28,7 +30,7 @@ public class WonderfulPenSyncController {
 
     @PostMapping("/pushFile")
     @Operation(summary = "推送我的文档到知识库")
-    public RestResponse pushFile(@RequestBody WonderfulPenSyncDTO dto) {
+    public RestResponse pushFile(@RequestBody List<WonderfulPenSyncDTO> dto) {
         return wonderfulPenSyncRepo.pushFile(dto);
     }
 

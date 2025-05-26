@@ -80,58 +80,60 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RestResponse pushFile(WonderfulPenSyncDTO dto) {
-        String url = dto.getUrl();
-        String[] split = url.split("\\?");
-        String Filetype = split[0].substring(split[0].lastIndexOf(".")+1);
-        if (StringUtil.isEmpty(url)){
-            return RestResponse.error("请求路径为空!");
-        }
-        String fileName = dto.getFileName();
-//        获取文件名（不包含后缀）
-        String subName= fileName;
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("Content-Type", "application/json")
-                .build();
-
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(300, TimeUnit.SECONDS)
-                .readTimeout(300, TimeUnit.SECONDS)
-                .writeTimeout(300, TimeUnit.SECONDS)
-                .build();
-        Response response = null;
-        try {
-//            妙笔请求获取文件
-            response = client.newCall(request).execute();
-            InputStream inputStream = new ByteArrayInputStream(response.body().bytes());
-            MultipartFile file = new MockMultipartFile(ContentType.APPLICATION_OCTET_STREAM.toString(), inputStream);
-//          上传文件
-            RestResponse updateResponse = fileApi.updateFile(file, null, null, null);
-            SaveFileParam saveFileParam = new SaveFileParam();
-            //响应数据
-            LinkedHashMap data = (LinkedHashMap) updateResponse.getData();
-            List<BusResourceFileDTO> fileList = new ArrayList<>();
-            BusResourceFileDTO busResourceFileDTO = new BusResourceFileDTO();
-            busResourceFileDTO.setGuid(data.get("guid").toString());
-            busResourceFileDTO.setName(subName);
-            busResourceFileDTO.setFileType(Filetype);
-            String userId = dto.getUserId();
-            busResourceFileDTO.setCreateUserId(userId);
-            //默认配置项目
-            busResourceFileDTO.setLevel(Integer.valueOf(dto.getSecurityLevel()));
-            busResourceFileDTO.setScopeRule("ONLY_ME");
-            //构造参数
-            fileList.add(busResourceFileDTO);
-            saveFileParam.setFileList(fileList);
-            saveFileParam.setFolderId(304);
-            // 保存文件
-            RestResponse saveResponse = kmService.saveFile(saveFileParam);
-            if (saveResponse.getCode() != 200||saveResponse.getCode() != 200) {
-                return RestResponse.error("推送失败");
+    public RestResponse pushFile(List<WonderfulPenSyncDTO> dtoList) {
+        for (WonderfulPenSyncDTO dto : dtoList) {
+            String url = dto.getUrl();
+            String[] split = url.split("\\?");
+            String Filetype = split[0].substring(split[0].lastIndexOf(".")+1);
+            if (StringUtil.isEmpty(url)){
+                return RestResponse.error("请求路径为空!");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            String fileName = dto.getFileName();
+    //        获取文件名（不包含后缀）
+            String subName= fileName;
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(300, TimeUnit.SECONDS)
+                    .readTimeout(300, TimeUnit.SECONDS)
+                    .writeTimeout(300, TimeUnit.SECONDS)
+                    .build();
+            Response response = null;
+            try {
+    //            妙笔请求获取文件
+                response = client.newCall(request).execute();
+                InputStream inputStream = new ByteArrayInputStream(response.body().bytes());
+                MultipartFile file = new MockMultipartFile(ContentType.APPLICATION_OCTET_STREAM.toString(), inputStream);
+    //          上传文件
+                RestResponse updateResponse = fileApi.updateFile(file, null, null, null);
+                SaveFileParam saveFileParam = new SaveFileParam();
+                //响应数据
+                LinkedHashMap data = (LinkedHashMap) updateResponse.getData();
+                List<BusResourceFileDTO> fileList = new ArrayList<>();
+                BusResourceFileDTO busResourceFileDTO = new BusResourceFileDTO();
+                busResourceFileDTO.setGuid(data.get("guid").toString());
+                busResourceFileDTO.setName(subName);
+                busResourceFileDTO.setFileType(Filetype);
+                String userId = dto.getUserId();
+                busResourceFileDTO.setCreateUserId(userId);
+                //默认配置项目
+                busResourceFileDTO.setLevel(Integer.valueOf(dto.getSecurityLevel()));
+                busResourceFileDTO.setScopeRule("ONLY_ME");
+                //构造参数
+                fileList.add(busResourceFileDTO);
+                saveFileParam.setFileList(fileList);
+                saveFileParam.setFolderId(304);
+                // 保存文件
+                RestResponse saveResponse = kmService.saveFile(saveFileParam);
+                if (saveResponse.getCode() != 200||saveResponse.getCode() != 200) {
+                    return RestResponse.error("推送失败");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return RestResponse.success("推送成功");
     }

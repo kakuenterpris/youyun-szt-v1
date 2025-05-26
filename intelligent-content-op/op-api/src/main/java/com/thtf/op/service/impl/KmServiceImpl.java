@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import com.thtf.emdedding.dto.FileUploadRecordDTO;
 import com.thtf.emdedding.dto.RagProcessDTO;
 import com.thtf.feign.client.FileApi;
-import com.thtf.global.common.dto.BusUserInfoDTO;
 import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.DefaultErrorCode;
@@ -24,7 +23,6 @@ import com.thtf.op.mappings.BusResourceManageMapping;
 import com.thtf.op.properties.AiConfigProperties;
 import com.thtf.op.properties.ApikeyConfigProperties;
 import com.thtf.op.repo.*;
-import com.thtf.op.repo.impl.BusUserInfoRepoImpl;
 import com.thtf.op.runnable.ConvertMarkdownRunnable;
 import com.thtf.op.service.KmService;
 import com.thtf.op.service.RagFlowProcessService;
@@ -32,7 +30,6 @@ import com.thtf.op.service.ResourceProcessService;
 import com.thtf.op.util.HttpUtils;
 import com.thtf.resource.constants.ServiceConstants;
 import com.thtf.resource.dto.*;
-
 import com.thtf.resource.enums.*;
 import com.thtf.resource.param.SaveFileParam;
 import lombok.RequiredArgsConstructor;
@@ -103,15 +100,15 @@ public class KmServiceImpl implements KmService {
     @Override
     public RestResponse resourceTreeListLeft() {
         // 将左侧文件夹列表组装成树形结构
-        return RestResponse.success(TreeNodeServiceImpl.assembleTree(getResourceListLeft("", null)));
+        return RestResponse.success(TreeNodeServiceImpl.assembleTree(getResourceListLeft("", null, Objects.requireNonNull(ContextUtil.currentUser()))));
     }
 
     /**
      * 左侧文件夹列表
      */
     @Override
-    public List<BusResourceManageListDTO> getResourceListLeft(String requestType, String folderType) {
-        SystemUser currentUser = ContextUtil.currentUser();
+    public List<BusResourceManageListDTO> getResourceListLeft(String requestType, String folderType, SystemUser currentUser) {
+
         String userId = StringUtils.isBlank(currentUser.getUserId()) ? ServiceConstants.DEFAULT_USER_ID : currentUser.getUserId();
         List<BusResourceManageListDTO> result = new ArrayList<>();
         List<BusResourceManageListDTO> allList = new ArrayList<>();

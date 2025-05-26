@@ -84,14 +84,14 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Transactional(rollbackFor = Exception.class)
     public RestResponse pushFile(WonderfulPenSyncDTO dto) {
         String url = dto.getUrl();
+        String[] split = url.split("\\?");
+        String Filetype = split[0].substring(split[0].lastIndexOf(".")+1);
         if (StringUtil.isEmpty(url)){
             return RestResponse.error("请求路径为空!");
         }
         String fileName = dto.getFileName();
-//        获取后缀
-        String Filetype = fileName.substring(fileName.lastIndexOf("."));
 //        获取文件名（不包含后缀）
-        String subName= fileName.substring(0, fileName.lastIndexOf("."));
+        String subName= fileName;
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Content-Type", "application/json")

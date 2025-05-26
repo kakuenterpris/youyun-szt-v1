@@ -1,5 +1,6 @@
 package com.thtf.op.controller;
 
+import com.thtf.emdedding.dto.PushFileDTO;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
@@ -30,8 +31,8 @@ public class WonderfulPenSyncController {
 
     @PostMapping("/pushFile")
     @Operation(summary = "推送我的文档到知识库")
-    public RestResponse pushFile(@RequestBody List<WonderfulPenSyncDTO> dto) {
-        return wonderfulPenSyncRepo.pushFile(dto);
+    public RestResponse pushFile(@RequestBody PushFileDTO pushFileDTO) {
+        return wonderfulPenSyncRepo.pushFile(pushFileDTO);
     }
 
     @PostMapping("/getFileByUserId")

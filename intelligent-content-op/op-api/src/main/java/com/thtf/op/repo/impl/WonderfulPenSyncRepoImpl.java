@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.pagehelper.util.StringUtil;
 import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
+import com.thtf.emdedding.dto.PushFileDTO;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
 import com.thtf.feign.client.FileApi;
 import com.thtf.file.dto.FileUploadRecordDTO;
@@ -80,7 +81,8 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RestResponse pushFile(List<WonderfulPenSyncDTO> dtoList) {
+    public RestResponse pushFile(PushFileDTO pushFileDTO) {
+        List<WonderfulPenSyncDTO> dtoList = pushFileDTO.getPushList();
         for (WonderfulPenSyncDTO dto : dtoList) {
             String url = dto.getUrl();
             String[] split = url.split("\\?");

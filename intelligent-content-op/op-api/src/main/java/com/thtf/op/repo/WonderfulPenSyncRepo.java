@@ -1,6 +1,7 @@
 package com.thtf.op.repo;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.thtf.emdedding.dto.PushFileDTO;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.BusResourceFolderEntity;
@@ -14,7 +15,7 @@ import java.util.List;
  */
 public interface WonderfulPenSyncRepo extends IService<BusResourceFolderEntity> {
 
-    RestResponse pushFile(List<WonderfulPenSyncDTO> dto);
+    RestResponse pushFile(PushFileDTO pushFileDTO);
 
     RestResponse getFileByUserId(WonderfulPenSyncDTO dto);
 

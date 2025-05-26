@@ -872,16 +872,19 @@ public class KmServiceImpl implements KmService {
     @Transactional(rollbackFor = Exception.class)
     public RestResponse deleteFile(Integer id) {
         SystemUser currentUser = ContextUtil.currentUser();
+        String userId = currentUser.getUserId();
         BusResourceFileDTO file = fileRepo.getById(id);
         if (null == file) {
             return RestResponse.fail(ResourceErrorCode.DELETE_GUID_NOT_EXISTS);
         }
-        //判断权限
-        BusResourceMemberDTO fileAuth = this.getFileAuth(file.getFolderId());
-        if (!fileAuth.getIsAdmin() && !fileAuth.getUploadAuth()){
-            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
+        Boolean systemAdminAuth = this.checkSystemAdminAuth(userId);
+        if (!systemAdminAuth){
+            //判断权限
+            BusResourceMemberDTO fileAuth = this.getFileAuth(file.getFolderId());
+            if (!fileAuth.getIsAdmin() && !fileAuth.getUploadAuth()){
+                return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
+            }
         }
-
         fileRepo.delete(id);
     //todo   知识库删除
 

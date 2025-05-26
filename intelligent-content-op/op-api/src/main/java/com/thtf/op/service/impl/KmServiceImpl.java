@@ -207,6 +207,7 @@ public class KmServiceImpl implements KmService {
             //要查看的文件夹下的所有层级的有权限查看的
             if (systemAdminAuth){
                 canViewFolderIds = childIds;
+                canViewfiles=null;
             }
             List<Integer> canViewList = (List<Integer>) CollectionUtils.intersection(childIds, canViewFolderIds);
             query.setParentId(null);
@@ -260,7 +261,7 @@ public class KmServiceImpl implements KmService {
                     busResourceManageListDTO.setScope(select);
                 }
             }
-            count = fileRepo.resourceListRightCount(folderIdList, viewFile, query, notDelete);
+            count = result.size();
         }
         List<Integer> idList = result.stream().map(BusResourceManageListDTO::getFolderId).distinct().toList();
         List<BusResourceMemberDTO> authList = this.getFolderAuthList(idList);

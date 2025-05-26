@@ -17,9 +17,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author zhangwei
@@ -99,21 +105,50 @@ public class RagFlowController {
 
 
     /**
-     * 获取RagFlow的MD
-     * @param docId
+     * 批量下载md文件
+     * @param docIds
      * @return
      */
     @GetMapping("/getRagFlowMD")
     @Operation(summary = "获取RagFlow的MD")
-    public ResponseEntity<byte[]> getRagFlowMD(@RequestParam(value = "docId") String docId) {
-        String base64Md = ragFlowProcessService.getRagFlowMD(docId);
-        byte[] mdBytes = Base64.getDecoder().decode(base64Md);
-        // 添加下载响应头
-        String fileName = docId + ".md";  // 根据业务需求构造文件名
-        return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_MARKDOWN)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-                .body(mdBytes);
+    public ResponseEntity<byte[]> getRagFlowMD(@RequestParam(value = "docIds") List<String> docIds) {
+
+        // 单个文件直接下载
+        if (docIds.size() == 1) {
+            String docId = docIds.get(0);
+            String base64Md = ragFlowProcessService.getRagFlowMD(docId);
+            byte[] mdBytes = Base64.getDecoder().decode(base64Md);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.TEXT_MARKDOWN)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + docId + ".md\"")
+                    .body(mdBytes);
+        }
+
+        // 多个文件走ZIP打包逻辑
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(baos)) {
+
+            for (String docId : docIds) {
+                String base64Md = ragFlowProcessService.getRagFlowMD(docId);
+                byte[] mdBytes = Base64.getDecoder().decode(base64Md);
+
+                ZipEntry entry = new ZipEntry(docId + ".md");
+                zos.putNextEntry(entry);
+                zos.write(mdBytes);
+                zos.closeEntry();
+            }
+
+            String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String fileName = dateStr + "_等" + docIds.size() + "个文件.zip";
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .body(baos.toByteArray());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 

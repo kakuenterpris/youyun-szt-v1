@@ -248,6 +248,8 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         String base64Md = ragFlowProcessService.getRagFlowMD(dto.getFileId());
         byte[] mdBytes = Base64.getDecoder().decode(base64Md);
 
+        Integer level = busResourceFileMapper.selectLevelByFileId(dto.getFileId());
+
         try (ByteArrayInputStream bais = new ByteArrayInputStream(mdBytes);
              ByteArrayOutputStream baos = new ByteArrayOutputStream();
              InputStreamReader isr = new InputStreamReader(bais, StandardCharsets.UTF_8);
@@ -259,7 +261,11 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 osw.write(buffer, 0, length);
             }
             osw.flush();
-            return RestResponse.success(baos.toString());
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("content", baos.toString());
+            jsonObject.put("level", levelTransfer(level));
+            return RestResponse.success(jsonObject);
         } catch (IOException e) {
             e.printStackTrace();
 
@@ -351,23 +357,25 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         List<BusResourceFileEntity> busResourceFileEntities = busResourceFileMapper.selectFileByIds(dto.getFileIds());
 
         for (BusResourceFileEntity busResourceFileEntity : busResourceFileEntities) {
-            switch (busResourceFileEntity.getLevel()) {
-                case 1:
-                    busResourceFileEntity.setLevelWonderPen("GK");
-                    break;
-                case 2:
-                    busResourceFileEntity.setLevelWonderPen("NB");
-                    break;
-                case 3:
-                    busResourceFileEntity.setLevelWonderPen("JM");
-                    break;
-                case 4:
-                    busResourceFileEntity.setLevelWonderPen("MM");
-                    break;
-
-            }
+            busResourceFileEntity.setLevelWonderPen(levelTransfer(busResourceFileEntity.getLevel()));
         }
         return RestResponse.success(busResourceFileEntities);
+    }
+
+
+    public String levelTransfer(Integer level) {
+        switch (level) {
+            case 1:
+                return "GK";
+            case 2:
+                return "NB";
+            case 3:
+                return "JM";
+            case 4:
+                return "MM";
+            default:
+                return "未知";
+        }
     }
 }
 

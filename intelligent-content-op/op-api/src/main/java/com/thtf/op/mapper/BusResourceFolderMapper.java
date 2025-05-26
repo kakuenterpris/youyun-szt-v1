@@ -22,6 +22,8 @@ public interface BusResourceFolderMapper extends BaseMapper<BusResourceFolderEnt
     @Select("select * from bus_resource_folder where parent_id = ${parentId}")
     List<BusResourceFolderEntity> listByParentIdIncludeDeletedFolder(Integer parentId);
 
+    @Select("select * from bus_resource_folder where parent_id = ${parentId} and type = ${type}")
+    List<BusResourceFolderEntity> listByParentIdAndTypeFolder(Integer parentId, Integer type);
 }
 
 

@@ -1,5 +1,6 @@
 package com.thtf.op.service;
 
+import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.resource.dto.*;
 import com.thtf.resource.param.SaveFileParam;
@@ -22,7 +23,7 @@ public interface KmService {
     /**
      * 左侧文件夹列表
      */
-    List<BusResourceManageListDTO> getResourceListLeft(String requestType, String folderType);
+    List<BusResourceManageListDTO> getResourceListLeft(String requestType, String folderType, SystemUser systemUser);
 
     /**
      * 右侧树

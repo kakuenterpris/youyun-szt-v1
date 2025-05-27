@@ -110,7 +110,7 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 response = client.newCall(request).execute();
                 InputStream inputStream = new ByteArrayInputStream(response.body().bytes());
                 float size = ((float) response.body().contentLength())/1024;
-                MultipartFile file = new MockMultipartFile(ContentType.APPLICATION_OCTET_STREAM.toString(), inputStream);
+                MultipartFile file = new MockMultipartFile("file",fileName+"."+Filetype,ContentType.APPLICATION_OCTET_STREAM.toString(), inputStream);
     //          上传文件
                 RestResponse updateResponse = fileApi.updateFile(file, null, null, null);
                 SaveFileParam saveFileParam = new SaveFileParam();

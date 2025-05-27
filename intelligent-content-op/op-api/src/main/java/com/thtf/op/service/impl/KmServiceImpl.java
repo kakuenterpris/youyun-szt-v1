@@ -196,7 +196,7 @@ public class KmServiceImpl implements KmService {
         Integer count = 0;
 
         // 查询操作 查看父文件目录下左右匹配的文件夹和目录
-        if (StringUtils.isNotEmpty(query.getName())||query.getIndexingStatus()!=null||query.getEmbeddingStatus()!=null||query.getLevel()!=null) {
+        if (StringUtils.isNotEmpty(query.getName())||query.getIndexingStatus()!=null||query.getEmbeddingStatus()!=null||query.getLevel()!=null||query.getStartTime()!=null||query.getEndTime()!=null) {
             List<BusResourceManageListDTO> childList = TreeNodeServiceImpl.getChildrenList(allList, parentId);
             List<Integer> childIds = Linq.select(childList, BusResourceManageListDTO::getId);
             List<Integer> memberFolderIds = Linq.select(memberRepo.listMemberAndViewAuthByUser(userId), BusResourceMemberDTO::getFolderId);

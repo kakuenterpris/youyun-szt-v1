@@ -61,15 +61,17 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
             Page<SysRoleEntity> pageData = this.page(page, roleQuery);
             List<SysRoleEntity> records = pageData.getRecords();
             List<Long> select = Linq.select(records, SysRoleEntity::getRoleId);
-            List<FolderAuthEntity> folderAuths = folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().in(FolderAuthEntity::getRoleId, select));
-            List<SysRoleMenuEntity> menuAuths = sysRoleMenuRepo.list(new LambdaQueryWrapper<SysRoleMenuEntity>().in(SysRoleMenuEntity::getRoleId, select));
-
-            records.stream().forEach(item -> {
+            List<FolderAuthEntity> folderAuths= new ArrayList<>();
+            List<SysRoleMenuEntity> menuAuths = new ArrayList<>();
+            if (select != null && select.size()>0) {
+                folderAuths = folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().in(FolderAuthEntity::getRoleId, select));
+                menuAuths = sysRoleMenuRepo.list(new LambdaQueryWrapper<SysRoleMenuEntity>().in(SysRoleMenuEntity::getRoleId, select));
+            }
+            for (SysRoleEntity item : records) {
                 Long roleId = item.getRoleId();
-
                 item.setMenuAuth(menuAuths.stream().filter(menuAuth -> menuAuth.getRoleId().equals(roleId)).collect(Collectors.toList()));
                 item.setFolderAuthList(folderAuths.stream().filter(folderAuth -> folderAuth.getRoleId().equals(Math.toIntExact(roleId))).collect(Collectors.toList()));
-            });
+            }
             return RestResponse.success(pageData);
         }catch (Exception e){
             return RestResponse.error("查询失败");

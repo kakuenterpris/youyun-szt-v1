@@ -181,7 +181,7 @@ public class KmServiceImpl implements KmService {
         SystemUser currentUser = ContextUtil.currentUser();
         String userId = currentUser.getUserId();
         Integer parentId = query.getParentId();
-        List<Integer> folderIdList = new ArrayList<>();
+            List<Integer> folderIdList = new ArrayList<>();
         Boolean viewFile = false;
         BusResourceFolderEntity entity = folderRepo.getById(parentId);
         if (null == entity) {
@@ -214,9 +214,12 @@ public class KmServiceImpl implements KmService {
             query.setParentId(null);
             result = fileRepo.selectFileList(canViewList,canViewfiles, query, notDelete);
             List<Integer> resultId = Linq.select(result, BusResourceManageListDTO::getId);
-            List<FileAuthEntity> list1 = fileAuthRepo.list(new LambdaQueryWrapper<FileAuthEntity>().in(FileAuthEntity::getId, resultId));
+            List<FileAuthEntity> fileAuths= new ArrayList<>();
+            if (resultId.size() > 0){
+                fileAuths=fileAuthRepo.list(new LambdaQueryWrapper<FileAuthEntity>().in(FileAuthEntity::getId, resultId));
+            }
             for (BusResourceManageListDTO busResourceManageListDTO : result) {
-                List<FileAuthEntity> collect = list1.stream().filter(fileAuthEntity -> fileAuthEntity.getFileId().equals(busResourceManageListDTO.getId())).collect(Collectors.toList());
+                List<FileAuthEntity> collect = fileAuths.stream().filter(fileAuthEntity -> fileAuthEntity.getFileId().equals(busResourceManageListDTO.getId())).collect(Collectors.toList());
                 List<Integer> select = Linq.select(collect, FileAuthEntity::getId);
                 busResourceManageListDTO.setScope(select);
             }
@@ -258,10 +261,13 @@ public class KmServiceImpl implements KmService {
 
             result = fileRepo.resourceListRight(folderIdList, viewFile, query, notDelete);
             List<Integer> resultId = Linq.select(result, BusResourceManageListDTO::getId);
-            List<FileAuthEntity> list1 = fileAuthRepo.list(new LambdaQueryWrapper<FileAuthEntity>().in(FileAuthEntity::getId, resultId));
+            List<FileAuthEntity> fileAuths= new ArrayList<>();
+            if (resultId.size() > 0){
+                fileAuths=fileAuthRepo.list(new LambdaQueryWrapper<FileAuthEntity>().in(FileAuthEntity::getId, resultId));
+            }
             for (BusResourceManageListDTO busResourceManageListDTO : result) {
                 if (busResourceManageListDTO.getFileId()!=null&&busResourceManageListDTO.getFileId()!=""){
-                    List<FileAuthEntity> collect = list1.stream().filter(fileAuthEntity -> fileAuthEntity.getFileId().equals(busResourceManageListDTO.getId())).collect(Collectors.toList());
+                    List<FileAuthEntity> collect = fileAuths.stream().filter(fileAuthEntity -> fileAuthEntity.getFileId().equals(busResourceManageListDTO.getId())).collect(Collectors.toList());
                     List<Integer> select = Linq.select(collect, FileAuthEntity::getId);
                     busResourceManageListDTO.setScope(select);
                 }

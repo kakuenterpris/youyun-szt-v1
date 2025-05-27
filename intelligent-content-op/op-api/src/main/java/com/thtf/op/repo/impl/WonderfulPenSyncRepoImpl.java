@@ -118,7 +118,7 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 LinkedHashMap data = (LinkedHashMap) updateResponse.getData();
                 List<BusResourceFileDTO> fileList = new ArrayList<>();
                 BusResourceFileDTO busResourceFileDTO = new BusResourceFileDTO();
-                busResourceFileDTO.setGuid(data.get("guid").toString());
+                busResourceFileDTO.setFileId(data.get("guid").toString());
                 busResourceFileDTO.setName(subName);
                 busResourceFileDTO.setFileType(Filetype);
                 busResourceFileDTO.setSize(String.valueOf(size));

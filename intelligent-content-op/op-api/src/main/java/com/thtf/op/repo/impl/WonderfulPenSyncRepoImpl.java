@@ -104,6 +104,7 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     //            妙笔请求获取文件
                 response = client.newCall(request).execute();
                 InputStream inputStream = new ByteArrayInputStream(response.body().bytes());
+                float size = ((float) response.body().contentLength())/1024;
                 MultipartFile file = new MockMultipartFile(ContentType.APPLICATION_OCTET_STREAM.toString(), inputStream);
     //          上传文件
                 RestResponse updateResponse = fileApi.updateFile(file, null, null, null);
@@ -115,6 +116,7 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 busResourceFileDTO.setGuid(data.get("guid").toString());
                 busResourceFileDTO.setName(subName);
                 busResourceFileDTO.setFileType(Filetype);
+                busResourceFileDTO.setSize(String.valueOf(size));
                 String userId = dto.getUserId();
                 busResourceFileDTO.setCreateUserId(userId);
                 //默认配置项目

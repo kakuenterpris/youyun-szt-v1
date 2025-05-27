@@ -118,8 +118,7 @@ public class RoleController {
     @Operation(summary = "更新角色信息接口")
     public RestResponse updateRole(@RequestBody UpdateRoleDto role) {
         try {
-            sysRoleRepo.updateByRoleId(role);
-            return RestResponse.success("更新角色信息成功");
+            return sysRoleRepo.updateByRoleId(role);
         }catch (Exception e) {
             log.error("更新角色信息失败", e);
             return RestResponse.error("更新角色信息失败");

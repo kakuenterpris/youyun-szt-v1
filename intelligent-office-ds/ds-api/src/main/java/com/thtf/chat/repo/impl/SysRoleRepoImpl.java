@@ -84,23 +84,25 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
             //获取用户角色
             SysRoleEntity roleByUserId = getRoleByUserId();
             if ((roleByUserId==null||!roleByUserId.getRoleKey().equals("security"))&&(role.getFolderAuthList() != null||role.getMenuAuth()!=null)){
-
+                return RestResponse.fail(602, "非安全管理员不能操作!");
             }
-
-            // 删除原有的权限
-            folderAuthRepo.remove(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, role.getRoleId()));
-            List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
-            List<FolderAuthEntity> fileAuthEntities = folderAuthList;
-            if (fileAuthEntities != null) {
-                for (FolderAuthEntity fileAuthEntity : fileAuthEntities) {
-                    fileAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
+            if (role.getFolderAuthList() != null) {
+                // 删除原有的知识库权限
+                folderAuthRepo.remove(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, role.getRoleId()));
+                List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
+                List<FolderAuthEntity> fileAuthEntities = folderAuthList;
+                if (fileAuthEntities != null) {
+                    for (FolderAuthEntity fileAuthEntity : fileAuthEntities) {
+                        fileAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
+                    }
                 }
+                folderAuthRepo.saveBatch(fileAuthEntities);
             }
-            folderAuthRepo.saveBatch(fileAuthEntities);
-
-            assignMenus(role);
-
-//更新角色
+            if (role.getMenuAuth()!=null) {
+                // 分配菜单权限
+                assignMenus(role);
+            }
+            //更新角色
             this.updateById(role);
 
         }catch (Exception e){

@@ -17,6 +17,13 @@
         indexing_status_name = #{indexStatusName}
         where file_id = #{fileId} and resource_file_id = #{resourceId}
     </update>
+
+    <update id="updateProgress">
+        update rel_user_resource
+        set progress = #{progress}
+        where file_id = #{fileId} and resource_file_id = #{resourceId}
+    </update>
+
     <update id="updateIndexStatusByFolderId">
         update rel_user_resource
         set indexing_status = #{indexStatus},

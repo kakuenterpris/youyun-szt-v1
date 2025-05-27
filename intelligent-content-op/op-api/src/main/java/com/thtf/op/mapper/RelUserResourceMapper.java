@@ -7,6 +7,7 @@ import com.thtf.resource.dto.RelUserResourceDTO;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +30,8 @@ public interface RelUserResourceMapper extends BaseMapper<RelUserResourceEntity>
     void updateDocumentId(@Param("documentId") String documentId, @Param("resourceId") Long resourceId, @Param("fileId") String fileId, @Param("indexStatus") String indexStatus, @Param("indexStatusName") String indexStatusName);
 
     void updateIndexStatus(@Param("resourceId") Long resourceId, @Param("fileId") String fileId, @Param("indexStatus") String indexStatus, @Param("indexStatusName") String indexStatusName);
+
+    void updateProgress(@Param("resourceId") Long resourceId, @Param("fileId") String fileId, @Param("progress") BigDecimal progress);
 
     List<Map> selectFileIdListByUserId(@Param("userId") String userId);
 

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -90,6 +91,24 @@ public class RelUserResourceServiceImpl implements RelUserResourceService {
             log.error("更新索引状态失败，失败原因{}", e.getMessage());
         }
     }
+
+    /**
+     * 更新进度
+     *
+     * @param progress
+     */
+    @Override
+    public void updateProgress(Long resourceId, String fileId, BigDecimal progress) {
+        try {
+            relUserResourceMapper.updateProgress(resourceId,fileId, progress);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("更新索引状态失败，失败原因{}", e.getMessage());
+        }
+    }
+
+
 
     /**
      * 根据用户id获取所有能预览的文件id集合

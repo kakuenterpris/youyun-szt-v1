@@ -140,7 +140,7 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         //测试 写死
         systemUser.setUserId("798");
 
-        List<BusResourceManageListDTO> busResourceManageListDTOS = TreeNodeServiceImpl.assembleTree(kmService.getResourceListLeft("wonderfulPen", dto.getType(), systemUser));
+        List<BusResourceManageListDTO> busResourceManageListDTOS = TreeNodeServiceImpl.assembleTree(kmService.getResourceListLeft("wonderfulPen", Integer.parseInt(dto.getType()), systemUser));
         return RestResponse.success(busResourceManageListDTOS);
     }
 

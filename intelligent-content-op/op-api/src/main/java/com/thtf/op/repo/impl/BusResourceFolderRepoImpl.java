@@ -79,7 +79,7 @@ public class BusResourceFolderRepoImpl extends ServiceImpl<BusResourceFolderMapp
     }
 
     @Override
-    public List<BusResourceFolderDTO> listAllByType(boolean notDelete, String type) {
+    public List<BusResourceFolderDTO> listAllByType(boolean notDelete, Integer type) {
         List<BusResourceFolderEntity> list;
         // notDelete为true时，查询未删除的文件夹，为false时，查询所有文件夹
         if (notDelete) {

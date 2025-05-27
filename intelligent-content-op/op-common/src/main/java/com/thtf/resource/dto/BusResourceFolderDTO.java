@@ -108,5 +108,5 @@ public class BusResourceFolderDTO {
     /**
      * 文件夹类型
      */
-    private String type;
+    private Integer type;
 }

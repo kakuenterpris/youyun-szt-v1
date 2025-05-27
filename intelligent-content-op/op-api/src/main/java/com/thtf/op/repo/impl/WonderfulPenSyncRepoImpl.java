@@ -13,6 +13,7 @@ import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
 import com.thtf.feign.client.FileApi;
 import com.thtf.global.common.dto.SystemUser;
+import com.thtf.global.common.rest.ContextUtil;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.BusResourceFileEntity;
 import com.thtf.op.entity.BusResourceFolderEntity;
@@ -139,12 +140,12 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Override
     public RestResponse getFileByUserId(WonderfulPenSyncDTO dto) {
 
-        SystemUser systemUser = busUserInfoMapper.getUserInfoByUserId(dto.getUserId());
-
         //测试 写死
-        systemUser.setUserId("798");
+        SystemUser currentUser = ContextUtil.currentUser();
 
-        List<BusResourceManageListDTO> busResourceManageListDTOS = TreeNodeServiceImpl.assembleTree(kmService.getResourceListLeft("wonderfulPen", Integer.parseInt(dto.getType()), systemUser));
+        currentUser.setUserId("798");
+
+        List<BusResourceManageListDTO> busResourceManageListDTOS = TreeNodeServiceImpl.assembleTree(kmService.getResourceListLeft("wonderfulPen", Integer.parseInt(dto.getType()), currentUser));
         return RestResponse.success(busResourceManageListDTOS);
     }
 

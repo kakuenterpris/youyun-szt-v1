@@ -112,7 +112,7 @@ public class RagFlowProcessRunnable implements Runnable {
         }
     }
 
-    private RestResponse handler() {
+    public RestResponse handler() {
 
         List<String> successFiles = new ArrayList<>();
         List<String> failedFiles = new ArrayList<>();

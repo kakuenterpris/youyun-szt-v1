@@ -116,8 +116,10 @@ public class ResourceProcessServiceImpl implements ResourceProcessService {
             // 使用Future获取返回值
             // 提交任务并获取Future
             Future<RestResponse> future = singleThreadExecutor.submit(() -> {
-                ragFlowProcessRunnable.run();
-                return ragFlowProcessRunnable.getProcessResult(); // 新增结果获取方法
+//                ragFlowProcessRunnable.run();
+//                return ragFlowProcessRunnable.getProcessResult(); // 新增结果获取方法
+                return ragFlowProcessRunnable.handler(); // 直接调用业务处理方法
+
             });
             RestResponse result = future.get(60, TimeUnit.SECONDS);
             return RestResponse.success(result.getData());

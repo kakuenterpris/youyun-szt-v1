@@ -84,6 +84,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             ragflowEntity.setEmail("M@M.test");
             ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
             apiKey = loginRagFlow(ragflowEntity);
+            redisUtil.set("ragflow:authHeader", apiKey, 1800);
         }
 
         // String datasetId = ragFlowApiConfigProperties.getDatasetId();
@@ -152,14 +153,14 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
                 .readTimeout(600, TimeUnit.SECONDS)
                 .writeTimeout(600, TimeUnit.SECONDS)
                 .build();
-        String apiKey = (String) redisUtil.get("ragflow:authHeader");  //ragFlowApiConfigProperties.getApiKey();
+        String apiKey = (String) redisUtil.get("ragflow:authHeader");
         if (StrUtil.isEmpty(apiKey)) {
             RagflowEntity ragflowEntity = new RagflowEntity();
             ragflowEntity.setEmail("M@M.test");
             ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
             apiKey = loginRagFlow(ragflowEntity);
+            redisUtil.set("ragflow:authHeader", apiKey, 1800);
         }
-        // String datasetId = ragFlowApiConfigProperties.getDatasetId();
         String url = ragFlowApiConfigProperties.getLoginUrl();
         if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
             log.error("上传文档得url或key为空");
@@ -508,7 +509,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             response = client.newCall(request).execute();
             Headers headers = response.headers();
             authHeader = headers.get("Authorization");
-            redisUtil.set("ragflow:authHeader:" + authHeader, 1800);
+            redisUtil.set("ragflow:authHeader", authHeader, 1800);
         }catch (Exception e) {
             log.error("调用ragflow方法post失败，失败原因：" + e.getMessage());
             e.getMessage();
@@ -534,6 +535,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             ragflowEntity.setEmail("M@M.test");
             ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
             apiKey = loginRagFlow(ragflowEntity);
+            redisUtil.set("ragflow:authHeader", apiKey, 1800);
         }
         log.info("调用ragflow方法apiKey：{}", apiKey);
 
@@ -564,20 +566,60 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
     @Override
     public String changeParser(List<SysRuleTagEntity> ruleTagList,String docId) {
         Map<String, String> params = new HashMap<>();
-        params.put("doc_id", docId);
+        Map<String, Object> parserConfig = new HashMap<>();
+        Map<String, Object> extractor = new HashMap<>();
+        List<Map<String, Object>> keyValues = new ArrayList<>();
         String url = ragFlowApiConfigProperties.getLoginUrl() + "/document/change_parser";
+
+        params.put("parser_id","naive");
+        params.put("doc_id", docId);
+
+        parserConfig.put("auto_keywords", 0);
+        parserConfig.put("auto_questions", 0);
         for (SysRuleTagEntity ruleTagEntity : ruleTagList) {
-            params.put(" ", ruleTagEntity.getTagName());
+            Map<String, Object> kv = new HashMap<>();
+            kv.put("code", ruleTagEntity.getTagCode());
+            kv.put("id", ruleTagEntity.getId());
+            kv.put("must_exist", true);  // 根据业务需求设置
+            kv.put("name", ruleTagEntity.getTagName());
+            kv.put("type", ruleTagEntity.getTagType());
+            keyValues.add(kv);
         }
 
+        extractor.put("keyvalues", keyValues);
+
+        parserConfig.put("extractor", extractor);
+
+        Map<String, Object> raptor = new HashMap<>();
+        raptor.put("use_raptor", false);
+        parserConfig.put("raptor", raptor);
+
+        parserConfig.put("chunk_token_num", 128);
+        parserConfig.put("delimiter", "\n");
+        parserConfig.put("pages", new HashMap<>());
+
+        params.put("parser config", parserConfig.toString());
         Gson gson = new Gson();
         String json = gson.toJson(params);
         log.info("调用ragflow方法post请求参数：{}", json);
+
+        String apiKey = (String) redisUtil.get("ragflow:authHeader");
+        if (StrUtil.isEmpty(apiKey)) {
+            RagflowEntity ragflowEntity = new RagflowEntity();
+            ragflowEntity.setEmail("M@M.test");
+            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
+            apiKey = loginRagFlow(ragflowEntity);
+            redisUtil.set("ragflow:authHeader", apiKey, 1800);
+        }
+        log.info("调用ragflow方法apiKey：{}", apiKey);
+
+
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
                 .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", apiKey)
                 .build();
 
         OkHttpClient client = new OkHttpClient.Builder()
@@ -644,6 +686,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
                 ragflowEntity.setEmail("M@M.test");
                 ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
                 apiKey = loginRagFlow(ragflowEntity);
+                redisUtil.set("ragflow:authHeader", apiKey, 1800);
             }
 
             Map<String, Object> params = new HashMap<>();
@@ -747,6 +790,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             ragflowEntity.setEmail("M@M.test");
             ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
             apiKey = loginRagFlow(ragflowEntity);
+            redisUtil.set("ragflow:authHeader", apiKey, 1800);
         }
 
         Request request = new Request.Builder()
@@ -787,6 +831,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             ragflowEntity.setEmail("M@M.test");
             ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
             apiKey = loginRagFlow(ragflowEntity);
+            redisUtil.set("ragflow:authHeader", apiKey, 1800);
         }
 
         Request request = new Request.Builder()
@@ -809,17 +854,6 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             log.error("获取PDF失败，原因：{}", e.getMessage());
             return e.getMessage();
         }
-    }
-
-
-    /**
-     * 解析之前先将配置信息给ragflow
-     * @return
-     */
-    public Map changeParser(){
-
-
-        return null;
     }
 
 }

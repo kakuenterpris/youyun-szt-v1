@@ -185,6 +185,7 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         userInfoVO.setUserPhone( param.getMobilePhone() );
         userInfoVO.setUserEmail( param.getEmail() );
         userInfoVO.setLocked( param.getLocked() );
+        userInfoVO.setSecretLevel(param.getSecretLevel().toString());
         userInfoVO.setRoleId( param.getRoleId()==null? "": param.getRoleId().toString() );
         return userInfoVO;
     }
@@ -192,10 +193,9 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
     @Override
     public RestResponse updateByUserId(UpdateUserInfoDto user) {
         try {
-            BusUserInfoEntity origin = this.getOne(new LambdaQueryWrapper<BusUserInfoEntity>().eq(BusUserInfoEntity::getUserId, user.getUserId()));
             //获取用户角色
             SysRoleEntity roleByUserId = getRoleByUserId();
-            if ((roleByUserId==null||!roleByUserId.getRoleKey().equals("security"))&&(user.getRoleIds() != null||origin.getSecretLevel()!=user.getSecretLevel()||origin.getLocked()!=user.getLocked())) {
+            if ((roleByUserId==null||!roleByUserId.getRoleKey().equals("security"))&&(user.getRoleIds() != null||user.getSecretLevel()!=null||user.getLocked()!=null)){
                 //todo 返回错误信息
                 return RestResponse.fail(602, "非安全管理员用户不能操作！");
             }

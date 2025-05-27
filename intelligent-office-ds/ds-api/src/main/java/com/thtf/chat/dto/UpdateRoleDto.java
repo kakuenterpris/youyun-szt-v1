@@ -9,8 +9,6 @@ import java.util.List;
 
 @Data
 public class UpdateRoleDto extends SysRoleEntity {
-    @Schema(description = "菜单ID列表")
-    private List<Long> menuIds;
 
     @Schema(description = "菜单ID列表")
     private List<SysRoleMenuEntity> menuAuth;

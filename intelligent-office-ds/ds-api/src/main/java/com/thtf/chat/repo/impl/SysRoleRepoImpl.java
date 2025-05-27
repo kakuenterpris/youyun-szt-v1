@@ -11,6 +11,7 @@ import com.thtf.chat.repo.FolderAuthRepo;
 import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.chat.mapper.SysRoleMapper;
+import com.thtf.chat.repo.SysUserRoleRepo;
 import com.thtf.chat.service.BusUserInfoService;
 import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.ContextUtil;
@@ -42,6 +43,8 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
     @Autowired
     private  FolderAuthRepo folderAuthRepo;
 
+    @Autowired
+    private SysUserRoleRepo sysUserRoleRepo;
 
 
     @Override
@@ -77,8 +80,13 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
     @Override
     public RestResponse updateByRoleId(UpdateRoleDto role) {
         try {
-            this.updateById(role);
 //            分配知识库权限
+            //获取用户角色
+            SysRoleEntity roleByUserId = getRoleByUserId();
+            if ((roleByUserId==null||!roleByUserId.getRoleKey().equals("security"))&&(role.getFolderAuthList() != null||role.getMenuAuth()!=null)){
+
+            }
+
             // 删除原有的权限
             folderAuthRepo.remove(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, role.getRoleId()));
             List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
@@ -88,9 +96,11 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
                     fileAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
                 }
             }
-            assignMenus(role);
             folderAuthRepo.saveBatch(fileAuthEntities);
 
+            assignMenus(role);
+
+//更新角色
             this.updateById(role);
 
         }catch (Exception e){
@@ -98,6 +108,13 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
         }
         return RestResponse.success("修改成功");
     }
+
+        public SysRoleEntity getRoleByUserId(){
+            SystemUser currentUser = ContextUtil.currentUser();
+            String id = currentUser.getId();
+            SysUserRoleEntity sysUserRole = sysUserRoleRepo.getOne(new LambdaQueryWrapper<SysUserRoleEntity>().eq(SysUserRoleEntity::getUserId, id));
+            return sysUserRole==null?null:this.getById(sysUserRole.getRoleId());
+        }
 
     protected boolean assignMenus(UpdateRoleDto dto) {
         // 分配菜单权限

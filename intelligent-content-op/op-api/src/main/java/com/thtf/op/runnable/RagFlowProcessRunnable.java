@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -260,6 +261,9 @@ public class RagFlowProcessRunnable implements Runnable {
             // 更新资源状态为解析失败
             relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.PARSE_ERROR.getIndexingStatus(), IndexingStatusEnum.PARSE_ERROR.getIndexingStatusName());
         } else {
+            // 将进度更新为0
+            BigDecimal progress = BigDecimal.ZERO;
+            relUserResourceService.updateProgress(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(),progress);
             // 更新资源为解析中
             relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.PARSING.getIndexingStatus(), IndexingStatusEnum.PARSING.getIndexingStatusName());
 

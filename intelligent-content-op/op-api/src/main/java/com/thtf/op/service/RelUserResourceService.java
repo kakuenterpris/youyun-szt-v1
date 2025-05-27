@@ -1,5 +1,6 @@
 package com.thtf.op.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -21,6 +22,8 @@ public interface RelUserResourceService {
     void updateDocumentId(String documentId, Long resourceId, String fileId);
 
     void updateIndexStatus(Long resourceId, String fileId, String indexingStatus, String indexingStatusName);
+
+    void updateProgress(Long resourceId, String fileId, BigDecimal progress);
 
     List<String> getFileIdListByUserId(String userId);
 

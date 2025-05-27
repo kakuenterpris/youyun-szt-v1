@@ -222,10 +222,8 @@ public class RagFlowProcessRunnable implements Runnable {
             queryWrapper.orderBy(true, true, SysRuleTagEntity::getSort);
             ruleTagList = sysRuleTagRepo.list(queryWrapper);
         }
-        // ragFlowProcessService.changeParser(ruleTagList, datesetId);
-
-
-
+        String changeParser = ragFlowProcessService.changeParser(ruleTagList, datesetId);
+        System.out.println("changeParser:===>" + changeParser);
 
 //        Map dataSetMap = fileEmbeddingConfigMapper.getDataSetData(ragProcessDTO.getEmbeddingConfigCode());
 //        if (null == dataSetMap || StrUtil.isEmpty((CharSequence) dataSetMap.get("rag_dataset_id"))) {

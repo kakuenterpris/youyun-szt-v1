@@ -4,6 +4,8 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.pagehelper.util.StringUtil;
 import com.google.gson.Gson;
@@ -14,8 +16,10 @@ import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.BusResourceFileEntity;
 import com.thtf.op.entity.BusResourceFolderEntity;
+import com.thtf.op.entity.RelUserResourceEntity;
 import com.thtf.op.mapper.*;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
+import com.thtf.op.repo.RelUserResourceRepo;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.service.impl.KmServiceImpl;
@@ -188,9 +192,17 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
             }
         }
 
+        LambdaQueryWrapper<RelUserResourceEntity> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.in(RelUserResourceEntity::getFileId, fileIds);
+        queryWrapper.eq(RelUserResourceEntity::getIndexingStatus, "2");
+        List<RelUserResourceEntity> entitys = relUserResourceMapper.selectList(queryWrapper);
+        entitys.forEach(entity -> {
+            list.add(entity.getDocumentId());
+        });
+
         //测试 写死
-        list.add("ddb0407c36d711f0b0020a7f8ad6111b");
-        list.add("ec2aa81e36bd11f09635ce6a55565431");
+//        list.add("ddb0407c36d711f0b0020a7f8ad6111b");
+//        list.add("ec2aa81e36bd11f09635ce6a55565431");
 
         params.put("document_ids", list);
 
@@ -221,8 +233,9 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 map.put("similarity", chunk.get("similarity"));
 
                 String documentId = relUserResourceMapper.getFileIdByDocumentId(chunk.get("document_id").toString());
+//                documentId = RandomUtil.randomString(10);
                 //测试随机成成id
-                map.put("document_id", RandomUtil.randomString(10));
+                map.put("document_id", documentId);
                 map.put("document_keyword", chunk.get("document_keyword"));
                 list2.add(map);
             }

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -45,6 +46,7 @@ public class RoleController {
     @Transactional(rollbackFor = Exception.class)
     public RestResponse createRole(@RequestBody SysRoleEntity role) {
         try {
+                role.setCreateTime(new Date());
                 sysRoleRepo.save(role);
                 System.out.println(role);
                 List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
@@ -55,7 +57,8 @@ public class RoleController {
                 }
                 folderAuthRepo.saveBatch(folderAuthList);
             }
-                if (role.getMenuAuth() != null && role.getMenuAuth().isEmpty()) {
+
+            if (role.getMenuAuth() != null&&!role.getMenuAuth().isEmpty()) {
                     List<SysRoleMenuEntity> menuAuth = role.getMenuAuth();
                     for (SysRoleMenuEntity sysRoleMenu : menuAuth) {
                         sysRoleMenu.setRoleId(role.getRoleId());

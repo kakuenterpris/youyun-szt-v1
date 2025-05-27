@@ -250,7 +250,7 @@ public class BusResourceManageListDTO extends BaseTreeNodeVO {
     /**
      * 文件夹类型
      */
-    private String type;
+    private Integer type;
 
 
 }

@@ -2,6 +2,7 @@ package com.thtf.op.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.google.gson.Gson;
 import com.thtf.emdedding.dto.FileUploadRecordDTO;
 import com.thtf.emdedding.dto.RagProcessDTO;
@@ -14,6 +15,7 @@ import com.thtf.global.common.utils.Linq;
 import com.thtf.login.enums.UserSpecialAuthEnum;
 import com.thtf.op.entity.*;
 import com.thtf.op.enums.FileScopeTypeEnum;
+import com.thtf.op.mapper.BusResourceFolderMapper;
 import com.thtf.op.mapper.FileEmbeddingConfigMapper;
 import com.thtf.op.mapper.FileUploadRecordMapper;
 import com.thtf.op.mappings.BusResourceEmbeddingMapping;
@@ -89,6 +91,8 @@ public class KmServiceImpl implements KmService {
     private final SysUserRoleRepo sysUserRoleRepo;
 
     private final FileUploadRecordMapper fileUploadRecordMapper;
+
+    private final BusResourceFolderMapper busResourceFolderMapper;
     @Value("${file.base.path}")
     private String fileBasePath;
     private static final String[] toMarkdownWhiteList = {"PDF", "PPT", "PPTX", "DOC", "PNG", "JPG",
@@ -107,7 +111,7 @@ public class KmServiceImpl implements KmService {
      * 左侧文件夹列表
      */
     @Override
-    public List<BusResourceManageListDTO> getResourceListLeft(String requestType, String folderType, SystemUser currentUser) {
+    public List<BusResourceManageListDTO> getResourceListLeft(String requestType, Integer folderType, SystemUser currentUser) {
 
         String userId = StringUtils.isBlank(currentUser.getUserId()) ? ServiceConstants.DEFAULT_USER_ID : currentUser.getUserId();
         List<BusResourceManageListDTO> result = new ArrayList<>();
@@ -520,6 +524,23 @@ public class KmServiceImpl implements KmService {
         if (edit){
             folderRepo.update(dto);
         } else {
+            //设置文件类型
+            if (parent.getParentId() == 0) {
+                //获取busResourceFolderEntities中type最大的值
+                LambdaQueryWrapper<BusResourceFolderEntity> queryWrapper = Wrappers.lambdaQuery();
+                queryWrapper.select(BusResourceFolderEntity::getType);
+                queryWrapper.orderByDesc(BusResourceFolderEntity::getType);
+                queryWrapper.last("LIMIT 1");
+                BusResourceFolderEntity entity = busResourceFolderMapper.selectOne(queryWrapper);
+                if (entity != null) {
+                    dto.setType(entity.getType() + 1);
+                } else {
+                    dto.setType(1);
+                }
+            } else {
+                dto.setType(parent.getType());
+            }
+
             dto.setSort(folderRepo.maxSort() + 1);
             folderId = folderRepo.add(dto);
         }

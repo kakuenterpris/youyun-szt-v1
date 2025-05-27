@@ -58,20 +58,19 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
             LambdaQueryWrapper<SysRoleEntity> roleQuery = new LambdaQueryWrapper<>();
             roleQuery.eq(vo.getRoleName() != null, SysRoleEntity::getRoleName, vo.getRoleName());
             roleQuery.eq(vo.getStatus() != null, SysRoleEntity::getStatus, vo.getStatus());
-            Page<SysRoleEntity> page1 = this.page(page, roleQuery);
-            List<SysRoleEntity> records = page1.getRecords();
+            Page<SysRoleEntity> pageData = this.page(page, roleQuery);
+            List<SysRoleEntity> records = pageData.getRecords();
             List<Long> select = Linq.select(records, SysRoleEntity::getRoleId);
-            List<FolderAuthEntity> list1 = folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().in(FolderAuthEntity::getRoleId, select));
-            page1.getRecords().stream().forEach(item -> {
-                Integer roleId = Math.toIntExact(item.getRoleId());
-                LambdaQueryWrapper<SysRoleMenuEntity> sysRoleMenuQuery = new LambdaQueryWrapper<>();
-                sysRoleMenuQuery.eq(SysRoleMenuEntity::getRoleId, roleId);
-                List<SysRoleMenuEntity> list = sysRoleMenuRepo.list(sysRoleMenuQuery);
-                item.setMenuAuth(list);
-                item.setFolderAuthList(list1.stream().filter(item1 -> item1.getRoleId().equals(roleId)).collect(Collectors.toList()));
-            });
+            List<FolderAuthEntity> folderAuths = folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().in(FolderAuthEntity::getRoleId, select));
+            List<SysRoleMenuEntity> menuAuths = sysRoleMenuRepo.list(new LambdaQueryWrapper<SysRoleMenuEntity>().in(SysRoleMenuEntity::getRoleId, select));
 
-            return RestResponse.success(page1);
+            records.stream().forEach(item -> {
+                Long roleId = item.getRoleId();
+
+                item.setMenuAuth(menuAuths.stream().filter(menuAuth -> menuAuth.getRoleId().equals(roleId)).collect(Collectors.toList()));
+                item.setFolderAuthList(folderAuths.stream().filter(folderAuth -> folderAuth.getRoleId().equals(Math.toIntExact(roleId))).collect(Collectors.toList()));
+            });
+            return RestResponse.success(pageData);
         }catch (Exception e){
             return RestResponse.error("查询失败");
         }

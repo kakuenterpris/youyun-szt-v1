@@ -193,6 +193,9 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         for (Map<String, Object> map : dto.getFolderIds()) {
             String type = map.get("type").toString();
             String folderIdStr = map.get("folderId").toString();
+            if (StrUtil.isBlank(folderIdStr)) {
+                continue;
+            }
             String[] folderIds = folderIdStr.split(",");
             for (String folderId : folderIds) {
                 fileIds.addAll(getSubFilesRecursively(Integer.valueOf(folderId), Integer.parseInt(type)));

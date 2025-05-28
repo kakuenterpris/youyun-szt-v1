@@ -702,6 +702,8 @@ public class KmServiceImpl implements KmService {
                     relUserResourceDTO.setResourceId(resourceFileId);
                     relUserResourceDTO.setResourceFileId(Math.toIntExact(resourceFileId));
                     relUserResourceDTO.setUserId(userId);
+                    relUserResourceDTO.setIndexingStatus("1");
+                    relUserResourceDTO.setIndexingStatusName("未提取");
                     relUserResourceDTO.setDatasetsId("");
                     relUserResourceDTO.setFileId(fileDTO.getFileId());
                     relUserResourceRepo.add(relUserResourceDTO);

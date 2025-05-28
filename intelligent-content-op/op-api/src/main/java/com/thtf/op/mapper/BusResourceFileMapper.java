@@ -31,9 +31,9 @@ public interface BusResourceFileMapper extends BaseMapper<BusResourceFileEntity>
                                                   String level, String embeddingStatus, String indexingStatus, Date startTime, Date endTime,
                                                   Integer begin, Integer end, String timeSort, String nameSort,
                                                   Boolean notDelete);
-    Integer selectFileListCount(String name, List<Integer> fileYearList,
-                           List<String> embeddingConfigNameList, List<Integer> folderIdList,
-                           String timeSort, String nameSort, Boolean notDelete);
+    Integer selectFileListCount( String name, List<Integer> fileYearList,
+                                List<String> embeddingConfigNameList, List<Integer> folderIdList,List<Integer> fileIdList,
+                                String level, String embeddingStatus, String indexingStatus, Date startTime, Date endTime,Boolean notDelete);
 
     //根据fileIds查询文件信息
     @Select("select file_id, name, level from bus_resource_file where file_id in ${fileIds}")

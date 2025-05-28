@@ -265,12 +265,17 @@
     </select>
 
     <select id="selectFileListCount" resultType="java.lang.Integer">
-        select
-        count(*)
-        FROM
-        bus_resource_file a
-        LEFT JOIN rel_user_resource b ON a.id = b.resource_file_id
+        SELECT count(*)
+        FROM bus_resource_file a
+        LEFT JOIN rel_user_resource b
+            ON a.id = b.resource_file_id
         WHERE 1=1
+        <if test="fileIdList != null and fileIdList.size > 0">
+            and a.ID in
+            <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+            #{fileId}
+            </foreach>
+        </if>
         and a.folder_id in
         <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
             #{folderId}
@@ -278,6 +283,15 @@
 
         <if test="notDelete == true">
             AND a.is_deleted = 0
+        </if>
+        <if test="indexingStatus != null">
+            AND b.indexing_status = #{indexingStatus}
+        </if>
+        <if test="embeddingStatus != null and embeddingStatus != ''">
+            AND b.embed_status = #{embeddingStatus}
+        </if>
+        <if test="level != null and level != ''">
+            and a.level= #{level}
         </if>
         <if test="name != null and name != ''">
             and a.name like concat('%', #{name}, '%')
@@ -287,6 +301,12 @@
             <foreach collection="fileYearList" item="fileYear" open="(" separator="," close=")">
                 #{fileYear}
             </foreach>
+        </if>
+        <if test="startTime != null ">
+            and a.UPDATE_TIME >= TO_DATE(#{startTime}, 'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="endTime != null ">
+            and a.UPDATE_TIME &lt; TO_DATE(#{endTime}, 'YYYY-MM-DD HH24:MI:SS')
         </if>
         <if test="embeddingConfigNameList != null and embeddingConfigNameList.size > 0">
             and a.embedding_config_name IN

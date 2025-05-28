@@ -160,10 +160,10 @@ public class BusResourceFileRepoImpl extends ServiceImpl<BusResourceFileMapper, 
     }
 
     @Override
-    public Integer selectFileListCount(List<Integer> folderIdList, QueryDTO query, boolean notDelete) {
+    public Integer selectFileListCount(List<Integer> folderIdList,List<Integer> fileIdList, QueryDTO query, boolean notDelete) {
         return fileMapper.selectFileListCount(query.getName(), query.getFileYearList(),
-                query.getEmbeddingConfigNameList(), folderIdList,
-                query.getTimeSort(), query.getNameSort(), notDelete);
+                query.getEmbeddingConfigNameList(), folderIdList,fileIdList,
+                query.getLevel(),query.getEmbeddingStatus(),query.getIndexingStatus(),query.getStartTime(), query.getEndTime(),notDelete);
     }
 
     @Override

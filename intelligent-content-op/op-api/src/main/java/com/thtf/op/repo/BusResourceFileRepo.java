@@ -68,7 +68,7 @@ public interface BusResourceFileRepo extends IService<BusResourceFileEntity> {
      */
     List<BusResourceManageListDTO> selectFileList(List<Integer> folderIdList,List<Integer> fileIdList, QueryDTO query, boolean notDelete);
 
-    Integer selectFileListCount(List<Integer> folderIdList, QueryDTO query, boolean notDelete);
+    Integer selectFileListCount(List<Integer> folderIdList,List<Integer> fileIdList, QueryDTO query, boolean notDelete);
 
     boolean updatePreviewFileId(Long id, String previewFileId);
 

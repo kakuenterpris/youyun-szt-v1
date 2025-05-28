@@ -213,6 +213,7 @@ public class KmServiceImpl implements KmService {
             List<Integer> canViewList = (List<Integer>) CollectionUtils.intersection(childIds, canViewFolderIds);
             query.setParentId(null);
             result = fileRepo.selectFileList(canViewList,canViewfiles, query, notDelete);
+            count = fileRepo.selectFileListCount(canViewList,canViewfiles, query, notDelete);
             List<Integer> resultId = Linq.select(result, BusResourceManageListDTO::getId);
             List<FileAuthEntity> fileAuths= new ArrayList<>();
             if (resultId.size() > 0){
@@ -223,7 +224,7 @@ public class KmServiceImpl implements KmService {
                 List<Integer> select = Linq.select(collect, FileAuthEntity::getId);
                 busResourceManageListDTO.setScope(select);
             }
-            count = result.size();
+
             return RestResponse.success(result, count);
 
 
@@ -260,6 +261,7 @@ public class KmServiceImpl implements KmService {
             }
 
             result = fileRepo.resourceListRight(folderIdList, viewFile, query, notDelete);
+            count=fileRepo.resourceListRightCount(folderIdList, viewFile, query, notDelete);
             List<Integer> resultId = Linq.select(result, BusResourceManageListDTO::getId);
             List<FileAuthEntity> fileAuths= new ArrayList<>();
             if (resultId.size() > 0){
@@ -272,7 +274,6 @@ public class KmServiceImpl implements KmService {
                     busResourceManageListDTO.setScope(select);
                 }
             }
-            count = result.size();
         }
         List<Integer> idList = result.stream().map(BusResourceManageListDTO::getFolderId).distinct().toList();
         List<BusResourceMemberDTO> authList = this.getFolderAuthList(idList);

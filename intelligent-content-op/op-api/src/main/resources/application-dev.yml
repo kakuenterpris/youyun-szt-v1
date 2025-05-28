@@ -223,3 +223,5 @@ knife4j:
 
 file.base.path: /home/agentweb/web/intelligent-office/backend/content/data
 file.temp.path: /home/agentweb/web/intelligent-office/backend/content/data/temp
+
+# krm.api.url: http://{{服务器地址}}/okmsApi/krm/api/knowledgetype

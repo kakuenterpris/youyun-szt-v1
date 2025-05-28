@@ -183,7 +183,7 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         List<String> list1 = new ArrayList<>();
         list1.add(datasetId);
         params.put("dataset_ids", list1);
-        params.put("question", "物质"); //query
+        params.put("question", dto.getQuery()); //query
 
         //文件id集合
         List<String> list = new ArrayList<>();

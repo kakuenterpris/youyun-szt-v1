@@ -12,6 +12,7 @@ import com.thtf.global.common.dto.SystemUser;
 import com.thtf.global.common.rest.DefaultErrorCode;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.global.common.utils.JsonUtil;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
@@ -88,6 +89,16 @@ public class PermissionAspect {
 
     private String getTokenFromContext() {
         HttpServletRequest request = getHttpServletRequest();
+
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("token".equals(cookie.getName())) {  // 假设token存储在名为"token"的cookie中
+                    System.out.println("cookie:" + cookie.getValue());
+                    return cookie.getValue();
+                }
+            }
+        }
         // 从header取
         String fromHeader = request.getHeader(AuthConstants.token_key);
         if (StringUtils.isNotBlank(fromHeader)){

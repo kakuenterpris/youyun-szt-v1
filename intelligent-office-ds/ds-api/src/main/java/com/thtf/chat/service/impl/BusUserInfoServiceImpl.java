@@ -107,7 +107,7 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         SystemUser userInfo = bs2User(user);
         TokenDTO token = getTokenDTO(request, response, userInfo);
         //todo  获取用户权限
-        List<SysMenuEntity> userMenu = sysMenuRepo.getUserMenu(userInfo.getUserId());
+        List<SysMenuEntity> userMenu = sysMenuRepo.getUserMenu(userInfo.getId());
 //        流式构建子菜单
         List<SysMenuEntity> sysMenuEntities = userMenu.stream().filter(item -> Objects.equals(0L, item.getParentId())).map(item -> {
             item.setChildren(this.getChild(item.getMenuId(), userMenu));
@@ -278,7 +278,7 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
         }
 
         SystemUser.SystemUserBuilder systemUser = SystemUser.builder();
-
+        systemUser.id(param.getId().toString());
         systemUser.userId( param.getUserId() );
         systemUser.userName( param.getUserName() );
         systemUser.loginId( param.getLoginId() );

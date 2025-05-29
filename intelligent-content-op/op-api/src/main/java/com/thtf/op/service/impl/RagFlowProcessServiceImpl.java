@@ -9,10 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.global.common.cache.RedisUtil;
-import com.thtf.op.entity.BusUserInfoEntity;
-import com.thtf.op.entity.RagflowEntity;
-import com.thtf.op.entity.RelUserResourceEntity;
-import com.thtf.op.entity.SysRuleTagEntity;
+import com.thtf.op.entity.*;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
 import com.thtf.op.repo.BusUserInfoRepo;
 import com.thtf.op.repo.impl.RelUserResourceRepoImpl;
@@ -77,18 +74,8 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
                 .writeTimeout(600, TimeUnit.SECONDS)
                 .build();
         // 根据资源id,查询对应的ragflow知识库id
-
-        String apiKey = "";//(String) redisUtil.get("ragflow:authHeader");
-        if (StrUtil.isEmpty(apiKey)) {
-            RagflowEntity ragflowEntity = new RagflowEntity();
-            ragflowEntity.setEmail("M@M.test");
-            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
-            apiKey = loginRagFlow(ragflowEntity);
-//            redisUtil.set("ragflow:authHeader", apiKey, 60*60*6);
-        }
-
-        // String datasetId = ragFlowApiConfigProperties.getDatasetId();
-        String url = ragFlowApiConfigProperties.getLoginUrl();
+        String apiKey = ragFlowApiConfigProperties.getApiKey();
+        String url = ragFlowApiConfigProperties.getApiHost()+"/api/v1/datasets/"+datasetId+"/documents";
         if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
             log.error("上传文档得url或key为空");
             return null;
@@ -97,24 +84,20 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
         RequestBody fileBody = RequestBody.create(MediaType.parse("application/octet-stream"), file);
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("kb_id", datasetId)
                 .addFormDataPart("file", file.getName(), fileBody)
                 .build();
 
         Request request = new Request.Builder()
-                .url(url+"/document/upload")
-                .addHeader("Authorization", apiKey)
+                .url(url)
+                .addHeader("Authorization","Bearer "+ apiKey)
                 .post(requestBody)
                 .build();
         Response response = null;
         try {
-//            StopWatch watch = new StopWatch("请求临时切片处理接口");
-//            watch.start();
             response = client.newCall(request).execute();
             byte[] responseBytes = response.body().bytes();
             String jsonString = new String(responseBytes);
             System.out.println("ragflow返回值:===>" + jsonString);
-//            watch.stop();
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
             if (null != map && (Integer) map.get("code") == 0) {
                 JSONArray jsonArray = (JSONArray) map.get("data");
@@ -153,34 +136,23 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
                 .readTimeout(600, TimeUnit.SECONDS)
                 .writeTimeout(600, TimeUnit.SECONDS)
                 .build();
-        String apiKey = "";//(String) redisUtil.get("ragflow:authHeader");
-        if (StrUtil.isEmpty(apiKey)) {
-            RagflowEntity ragflowEntity = new RagflowEntity();
-            ragflowEntity.setEmail("M@M.test");
-            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
-            apiKey = loginRagFlow(ragflowEntity);
-//            redisUtil.set("ragflow:authHeader", apiKey, 60*60*6);
-        }
-        String url = ragFlowApiConfigProperties.getLoginUrl();
+        String apiKey = ragFlowApiConfigProperties.getApiKey();
+        String url = ragFlowApiConfigProperties.getApiHost()+"/api/v1/datasets/"+datasetId+"/chunks";
         if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
             log.error("上传文档得url或key为空");
             return false;
         }
-//        url = String.format(url, datasetId);
-        Map paramMap = new HashMap(2);
+        Map paramMap = new HashMap();
         List<String> fileIdList = new ArrayList<>();
         fileIdList.add(uploadFileId);
-        paramMap.put("doc_ids", fileIdList);
-        paramMap.put("run", 1);
-        paramMap.put("delete",false);
-
+        paramMap.put("document_ids", fileIdList);
         Gson gson = new Gson();
         String json = gson.toJson(paramMap);
         RequestBody body = RequestBody.create(CommonConstants.JSON_MEDIA_TYPE, json);
         Request request = new Request.Builder()
-                .url(url+"/document/run")
+                .url(url)
                 .addHeader("Content-type", "application/json")
-                .addHeader("Authorization",  apiKey)
+                .addHeader("Authorization", "Bearer "+ apiKey)
                 .post(body)
                 .build();
         Response response = null;
@@ -522,36 +494,28 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
     }
 
     @Override
-    public String createRagFlow(String userId) {
+    public String createRagFlow(String filenName) {
 
         Map params = new HashMap();
-        params.put("name", userId+"_001");
-        String url = ragFlowApiConfigProperties.getLoginUrl() +"/kb/create";
+        params.put("name", filenName);
+        String url = ragFlowApiConfigProperties.getApiHost() +"/api/v1/datasets";
         Gson gson = new Gson();
         String json = gson.toJson(params);
-        String apiKey = "";// (String) redisUtil.get("ragflow:authHeader");
-        if (StrUtil.isEmpty(apiKey)) {
-            RagflowEntity ragflowEntity = new RagflowEntity();
-            ragflowEntity.setEmail("M@M.test");
-            ragflowEntity.setPassword("opGETT2FDaJyhPjwvQYQlg2TWUN2CXk92bUeFbNm8e/Z5n9c9N2/zJsAQzidMJKRnokG3I46wemCiBpFBHiPjZaJz9nJ+6lCP/d7t08H6zV/xq6bETAr1qjOR8gizvUDdm+RQIrql/VPt1YfHNlYYkmu4z4JPQjWKzZBUgbuC7EF75Zc3gpp60KKG0S+OP3MdPRmobwmN3JaSlAghOu9kuIBDQ8wO+rZQVgyjKYS722EBfehSNSCC/zkCg3YSbXSHd3j9z+eiBP2KOOq/rYNal2H53zEzbMdwpRvlyc4fj0osPF+og19gHQYzFE1o1xIrDky1+wkRRiDYdOm4FLF+Q==");
-            apiKey = loginRagFlow(ragflowEntity);
-//            redisUtil.set("ragflow:authHeader", apiKey, 60*60*6);
-        }
-        log.info("调用ragflow方法apiKey：{}", apiKey);
-
         log.info("调用ragflow方法post请求参数：{}", json);
+        String apiKey = ragFlowApiConfigProperties.getApiKey();
+        log.info("调用ragflow方法apiKey：{}", apiKey);
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", apiKey)
+                .addHeader("Authorization", "Bearer " + apiKey)
                 .build();
 
         Map map = okHttpUtil.doPost(request);
         if (null!= map && (Integer) map.get("code") == 0) {
             Map<String, Object> data = (Map<String, Object>) map.get("data");
-            return (String) data.get("kb_id");
+            return (String) data.get("id");
         }
         return "";
     }
@@ -853,6 +817,47 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
         } catch (IOException e) {
             log.error("获取PDF失败，原因：{}", e.getMessage());
             return e.getMessage();
+        }
+    }
+
+    @Override
+    public Boolean updateDataset(String datasetId, String newName) {
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(300, TimeUnit.SECONDS)
+                .readTimeout(300, TimeUnit.SECONDS)
+                .writeTimeout(300, TimeUnit.SECONDS)
+                .build();
+
+        String apiKey = ragFlowApiConfigProperties.getApiKey();
+        String url = ragFlowApiConfigProperties.getApiHost() + "/api/v1/datasets/" + datasetId;
+
+        // 构建请求体
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", newName);
+        Gson gson = new Gson();
+        String json = gson.toJson(params);
+
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .put(body)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + apiKey)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                log.error("更新数据集失败，状态码：{}，响应：{}", response.code(), response.body().string());
+                return false;
+            }
+
+            // 解析响应
+            String responseBody = response.body().string();
+            Map<String, Object> result = JSONUtil.toBean(responseBody, Map.class);
+            return (Integer) result.get("code") == 0;
+        } catch (IOException e) {
+            log.error("更新数据集请求异常：{}", e.getMessage());
+            return false;
         }
     }
 

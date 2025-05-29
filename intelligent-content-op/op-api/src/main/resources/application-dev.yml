@@ -158,13 +158,14 @@ apikey:
 ragflow:
   login-url: http://101.52.216.178/v1
   ragflow-url: http://101.52.216.178
-  api-key: ragflow-RiZDg3ZjBjMzQ2MTExZjBiNTE0YmU3ZG
+  api-host: http://101.52.216.178
 #  upload-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
 #  parse-url: http://10.10.93.125:8000/api/v1/datasets/%s/chunks
 #  chunks-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents/%s/chunks
 #  chunks-status-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
 #  delete-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
 #  #api-key: ragflow-YzMzg2Y2IyMTViYjExZjA5NTRkYWVmZD
+  api-key: ragflow-RiZDg3ZjBjMzQ2MTExZjBiNTE0YmU3ZG
 #  dataset-id: 79b40f1015ba11f0838aaefd37d94fab
 
 feign:

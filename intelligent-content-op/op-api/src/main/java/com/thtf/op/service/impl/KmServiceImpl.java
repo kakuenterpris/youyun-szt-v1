@@ -3,6 +3,7 @@ package com.thtf.op.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.gson.Gson;
 import com.thtf.emdedding.dto.FileUploadRecordDTO;
 import com.thtf.emdedding.dto.RagProcessDTO;
@@ -32,6 +33,7 @@ import com.thtf.op.service.ResourceProcessService;
 import com.thtf.op.util.HttpUtils;
 import com.thtf.resource.constants.ServiceConstants;
 import com.thtf.resource.dto.*;
+
 import com.thtf.resource.enums.*;
 import com.thtf.resource.param.SaveFileParam;
 import lombok.RequiredArgsConstructor;
@@ -84,6 +86,11 @@ public class KmServiceImpl implements KmService {
     private final FileEmbeddingConfigMapper fileEmbeddingConfigMapper;
     private final RagFlowProcessService ragFlowProcessService;
     private final FileAuthRepo fileAuthRepo;
+
+
+    private final BusResourceDatasetRepo busResourceDatasetRepo;
+
+
     // 操作日志
     private final SysOptLogRepo sysOptLogRepo;
 
@@ -530,6 +537,18 @@ public class KmServiceImpl implements KmService {
 
         if (edit){
             folderRepo.update(dto);
+            // 同时修改ragflow知识库
+            LambdaQueryWrapper<BusResourceDatasetEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.eq(BusResourceDatasetEntity::getCode, userId);
+            lambdaQueryWrapper.eq(BusResourceDatasetEntity::getFolderId, folderId);
+            lambdaQueryWrapper.eq(BusResourceDatasetEntity::getDeleted, 0);
+            BusResourceDatasetEntity one = busResourceDatasetRepo.getOne(lambdaQueryWrapper);
+            Boolean updated = ragFlowProcessService.updateDataset(one.getDatasetsId(), name);
+            if (!updated){
+                log.error("创建RagFlow知识库失败，name: {}", name);
+                return RestResponse.fail(ResourceErrorCode.EDIT_FAIL.getCode(), "修改RagFlow知识库失败");
+            }
+
         } else {
             //设置文件类型
             if (parent.getParentId() == 0) {
@@ -550,6 +569,19 @@ public class KmServiceImpl implements KmService {
 
             dto.setSort(folderRepo.maxSort() + 1);
             folderId = folderRepo.add(dto);
+            // 同时调用ragflow的创建知识库的接口
+            String dataSetId = ragFlowProcessService.createRagFlow(name);
+            if (StringUtils.isNotEmpty(dataSetId)) {
+                BusResourceDatasetEntity busResourceDatasetEntity = new BusResourceDatasetEntity();
+                busResourceDatasetEntity.setCategoryCode("user");
+                busResourceDatasetEntity.setCode(userId);
+                busResourceDatasetEntity.setDatasetsId(dataSetId);
+                busResourceDatasetEntity.setFolderId(folderId);
+                boolean save = busResourceDatasetRepo.save(busResourceDatasetEntity);
+            } else {
+                log.error("创建RagFlow知识库失败，name: {}", name);
+                return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "创建RagFlow知识库失败");
+            }
         }
         BusResourceFolderDTO newDTO = folderRepo.getOneById(folderId);
         //保存成员权限
@@ -916,6 +948,7 @@ public class KmServiceImpl implements KmService {
                 return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
             }
         }
+
         fileRepo.delete(id);
     //todo   知识库删除
 

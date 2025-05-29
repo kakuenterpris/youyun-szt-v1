@@ -18,6 +18,9 @@ public class RagFlowApiConfigProperties {
 
 
     private String ragflowUrl;
+
+    private String apiHost;
+
     /**
      * 上传url
      */

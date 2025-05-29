@@ -171,27 +171,20 @@ public class RagFlowProcessRunnable implements Runnable {
                 file = originalFile;
             }
         }
+
+        BusResourceFileEntity fileEntity = busResourceFileRepo.getById(ragProcessDTO.getResourceId());
+        LambdaQueryWrapper<BusResourceDatasetEntity> queryBusResourceDataset = new LambdaQueryWrapper<>();
+        queryBusResourceDataset.eq(BusResourceDatasetEntity::getCode, ContextUtil.currentUser().getUserId());
+        queryBusResourceDataset.eq(BusResourceDatasetEntity::getFolderId,fileEntity.getFolderId());
+        queryBusResourceDataset.eq(BusResourceDatasetEntity::getDeleted, false);
         // 获取知识库id
-        BusResourceDatasetDTO busResourceDatasetDTO = datasetRepo.getByCode(ContextUtil.currentUser().getUserId());
+        BusResourceDatasetEntity busResourceDatasetEntity = datasetRepo.getOne(queryBusResourceDataset);
         // 如果没有知识库则创建
         String datesetId = "";
-        System.out.println("datesetId:===>" + datesetId);
-        if (null == busResourceDatasetDTO) {
-            datesetId = ragFlowProcessService.createRagFlow(ContextUtil.getUserId());
-            if (StrUtil.isEmpty(datesetId)) {
-                relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CREATE_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_ERROR.getIndexingStatusName());
-                log.error("创建ragflow知识库id失败，无法上传文件,用户id为{}", ContextUtil.getUserId());
-                return RestResponse.fail(500, "创建ragflow知识库id失败");
-            }
-            boolean add = datasetRepo.add("user", ContextUtil.getUserId(), datesetId);
-            System.out.println("add:===>" + add);
-            if (!add) {
-                relUserResourceService.updateIndexStatus(ragProcessDTO.getResourceId(), ragProcessDTO.getFileId(), IndexingStatusEnum.RAG_CONFIG_ERROR.getIndexingStatus(), IndexingStatusEnum.RAG_ERROR.getIndexingStatusName());
-                log.error("添加ragflow知识库id失败，无法上传文件,用户id为{}",ContextUtil.getUserId());
-                return RestResponse.fail(500, "添加ragflow知识库id失败");
-            }
+        if (null == busResourceDatasetEntity) {
+            return RestResponse.fail(500, "获取知识库id失败");
         }else {
-            datesetId = busResourceDatasetDTO.getDatasetsId();
+            datesetId = busResourceDatasetEntity.getDatasetsId();
         }
         System.out.println("datesetId:===>" + datesetId);
         // 设置抽取的规则
@@ -200,7 +193,6 @@ public class RagFlowProcessRunnable implements Runnable {
         // 知识化状态配置味空，无法获取到知识库id
         if (StrUtil.isEmpty(ragProcessDTO.getEmbeddingConfigCode())) {
             // 获取文件所在文件夹的配置规则
-            BusResourceFileEntity fileEntity = busResourceFileRepo.getById(ragProcessDTO.getResourceId());
             if(StringUtils.isNotEmpty(fileEntity.getEmbeddingConfigCode())  && StringUtils.isNotEmpty(fileEntity.getEmbeddingConfigName())){
                 queryWrapper.eq(SysRuleTagEntity::getRuleExtractId,fileEntity.getEmbeddingConfigCode());
                 queryWrapper.orderBy(true, true, SysRuleTagEntity::getSort);

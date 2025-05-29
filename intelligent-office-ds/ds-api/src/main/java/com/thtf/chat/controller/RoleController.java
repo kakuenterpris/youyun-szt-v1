@@ -2,6 +2,7 @@ package com.thtf.chat.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.access.dto.SysRoleDto;
+import com.thtf.chat.annotation.RequiresPermission;
 import com.thtf.chat.dto.UpdateRoleDto;
 import com.thtf.chat.entity.FolderAuthEntity;
 import com.thtf.chat.entity.SysRoleEntity;
@@ -30,6 +31,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
+@RequiresPermission("RoleManage")
 public class RoleController {
     @Autowired
     private SysRoleRepo sysRoleRepo;

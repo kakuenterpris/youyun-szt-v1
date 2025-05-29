@@ -3,6 +3,7 @@ package com.thtf.chat.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.access.dto.UserInfoDto;
 import com.thtf.access.vo.UserInfoVO;
+import com.thtf.chat.annotation.RequiresPermission;
 import com.thtf.chat.dto.UpdateUserInfoDto;
 import com.thtf.chat.entity.BusUserInfoEntity;
 import com.thtf.chat.repo.SysUserRoleRepo;
@@ -23,6 +24,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
+@RequiresPermission("UserManage")
 public class UserController {
 
     @Autowired

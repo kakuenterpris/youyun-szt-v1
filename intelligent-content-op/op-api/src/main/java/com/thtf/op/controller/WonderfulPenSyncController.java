@@ -1,9 +1,12 @@
 package com.thtf.op.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import com.thtf.emdedding.dto.PushFileDTO;
+import com.thtf.emdedding.dto.RagProcessDTO;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
+import com.thtf.op.service.ResourceProcessService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +32,24 @@ public class WonderfulPenSyncController {
     @Autowired
     private WonderfulPenSyncRepo wonderfulPenSyncRepo;
 
+    @Autowired
+    private ResourceProcessService resourceProcessService;
+
+
     @PostMapping("/pushFile")
     @Operation(summary = "推送我的文档到知识库")
     public RestResponse pushFile(@RequestBody PushFileDTO pushFileDTO) {
-        return wonderfulPenSyncRepo.pushFile(pushFileDTO);
+        RestResponse restResponse = wonderfulPenSyncRepo.pushFile(pushFileDTO);
+        List<RagProcessDTO> fileIdList = (List<RagProcessDTO>) restResponse.getData();
+        if (!CollUtil.isEmpty(fileIdList)){
+            // 直接向量化
+            RestResponse response = resourceProcessService.execute(fileIdList);
+            if (response.getCode() != 200) {
+                log.error("向量化失败");
+                return RestResponse.error("向量化失败");
+            }
+        }
+        return RestResponse.error("向量化失败");
     }
 
     @PostMapping("/getFileByUserId")

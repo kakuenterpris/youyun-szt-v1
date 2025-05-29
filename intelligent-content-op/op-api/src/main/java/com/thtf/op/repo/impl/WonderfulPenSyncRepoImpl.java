@@ -83,8 +83,6 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Autowired
     BusUserInfoMapper busUserInfoMapper;
 
-    @Autowired
-    ResourceProcessService resourceProcessService;
 
 
     @Override
@@ -146,24 +144,24 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 if (saveResponse.getCode() != 200||saveResponse.getCode() != 200) {
                     return RestResponse.error("推送失败");
                 }
+
+                LambdaQueryWrapper<BusResourceFileEntity> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(BusResourceFileEntity::getFileId, data.get("guid").toString());
+                queryWrapper.eq(BusResourceFileEntity::getDeleted, 0);
+                BusResourceFileEntity busResourceFileEntity = busResourceFileMapper.selectOne(queryWrapper);
+                if (busResourceFileEntity == null) {
+                    log.error("文件不存在或已被删除");
+                    return RestResponse.error("文件不存在或已被删除");
+                }
                 RagProcessDTO ragProcessDTO = new RagProcessDTO();
                 ragProcessDTO.setFileId(data.get("guid").toString());
-                ragProcessDTO.setResourceId(304L);
+                ragProcessDTO.setResourceId(busResourceFileEntity.getId());
                 fileIdList.add(ragProcessDTO);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        if (!CollUtil.isEmpty(fileIdList)){
-            // 直接向量化
-            RestResponse response = resourceProcessService.execute(fileIdList);
-            if (response.getCode() != 200) {
-                log.error("向量化失败");
-                return RestResponse.error("向量化失败");
-            }
-        }
-
-        return RestResponse.success("推送成功");
+        return RestResponse.success(fileIdList);
     }
 
     @Override

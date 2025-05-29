@@ -629,7 +629,7 @@ public class KmServiceImpl implements KmService {
 //            return RestResponse.fail(ResourceErrorCode.NO_AUTH.getCode(), "无操作权限");
 //        }
 
-        List<RagProcessDTO> fileIdList = new ArrayList<>(); // 用于将文件同步到ragflow
+//        List<RagProcessDTO> fileIdList = new ArrayList<>(); // 用于将文件同步到ragflow
         List<ConvertMarkdownDTO> mdList = new ArrayList<>(); // 用于将文件转换为md文件
         List<Map<String, Object>> fileList = new ArrayList<>();
         //处理重复名字
@@ -745,18 +745,18 @@ public class KmServiceImpl implements KmService {
                     String fileEmbeddingConfigCode = StringUtils.isEmpty(fileDTO.getEmbeddingConfigCode()) ? "" : fileDTO.getEmbeddingConfigCode();
                     embeddingConfig = this.getEmbeddingConfigByConfigCode(fileEmbeddingConfigCode, null);
 
-                    RagProcessDTO ragProcessDTO = new RagProcessDTO();
-                    ragProcessDTO.setResourceId(resourceFileId);
-                    ragProcessDTO.setFileId(fileDTO.getFileId());
-                    ragProcessDTO.setEmbeddingConfigCode(embeddingConfig.getConfigCode());
-                    fileIdList.add(ragProcessDTO);
+//                    RagProcessDTO ragProcessDTO = new RagProcessDTO();
+//                    ragProcessDTO.setResourceId(resourceFileId);
+//                    ragProcessDTO.setFileId(fileDTO.getFileId());
+//                    ragProcessDTO.setEmbeddingConfigCode(embeddingConfig.getConfigCode());
+//                    fileIdList.add(ragProcessDTO);
 
-                    if (Arrays.asList(toMarkdownWhiteList).contains(fileDTO.getFileType())) {
-                        ConvertMarkdownDTO markdownDTO = new ConvertMarkdownDTO();
-                        markdownDTO.setResourceId(resourceFileId);
-                        markdownDTO.setFileId(fileDTO.getFileId());
-                        mdList.add(markdownDTO);
-                    }
+//                    if (Arrays.asList(toMarkdownWhiteList).contains(fileDTO.getFileType())) {
+//                        ConvertMarkdownDTO markdownDTO = new ConvertMarkdownDTO();
+//                        markdownDTO.setResourceId(resourceFileId);
+//                        markdownDTO.setFileId(fileDTO.getFileId());
+//                        mdList.add(markdownDTO);
+//                    }
                 }
 
                 //记录操作日志
@@ -774,12 +774,12 @@ public class KmServiceImpl implements KmService {
             return RestResponse.fail(500, "文件上传失败");
         }
 
-        if (CollUtil.isNotEmpty(fileIdList)) {
-            resourceProcessService.execute(fileIdList);
-        }
-        if (CollUtil.isNotEmpty(mdList)) {
-            this.addPreview(mdList);
-        }
+//        if (CollUtil.isNotEmpty(fileIdList)) {
+//            resourceProcessService.execute(fileIdList);
+//        }
+//        if (CollUtil.isNotEmpty(mdList)) {
+//            this.addPreview(mdList);
+//        }
         return RestResponse.SUCCESS;
     }
 

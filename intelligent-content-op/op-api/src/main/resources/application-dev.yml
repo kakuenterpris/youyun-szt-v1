@@ -163,7 +163,7 @@ ragflow:
 #  chunks-status-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
 #  delete-url: http://10.10.93.125:8000/api/v1/datasets/%s/documents
 #  #api-key: ragflow-YzMzg2Y2IyMTViYjExZjA5NTRkYWVmZD
-#  api-key: ragflow-JjNWQ3NzdhMTkxMTExZjA5YTc2YWVmZD
+  api-key: ragflow-RiZDg3ZjBjMzQ2MTExZjBiNTE0YmU3ZG
 #  dataset-id: 79b40f1015ba11f0838aaefd37d94fab
 
 feign:
@@ -222,4 +222,5 @@ knife4j:
 file.base.path: /home/agentweb/web/intelligent-office/backend/content/data
 file.temp.path: /home/agentweb/web/intelligent-office/backend/content/data/temp
 
-# krm.api.url: http://{{服务器地址}}/okmsApi/krm/api/knowledgetype
+# 需要将localhost改成数聚的ip
+krm.api.url: http://localhost/okmsApi/krm/api/knowledgetype

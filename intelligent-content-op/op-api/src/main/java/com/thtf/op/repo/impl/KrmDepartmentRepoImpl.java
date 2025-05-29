@@ -1,0 +1,185 @@
+package com.thtf.op.repo.impl;
+
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.Gson;
+import com.thtf.op.entity.KrmDepartmentEntity;
+import com.thtf.op.mapper.KrmDepartmentMapper;
+import com.thtf.op.repo.KrmDepartmentRepo;
+import com.thtf.op.util.OKHttpUtils;
+import okhttp3.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+/**
+* @author Lenovo
+* @description 针对表【KRM_DEPARTMENT(数聚平台部门体系)】的数据库操作Service实现
+* @createDate 2025-05-27 17:57:55
+*/
+@Service
+public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmDepartmentEntity>
+    implements KrmDepartmentRepo {
+
+    @Value("${krm.api.url}")
+    private String krmUrl;
+
+    @Autowired
+    private OKHttpUtils okHttpUtil;
+
+    private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json");
+
+
+
+    @Override
+    public List<KrmDepartmentEntity> getKnowledgeType(String sysId) {
+        Map params = new HashMap();
+        params.put("sysId", sysId);
+        String url = krmUrl+"/getKnowledgeType";
+        Gson gson = new Gson();
+        String json = gson.toJson(params);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        Map map = okHttpUtil.doPost(request);
+        if (map != null) {
+            if (map.get("success") == null || !(Boolean) map.get("success")) {
+                return null;
+            }
+            List<KrmDepartmentEntity> krmDepartmentEntityList = (List<KrmDepartmentEntity>) map.get("content");
+            if (krmDepartmentEntityList != null && !krmDepartmentEntityList.isEmpty()) {
+                // 新增保存逻辑
+                saveDepartmentTree(krmDepartmentEntityList);
+                return krmDepartmentEntityList;
+            }
+        }
+        return List.of();
+    }
+
+    public void saveDepartmentTree(List<KrmDepartmentEntity> treeNodes) {
+        for (KrmDepartmentEntity node : treeNodes) {
+            // 转换布尔值为Integer类型（根据实体类定义）
+            node.setEnabled(node.getEnabled()== true ? true : false);
+            // 保存当前节点
+            int result = this.addKnowledgeType(
+                    node.getSysId(),
+                    node.getName(),
+                    node.getPId()
+            );
+
+            // 递归保存子节点（需要处理字段转换）
+            if (result > 0 && node.getChildren() != null) {
+                node.getChildren().forEach(child -> {
+                    child.setPId(node.getId());    // 设置父节点ID
+                    child.setSysId(node.getSysId()); // 继承系统ID
+                    // 类型转换
+                    child.setEnabled(node.getEnabled()== true ? true : false);
+                    child.setIsSub(child.getIsSub() != null ? child.getIsSub() : 0);
+                });
+                saveDepartmentTree(node.getChildren());
+            }
+        }
+    }
+
+
+    @Override
+    public int addKnowledgeType(String sysId, String name, String pId) {
+        Map params = new HashMap();
+        params.put("sysId", sysId);
+        params.put("name", name);
+        params.put("pId", pId);
+        String url = krmUrl+"/addKnowledgeType";
+        Gson gson = new Gson();
+        String json = gson.toJson(params);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        Map map = okHttpUtil.doPost(request);
+        if (map != null) {
+            Integer result = (Integer) map.get("data");
+            if (result != null) {
+                return result;
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public int updateKnowledgeType(String sysId, String name, String pId, String id) {
+
+        Map params = new HashMap();
+        params.put("sysId", sysId);
+        params.put("name", name);
+        params.put("pId", pId);
+        String url = krmUrl+"/updateKnowledgeType";
+        Gson gson = new Gson();
+        String json = gson.toJson(params);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        Map map = okHttpUtil.doPost(request);
+        if (map!= null) {
+            Integer result = (Integer) map.get("data");
+            if (result!= null) {
+                return result;
+            }
+        }
+
+        return 0;
+    }
+
+    @Override
+    public int deleteKnowledgeType(String sysId, String id) {
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(600, TimeUnit.SECONDS)
+                .readTimeout(600, TimeUnit.SECONDS)
+                .writeTimeout(600, TimeUnit.SECONDS)
+                .build();
+
+        String url = krmUrl+"/delKnowledgeType";
+        url = String.format(url, sysId, id);
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Content-type", "application/json")
+                .get()
+                .build();
+        Response response = null;
+        try {
+            response = client.newCall(request).execute();
+            byte[] responseBytes = null;
+            responseBytes = response.body().bytes();
+            String jsonString = new String(responseBytes);
+            Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
+            if (map != null && map.get("data") != null) {
+                return (Integer) map.get("data");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }finally {
+            if (response != null) {
+                response.close();
+            }
+        }
+        return 0;
+    }
+}
+
+

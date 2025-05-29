@@ -7,7 +7,10 @@ import com.thtf.access.dto.SysRoleDto;
 import com.thtf.chat.dto.AssignMenusDTO;
 import com.thtf.chat.dto.UpdateRoleDto;
 import com.thtf.chat.entity.*;
+import com.thtf.chat.enums.ApprovalType;
+import com.thtf.chat.repo.ApprovalDetailRepo;
 import com.thtf.chat.repo.FolderAuthRepo;
+import com.thtf.chat.repo.SysAuthApprovalRepo;
 import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.chat.mapper.SysRoleMapper;
@@ -46,6 +49,12 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
     @Autowired
     private SysUserRoleRepo sysUserRoleRepo;
 
+    @Autowired
+    private SysAuthApprovalRepo sysAuthApprovalRepo;
+
+    @Autowired
+    private ApprovalDetailRepo approvalDetailRepo;
+
 
     @Override
     public List<SysRoleEntity> getRoleByUserId(Integer userId) {
@@ -81,31 +90,61 @@ public class SysRoleRepoImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity>
     @Override
     public RestResponse updateByRoleId(UpdateRoleDto role) {
         try {
+            SysAuthApprovalEntity sysAuthApproval = new SysAuthApprovalEntity();
+            List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
+            List<SysRoleMenuEntity> menuAuthList = role.getMenuAuth();
+            boolean editFolderAuth = role.getFolderAuthList() != null;
+            boolean editMenuAuth = role.getMenuAuth()!=null;
+
 //            分配知识库权限
             //获取用户角色
             SysRoleEntity roleByUserId = getRoleByUserId();
-            if ((roleByUserId==null||!roleByUserId.getRoleKey().equals("security"))&&(role.getFolderAuthList() != null||role.getMenuAuth()!=null)){
-                return RestResponse.fail(602, "非安全管理员不能操作!");
-            }
-            if (role.getFolderAuthList() != null) {
-                // 删除原有的知识库权限
-                folderAuthRepo.remove(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, role.getRoleId()));
-                List<FolderAuthEntity> folderAuthList = role.getFolderAuthList();
-                List<FolderAuthEntity> fileAuthEntities = folderAuthList;
-                if (fileAuthEntities != null) {
-                    for (FolderAuthEntity fileAuthEntity : fileAuthEntities) {
-                        fileAuthEntity.setRoleId(Math.toIntExact(role.getRoleId()));
+            if ((role.getFolderAuthList() != null||role.getMenuAuth()!=null)){
+                List<ApprovalDetailEntity> approval = new ArrayList<>();
+//               创建审批
+                sysAuthApproval.setRoleId(Math.toIntExact(role.getRoleId()));
+                sysAuthApproval.setStatus("0");
+                if (editFolderAuth){
+                    sysAuthApproval.setIsUpdateFolderAuth(1);
+                }else {
+                    sysAuthApproval.setIsUpdateFolderAuth(0);
+                }
+                if (editMenuAuth){
+                    sysAuthApproval.setIsUpdateMenuAuth(1);
+                }else {
+                    sysAuthApproval.setIsUpdateMenuAuth(0);
+                }
+                sysAuthApprovalRepo.save(sysAuthApproval);
+//               记录审批ID
+                Long id = sysAuthApproval.getId();
+                if (editFolderAuth) {
+                    sysAuthApproval.setIsUpdateFolderAuth(1);
+                    for (FolderAuthEntity folderAuthEntity : folderAuthList) {
+                        ApprovalDetailEntity approvalDetailEntity = new ApprovalDetailEntity();
+                        approvalDetailEntity.setApprovalId(id);
+                        approvalDetailEntity.setRoleId(folderAuthEntity.getRoleId());
+                        approvalDetailEntity.setFolderOrMenu(folderAuthEntity.getFolderId());
+                        approvalDetailEntity.setAuthType(ApprovalType.folder.getCode());
+                        approval.add(approvalDetailEntity);
                     }
                 }
-                folderAuthRepo.saveBatch(fileAuthEntities);
-            }
-            if (role.getMenuAuth()!=null) {
-                // 分配菜单权限
-                assignMenus(role);
+                if (editMenuAuth) {
+                    sysAuthApproval.setIsUpdateMenuAuth(1);
+                    for (SysRoleMenuEntity sysRoleMenu : menuAuthList) {
+                        ApprovalDetailEntity approvalDetailEntity = new ApprovalDetailEntity();
+                        approvalDetailEntity.setApprovalId(id);
+                        approvalDetailEntity.setRoleId(Math.toIntExact(sysRoleMenu.getRoleId()));
+                        approvalDetailEntity.setFolderOrMenu(Math.toIntExact(sysRoleMenu.getMenuId()));
+                        approvalDetailEntity.setAuthType(ApprovalType.menu.getCode());
+                        approvalDetailEntity.setAuthManage(sysRoleMenu.getManageAuth());
+                        approval.add(approvalDetailEntity);
+                    }
+                }
+
+                approvalDetailRepo.saveBatch(approval);
             }
             //更新角色
             this.updateById(role);
-
         }catch (Exception e){
             return RestResponse.fail(1004, "修改失败！" + e.getMessage());
         }

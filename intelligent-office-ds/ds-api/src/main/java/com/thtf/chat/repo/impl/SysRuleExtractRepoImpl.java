@@ -1,10 +1,16 @@
 package com.thtf.chat.repo.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.thtf.access.dto.SysRuleExtractDto;
+import com.thtf.chat.entity.BusResourceFileEntity;
+import com.thtf.chat.entity.BusResourceFolderEntity;
 import com.thtf.chat.entity.SysRuleExtractEntity;
+import com.thtf.chat.mapper.BusResourceFileMapper;
+import com.thtf.chat.mapper.BusResourceFolderMapper;
 import com.thtf.chat.mapper.SysRuleExtractMapper;
 import com.thtf.chat.repo.SysRuleExtractRepo;
 import com.thtf.global.common.rest.ContextUtil;
@@ -16,16 +22,20 @@ import java.util.Date;
 import java.util.List;
 
 /**
-* @author cheng
+ * @author cheng
  * @description 针对表【SYS_RULE_EXTRACT(知识规则提取配置)】的数据库操作Service实现
-* @createDate 2025-05-15 17:47:15
-*/
+ * @createDate 2025-05-15 17:47:15
+ */
 @Service
 public class SysRuleExtractRepoImpl extends ServiceImpl<SysRuleExtractMapper, SysRuleExtractEntity>
-    implements SysRuleExtractRepo {
+        implements SysRuleExtractRepo {
 
     @Autowired
     private SysRuleExtractMapper sysRuleExtractMapper;
+    @Autowired
+    private BusResourceFileMapper busResourceFileMapper;
+    @Autowired
+    private BusResourceFolderMapper busResourceFolderMapper;
 
     @Override
     public RestResponse pageList(Page<SysRuleExtractEntity> page, SysRuleExtractDto dto) {
@@ -34,7 +44,7 @@ public class SysRuleExtractRepoImpl extends ServiceImpl<SysRuleExtractMapper, Sy
             roleQuery.eq(dto.getName() != null, SysRuleExtractEntity::getName, dto.getName());
             roleQuery.eq(dto.getCode() != null, SysRuleExtractEntity::getCode, dto.getCode());
             return RestResponse.success(this.page(page, roleQuery));
-        }catch (Exception e){
+        } catch (Exception e) {
             return RestResponse.error("查询失败");
         }
     }
@@ -64,6 +74,27 @@ public class SysRuleExtractRepoImpl extends ServiceImpl<SysRuleExtractMapper, Sy
         } catch (Exception e) {
             log.error("创建提取规则失败", e);
             return RestResponse.error("创建提取规则失败");
+        }
+    }
+
+
+    public void setRuleExtract(SysRuleExtractDto dto) {
+        List<String> fileIds = dto.getFileIds();
+        if (!fileIds.isEmpty()) {
+            LambdaUpdateWrapper<BusResourceFileEntity> wrapper = Wrappers.lambdaUpdate(BusResourceFileEntity.class);
+            wrapper.set(BusResourceFileEntity::getEmbeddingConfigCode, dto.getCode())
+                    .set(BusResourceFileEntity::getEmbeddingConfigName, dto.getName())
+                    .in(BusResourceFileEntity::getId, fileIds);
+            busResourceFileMapper.update(wrapper);
+        }
+
+        List<String> folderIds = dto.getFolderIds();
+        if (!folderIds.isEmpty()) {
+            LambdaUpdateWrapper<BusResourceFolderEntity> wrapper = Wrappers.lambdaUpdate(BusResourceFolderEntity.class);
+            wrapper.set(BusResourceFolderEntity::getEmbeddingConfigCode, dto.getCode())
+                    .set(BusResourceFolderEntity::getEmbeddingConfigName, dto.getName())
+                    .in(BusResourceFolderEntity::getId, folderIds);
+            busResourceFolderMapper.update(wrapper);
         }
     }
 

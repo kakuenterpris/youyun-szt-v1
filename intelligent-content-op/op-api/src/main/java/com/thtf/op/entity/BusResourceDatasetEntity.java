@@ -30,4 +30,10 @@ public class BusResourceDatasetEntity extends BaseEntity {
      */
     @TableField(value = "datasets_id")
     private String datasetsId;
+
+    /**
+     * 文件夹id
+     */
+    @TableField(value = "folder_id")
+    private Long folderId;
 }

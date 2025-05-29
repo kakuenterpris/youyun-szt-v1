@@ -33,13 +33,15 @@ public interface RagFlowProcessService {
 
     String loginRagFlow(RagflowEntity ragflowEntity);
 
-    String createRagFlow(String userId);
+    String createRagFlow(String fileName);
 
     String changeParser(List<SysRuleTagEntity> ruleTagList,String docId);
 
     String getRagFlowMD(String docId);
 
     String getRagFlowPDF(String docId);
+
+    Boolean updateDataset(String datasetId,String newName);
 
 //    String getRagFlowStatus();
 }

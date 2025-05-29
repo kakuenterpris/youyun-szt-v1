@@ -1,6 +1,7 @@
 package com.thtf.op.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.gson.Gson;
 import com.thtf.emdedding.dto.FileUploadRecordDTO;
 import com.thtf.emdedding.dto.RagProcessDTO;
@@ -80,6 +81,11 @@ public class KmServiceImpl implements KmService {
     private final ResourceProcessService resourceProcessService;
     private final FileEmbeddingConfigMapper fileEmbeddingConfigMapper;
     private final RagFlowProcessService ragFlowProcessService;
+
+
+    private final BusResourceDatasetRepo busResourceDatasetRepo;
+
+
     // 操作日志
     private final SysOptLogRepo sysOptLogRepo;
 
@@ -500,9 +506,34 @@ public class KmServiceImpl implements KmService {
 
         if (edit){
             folderRepo.update(dto);
+            // 同时修改ragflow知识库
+            LambdaQueryWrapper<BusResourceDatasetEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.eq(BusResourceDatasetEntity::getCode, userId);
+            lambdaQueryWrapper.eq(BusResourceDatasetEntity::getFolderId, folderId);
+            lambdaQueryWrapper.eq(BusResourceDatasetEntity::getDeleted, 0);
+            BusResourceDatasetEntity one = busResourceDatasetRepo.getOne(lambdaQueryWrapper);
+            Boolean updated = ragFlowProcessService.updateDataset(one.getDatasetsId(), name);
+            if (!updated){
+                log.error("创建RagFlow知识库失败，name: {}", name);
+                return RestResponse.fail(ResourceErrorCode.EDIT_FAIL.getCode(), "修改RagFlow知识库失败");
+            }
+
         } else {
             dto.setSort(folderRepo.maxSort() + 1);
             folderId = folderRepo.add(dto);
+            // 同时调用ragflow的创建知识库的接口
+            String dataSetId = ragFlowProcessService.createRagFlow(name);
+            if (StringUtils.isNotEmpty(dataSetId)) {
+                BusResourceDatasetEntity busResourceDatasetEntity = new BusResourceDatasetEntity();
+                busResourceDatasetEntity.setCategoryCode("user");
+                busResourceDatasetEntity.setCode(userId);
+                busResourceDatasetEntity.setDatasetsId(dataSetId);
+                busResourceDatasetEntity.setFolderId(folderId);
+                boolean save = busResourceDatasetRepo.save(busResourceDatasetEntity);
+            } else {
+                log.error("创建RagFlow知识库失败，name: {}", name);
+                return RestResponse.fail(ResourceErrorCode.ADD_FAIL.getCode(), "创建RagFlow知识库失败");
+            }
         }
         BusResourceFolderDTO newDTO = folderRepo.getOneById(folderId);
         //保存成员权限

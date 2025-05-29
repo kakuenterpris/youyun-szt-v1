@@ -3,6 +3,7 @@ package com.thtf.op.controller;
 import cn.hutool.core.io.file.FileNameUtil;
 import com.thtf.global.common.rest.RestResponse;
 import com.thtf.global.common.validation.ValidGroup;
+import com.thtf.op.annotation.RequiresPermission;
 import com.thtf.op.service.KmService;
 import com.thtf.resource.dto.*;
 import com.thtf.resource.param.SaveFileParam;
@@ -29,6 +30,7 @@ import java.util.List;
 @RequestMapping("/api/v1/km")
 @Slf4j
 @RequiredArgsConstructor
+@RequiresPermission("knowledgeBase")
 public class KmController {
 
     private final KmService service;

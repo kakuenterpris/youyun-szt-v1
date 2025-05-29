@@ -75,4 +75,19 @@ public class RuleExtractController {
     }
 
 
+    @PostMapping("/setRuleExtract")
+    @Operation(summary = "设置提取规则接口")
+    public RestResponse setRuleExtract(@RequestBody SysRuleExtractDto dto) {
+        try {
+            sysRuleExtractRepo.setRuleExtract(dto);
+            return RestResponse.success("设置提取规则成功");
+        } catch (Exception e) {
+            log.error("设置提取规则失败", e);
+            return RestResponse.error("设置提取规则失败");
+        }
+
+
+    }
+
+
 }

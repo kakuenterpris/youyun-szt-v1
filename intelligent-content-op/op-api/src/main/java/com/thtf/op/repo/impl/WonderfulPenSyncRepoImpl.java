@@ -12,6 +12,7 @@ import com.github.pagehelper.util.StringUtil;
 import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.emdedding.dto.PushFileDTO;
+import com.thtf.emdedding.dto.RagProcessDTO;
 import com.thtf.emdedding.dto.WonderfulPenSyncDTO;
 import com.thtf.feign.client.FileApi;
 import com.thtf.global.common.dto.SystemUser;
@@ -25,6 +26,7 @@ import com.thtf.op.properties.RagFlowApiConfigProperties;
 import com.thtf.op.repo.RelUserResourceRepo;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
 import com.thtf.op.service.RagFlowProcessService;
+import com.thtf.op.service.ResourceProcessService;
 import com.thtf.op.service.impl.KmServiceImpl;
 import com.thtf.op.service.impl.TreeNodeServiceImpl;
 import com.thtf.resource.dto.BusResourceFileDTO;
@@ -81,10 +83,17 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Autowired
     BusUserInfoMapper busUserInfoMapper;
 
+    @Autowired
+    ResourceProcessService resourceProcessService;
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RestResponse pushFile(PushFileDTO pushFileDTO) {
         List<WonderfulPenSyncDTO> dtoList = pushFileDTO.getPushList();
+        // 向量化所需list
+        List<RagProcessDTO> fileIdList = new ArrayList<>();
+
         for (WonderfulPenSyncDTO dto : dtoList) {
             String url = dto.getUrl();
             String[] split = url.split("\\?");
@@ -137,10 +146,23 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 if (saveResponse.getCode() != 200||saveResponse.getCode() != 200) {
                     return RestResponse.error("推送失败");
                 }
+                RagProcessDTO ragProcessDTO = new RagProcessDTO();
+                ragProcessDTO.setFileId(data.get("guid").toString());
+                ragProcessDTO.setResourceId(304L);
+                fileIdList.add(ragProcessDTO);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        if (!CollUtil.isEmpty(fileIdList)){
+            // 直接向量化
+            RestResponse response = resourceProcessService.execute(fileIdList);
+            if (response.getCode() != 200) {
+                log.error("向量化失败");
+                return RestResponse.error("向量化失败");
+            }
+        }
+
         return RestResponse.success("推送成功");
     }
 

@@ -1,5 +1,6 @@
 package com.thtf.op.repo.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -203,7 +204,9 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         }
 
         LambdaQueryWrapper<RelUserResourceEntity> queryWrapper = Wrappers.lambdaQuery();
-        queryWrapper.in(RelUserResourceEntity::getFileId, fileIds);
+        if(!CollUtil.isEmpty(fileIds)){
+            queryWrapper.in(RelUserResourceEntity::getFileId, fileIds);
+        }
         queryWrapper.eq(RelUserResourceEntity::getIndexingStatus, "2");
         List<RelUserResourceEntity> entitys = relUserResourceMapper.selectList(queryWrapper);
         entitys.forEach(entity -> {

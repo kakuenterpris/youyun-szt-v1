@@ -82,7 +82,7 @@ public class SysRuleExtractRepoImpl extends ServiceImpl<SysRuleExtractMapper, Sy
         List<String> fileIds = dto.getFileIds();
         if (!fileIds.isEmpty()) {
             LambdaUpdateWrapper<BusResourceFileEntity> wrapper = Wrappers.lambdaUpdate(BusResourceFileEntity.class);
-            wrapper.set(BusResourceFileEntity::getEmbeddingConfigCode, dto.getCode())
+            wrapper.set(BusResourceFileEntity::getEmbeddingConfigCode, dto.getId())
                     .set(BusResourceFileEntity::getEmbeddingConfigName, dto.getName())
                     .in(BusResourceFileEntity::getId, fileIds);
             busResourceFileMapper.update(wrapper);
@@ -91,7 +91,7 @@ public class SysRuleExtractRepoImpl extends ServiceImpl<SysRuleExtractMapper, Sy
         List<String> folderIds = dto.getFolderIds();
         if (!folderIds.isEmpty()) {
             LambdaUpdateWrapper<BusResourceFolderEntity> wrapper = Wrappers.lambdaUpdate(BusResourceFolderEntity.class);
-            wrapper.set(BusResourceFolderEntity::getEmbeddingConfigCode, dto.getCode())
+            wrapper.set(BusResourceFolderEntity::getEmbeddingConfigCode, dto.getId())
                     .set(BusResourceFolderEntity::getEmbeddingConfigName, dto.getName())
                     .in(BusResourceFolderEntity::getId, folderIds);
             busResourceFolderMapper.update(wrapper);

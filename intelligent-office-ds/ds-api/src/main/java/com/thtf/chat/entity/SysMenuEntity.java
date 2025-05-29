@@ -146,6 +146,9 @@ public class SysMenuEntity implements Serializable {
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
+    @TableField(value = "MANAGE_AUTH")
+    private Integer manageAuth;
+
     //子菜单
     @TableField(exist = false)
     private List<SysMenuEntity> Children;

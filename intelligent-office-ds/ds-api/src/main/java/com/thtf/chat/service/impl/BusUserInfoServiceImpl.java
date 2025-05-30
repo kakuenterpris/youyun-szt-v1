@@ -89,12 +89,10 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
             Object o1 = redisUtil.get(loginDTO.getUuid());
             if (Objects.isNull(o1)){
                 AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire")));
-                addLoginErrorCount(user.getId());
                 return RestResponse.fail(1004, "验证码已过期！");
             }
             if (!StringUtils.equalsIgnoreCase(Objects.toString(o1), loginDTO.getVerifyCode())){
                 AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error")));
-                addLoginErrorCount(user.getId());
                 return RestResponse.fail(1004, "验证码错误！");
             }
         }
@@ -134,6 +132,8 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
             return RestResponse.fail(1004, "用户已锁定，请联系管理员解锁！");
         }
 
+        //登陆成功重置失败次数
+        resetLoginErrorCount(user.getId());
         AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginDTO.getAccount(), Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success")));
         return RestResponse.success(token);
     }
@@ -316,6 +316,23 @@ public class BusUserInfoServiceImpl extends ServiceImpl<BusUserInfoMapper, BusUs
                 return RestResponse.success("锁定用户失败");
             }
 
+        }
+    }
+
+    /**
+     * 重置锁定次数
+     */
+    public RestResponse resetLoginErrorCount(Integer id) {
+        try {
+            LambdaQueryWrapper<BusUserInfoEntity> busUserInfoQuery = new LambdaQueryWrapper<>();
+            busUserInfoQuery.eq(BusUserInfoEntity::getId, id);
+            BusUserInfoEntity busUserInfoEntity = this.getOne(busUserInfoQuery);
+            busUserInfoEntity.setLoginFailCount(0);
+            this.updateById(busUserInfoEntity);
+            return RestResponse.success("重置用户登陆错误次数成功");
+        } catch (Exception e) {
+            log.error("重置用户登陆错误次数失败", e);
+            return RestResponse.error("重置用户登陆错误次数失败");
         }
     }
 

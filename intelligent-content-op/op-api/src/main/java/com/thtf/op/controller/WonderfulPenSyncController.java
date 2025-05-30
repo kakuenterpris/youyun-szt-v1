@@ -8,7 +8,6 @@ import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.repo.WonderfulPenSyncRepo;
 import com.thtf.op.service.ResourceProcessService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +48,7 @@ public class WonderfulPenSyncController {
                 return RestResponse.error("向量化失败");
             }
         }
-        return RestResponse.error("向量化失败");
+        return RestResponse.success("向量化成功");
     }
 
     @PostMapping("/getFileByUserId")

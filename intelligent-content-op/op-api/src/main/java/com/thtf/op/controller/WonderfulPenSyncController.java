@@ -49,7 +49,7 @@ public class WonderfulPenSyncController {
                 return RestResponse.error("向量化失败");
             }
         }
-        return RestResponse.error("向量化失败");
+        return RestResponse.success("向量化成功");
     }
 
     @PostMapping("/getFileByUserId")

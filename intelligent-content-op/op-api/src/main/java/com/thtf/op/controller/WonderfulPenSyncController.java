@@ -39,16 +39,19 @@ public class WonderfulPenSyncController {
     @Operation(summary = "推送我的文档到知识库")
     public RestResponse pushFile(@RequestBody PushFileDTO pushFileDTO) {
         RestResponse restResponse = wonderfulPenSyncRepo.pushFile(pushFileDTO);
+        if(restResponse.getCode() != 200) {
+            return RestResponse.error(restResponse.getMsg());
+        }
         List<RagProcessDTO> fileIdList = (List<RagProcessDTO>) restResponse.getData();
         if (!CollUtil.isEmpty(fileIdList)){
             // 直接向量化
             RestResponse response = resourceProcessService.execute(fileIdList);
             if (response.getCode() != 200) {
                 log.error("向量化失败");
-                return RestResponse.error("向量化失败");
+                return RestResponse.error(restResponse.getMsg());
             }
         }
-        return RestResponse.success("向量化成功");
+        return RestResponse.success(restResponse.getMsg());
     }
 
     @PostMapping("/getFileByUserId")

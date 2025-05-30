@@ -132,19 +132,12 @@ public class KmServiceImpl implements KmService {
         if (systemAdminAuth) {
             //系统管理员可查看所有文件夹(系统管理员不在文件夹成员里的话，不可查看该文件夹下的文件，但可查看该文件夹下的文件夹)
             result = allList;
-            for (BusResourceManageListDTO dto : result) {
-                dto.setEditAuth(true);
-                dto.setMoveAuth(true);
-                dto.setAddFolderAuth(dto.getCanAddSub());
-            }
         } else {
 //            用户角色
-
             Long roleId = sysUserRoleRepo.getOne(new LambdaQueryWrapper<SysUserRoleEntity>().eq(SysUserRoleEntity::getUserId, currentUser.getId())).getRoleId();
             List<Integer> adminFolderIds = Linq.select(folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, roleId)), FolderAuthEntity::getFolderId);
             //有权限的文件夹：向上 和 向下递归
             List<BusResourceManageListDTO> adminFolderList = Linq.find(allList, x -> !x.getOpenView() && adminFolderIds.contains(x.getId()));
-
             //向上递归的文件夹ids
             List<BusResourceManageListDTO> parentList = TreeNodeServiceImpl.getParentList(allList, adminFolderIds);
             result = parentList;
@@ -153,13 +146,6 @@ public class KmServiceImpl implements KmService {
             result.addAll(childrenList);
             result = result.stream().distinct().sorted(Comparator.comparing(BusResourceManageListDTO::getId)).collect(Collectors.toList());
             adminFolderList.addAll(childrenList);
-//            for (BusResourceManageListDTO dto : result) {
-//                dto.setViewLogAuth(dto.getCreateUserId().equals(userId));
-//                boolean adminAuth = adminFolderList.contains(dto);
-//                dto.setEditAuth(adminAuth);
-//                dto.setMoveAuth(adminAuth);
-//                dto.setAddFolderAuth(dto.getCanAddSub() && (adminAuth || memberFolderList.contains(dto)));
-//            }
         }
         return result;
     }

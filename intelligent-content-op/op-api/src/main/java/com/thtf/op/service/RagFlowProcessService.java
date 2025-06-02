@@ -2,6 +2,8 @@ package com.thtf.op.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.op.entity.BusResourceFileEntity;
+import com.thtf.op.entity.BusResourceFolderEntity;
 import com.thtf.op.entity.RagflowEntity;
 import com.thtf.op.entity.SysRuleTagEntity;
 import com.thtf.resource.dto.BusResourceManageDTO;
@@ -19,7 +21,7 @@ public interface RagFlowProcessService {
 
     String uploadFile(String datasetId, File file);
 
-    boolean parseFile(String datasetId, String uploadFileId);
+    boolean parseFile(String datasetId, String uploadFileId, BusResourceFileEntity fileEntity, BusResourceFolderEntity folderEntity);
 
     String uploadFile(MultipartFile file);
 

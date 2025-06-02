@@ -13,12 +13,10 @@ import com.thtf.op.entity.BusResourceDatasetEntity;
 import com.thtf.op.entity.BusResourceFileEntity;
 import com.thtf.op.entity.BusResourceFolderEntity;
 import com.thtf.op.entity.SysRuleTagEntity;
+import com.thtf.op.enums.RagFlowStatusEnum;
 import com.thtf.op.mapper.FileEmbeddingConfigMapper;
 import com.thtf.op.mapper.FileUploadRecordMapper;
-import com.thtf.op.repo.BusResourceDatasetRepo;
-import com.thtf.op.repo.BusResourceFileRepo;
-import com.thtf.op.repo.BusResourceFolderRepo;
-import com.thtf.op.repo.SysRuleTagRepo;
+import com.thtf.op.repo.*;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.service.RelUserResourceService;
 import com.thtf.op.service.ResourceProcessService;
@@ -26,6 +24,7 @@ import com.thtf.resource.dto.BusResourceDatasetDTO;
 import com.thtf.resource.enums.IndexingStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.io.IOException;
@@ -190,16 +189,17 @@ public class RagFlowProcessRunnable implements Runnable {
         // 设置抽取的规则
         List<SysRuleTagEntity> ruleTagList = new ArrayList<>();
         LambdaQueryWrapper<SysRuleTagEntity> queryWrapper = new LambdaQueryWrapper<>();
+        // 获取文件夹相关信息
+        BusResourceFolderEntity folderEntity = busResourceFolderRepo.getById(fileEntity.getFolderId());
         // 知识化状态配置味空，无法获取到知识库id
         if (StrUtil.isEmpty(ragProcessDTO.getEmbeddingConfigCode())) {
-            // 获取文件所在文件夹的配置规则
+            // 获取文件的配置规则
             if(StringUtils.isNotEmpty(fileEntity.getEmbeddingConfigCode())  && StringUtils.isNotEmpty(fileEntity.getEmbeddingConfigName())){
                 queryWrapper.eq(SysRuleTagEntity::getRuleExtractId,fileEntity.getEmbeddingConfigCode());
                 queryWrapper.orderBy(true, true, SysRuleTagEntity::getSort);
                 ruleTagList = sysRuleTagRepo.list(queryWrapper);
             }else{
                 // 获取文件所在文件夹的配置规则
-                BusResourceFolderEntity folderEntity = busResourceFolderRepo.getById(fileEntity.getFolderId());
                 if(StringUtils.isNotEmpty(folderEntity.getEmbeddingConfigCode())  && StringUtils.isNotEmpty(folderEntity.getEmbeddingConfigName())){
                     queryWrapper.eq(SysRuleTagEntity::getRuleExtractId, folderEntity.getEmbeddingConfigCode());
                     queryWrapper.orderBy(true, true, SysRuleTagEntity::getSort);
@@ -247,7 +247,7 @@ public class RagFlowProcessRunnable implements Runnable {
             relUserResourceService.updateDocumentId(uploadFileId, ragProcessDTO.getResourceId(), ragProcessDTO.getFileId());
         }
         // 触发ragflow解析
-        boolean parseBoolean = ragFlowProcessService.parseFile(datesetId, uploadFileId);
+        boolean parseBoolean = ragFlowProcessService.parseFile(datesetId, uploadFileId,fileEntity,folderEntity);
         System.out.println("触发ragflow解析:===>" + parseBoolean);
         if (!parseBoolean) {
             // 更新资源状态为解析失败

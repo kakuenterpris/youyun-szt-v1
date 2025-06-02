@@ -10,8 +10,10 @@ import com.google.gson.Gson;
 import com.thtf.emdedding.constants.CommonConstants;
 import com.thtf.global.common.cache.RedisUtil;
 import com.thtf.op.entity.*;
+import com.thtf.op.enums.RagFlowStatusEnum;
 import com.thtf.op.properties.RagFlowApiConfigProperties;
 import com.thtf.op.repo.BusUserInfoRepo;
+import com.thtf.op.repo.SysOptLogRepo;
 import com.thtf.op.repo.impl.RelUserResourceRepoImpl;
 import com.thtf.op.service.RagFlowProcessService;
 import com.thtf.op.util.OKHttpUtils;
@@ -55,6 +57,10 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
 
     @Autowired
     private OKHttpUtils okHttpUtil;
+
+    // 操作日志
+    @Autowired
+    private SysOptLogRepo sysOptLogRepo;
 
 
     /**
@@ -126,7 +132,7 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
      * @param uploadFileId
      */
     @Override
-    public boolean parseFile(String datasetId, String uploadFileId) {
+    public boolean parseFile(String datasetId, String uploadFileId, BusResourceFileEntity fileEntity, BusResourceFolderEntity folderEntity) {
         if (StrUtil.isEmpty(uploadFileId)) {
             log.error("上传文件id为空,无法解析");
             return false;
@@ -165,6 +171,13 @@ public class RagFlowProcessServiceImpl implements RagFlowProcessService {
             System.out.println("请求ragflow解析文档处理接口返回值:===>" + jsonString);
             watch.stop();
             Map<String, Object> map = JSONUtil.toBean(jsonString, Map.class);
+            // 记录操作日志
+            String operateContent = RagFlowStatusEnum.PRASE_FILE.getTypeName() + fileEntity.getName();
+            sysOptLogRepo.saveLog(operateContent, Long.valueOf(
+                            fileEntity.getFolderId()),
+                    Long.valueOf(folderEntity.getParentId()),
+                    RagFlowStatusEnum.UPLOAD_RAG.getTypeName(),
+                    1);
             if (null == map || (Integer) map.get("code") != 0) {
                 String errorMessage = (String) map.get("message");
                 log.error("ragflow解析文档处理接口失败，失败原因{}", errorMessage);

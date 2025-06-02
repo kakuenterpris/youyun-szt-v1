@@ -211,8 +211,10 @@ public class KmServiceImpl implements KmService {
         if (StringUtils.isNotEmpty(query.getName())||query.getIndexingStatus()!=null||query.getEmbeddingStatus()!=null||query.getLevel()!=null||query.getStartTime()!=null||query.getEndTime()!=null) {
             List<BusResourceManageListDTO> childList = TreeNodeServiceImpl.getChildrenList(allList, parentId);
             List<Integer> childIds = Linq.select(childList, BusResourceManageListDTO::getId);
-            List<Integer> memberFolderIds = Linq.select(memberRepo.listMemberAndViewAuthByUser(userId), BusResourceMemberDTO::getFolderId);
-            List<Integer> canViewFolderIds = memberFolderIds;
+            List<Integer> authFolderIds = Linq.select(folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().in(FolderAuthEntity::getRoleId, roleList)), FolderAuthEntity::getFolderId);
+//            向下遍历
+            List<Integer> authFolderList = Linq.select(TreeNodeServiceImpl.getChildrenList(allList, authFolderIds), BusResourceManageListDTO::getId);
+            List<Integer> canViewFolderIds = authFolderList;
             canViewFolderIds.addAll(adminFolderIds);
             //要查看的文件夹下的所有层级的有权限查看的文件夹
             List<Integer> canViewfiles = Linq.select(fileAuthRepo.listFileIdByUser(userId), FileAuthEntity::getFileId);

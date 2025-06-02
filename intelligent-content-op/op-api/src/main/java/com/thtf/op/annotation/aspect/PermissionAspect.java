@@ -1,5 +1,6 @@
 package com.thtf.op.annotation.aspect;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.thtf.global.common.cache.RedisUtil;
 import com.thtf.global.common.consts.AuthConstants;
 import com.thtf.global.common.dto.SystemUser;
@@ -9,7 +10,9 @@ import com.thtf.global.common.utils.JsonUtil;
 import com.thtf.op.annotation.RequiresPermission;
 import com.thtf.op.entity.SysMenuEntity;
 import com.thtf.op.entity.SysRoleEntity;
+import com.thtf.op.entity.SysRoleMenuEntity;
 import com.thtf.op.repo.SysMenuRepo;
+import com.thtf.op.repo.SysRoleMenuRepo;
 import com.thtf.op.repo.SysRoleRepo;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,9 +41,11 @@ public class PermissionAspect {
     private SysMenuRepo sysMenuRepo;
     @Autowired
     private SysRoleRepo sysRoleRepo;
+    @Autowired
+    private SysRoleMenuRepo sysRoleMenuRepo;
 
 
-    @Around("@annotation(requiresPermission)||@within(requiresPermission)") // 拦截带有 @RequiresPermission 注解的方法
+    @Around("@annotation(requiresPermission)") // 拦截带有 @RequiresPermission 注解的类和方法
     public Object checkPermission(ProceedingJoinPoint joinPoint, RequiresPermission requiresPermission) throws Throwable {
         String token = getTokenFromContext();
         if (token == null || token.isEmpty()) {
@@ -54,13 +59,15 @@ public class PermissionAspect {
             SystemUser systemUser = JsonUtil.fromJson(userInfoStr, SystemUser.class);
             //查询用户的角色和权限
             String requiredPermission = requiresPermission.value();
+            Integer authtype = requiresPermission.authtype();
             boolean hasPermission = false;
             List<SysRoleEntity> roleByUserId = sysRoleRepo.getRoleByUserId(Integer.valueOf(systemUser.getId()));
             //检查用户权限
             for (SysRoleEntity role : roleByUserId) {
                 List<SysMenuEntity> menuByRoleId = sysMenuRepo.getMenuByRoleId(role.getRoleId());
                 for (SysMenuEntity menu : menuByRoleId) {
-                    if (menu.getPerms().trim().equals(requiredPermission)) {
+                    SysRoleMenuEntity sysRoleMenu = sysRoleMenuRepo.getOne(new LambdaQueryWrapper<SysRoleMenuEntity>().eq(SysRoleMenuEntity::getRoleId, role.getRoleId()).eq(SysRoleMenuEntity::getMenuId, menu.getMenuId()));
+                    if (menu.getPerms().trim().equals(requiredPermission)&&sysRoleMenu.getManageAuth()>=authtype) {
                         hasPermission = true;
                         break;
                     }
@@ -69,7 +76,7 @@ public class PermissionAspect {
             if (!hasPermission&&!"SYSTEM_MANAGE".equals(systemUser.getSpecialAuth())) {
                 return RestResponse.fail(DefaultErrorCode.PERMISSION_DENIED);
             }
-                return joinPoint.proceed();
+            return joinPoint.proceed();
         }catch (Exception e) {
             throw new RuntimeException("Authentication or authorization failed", e);
         }

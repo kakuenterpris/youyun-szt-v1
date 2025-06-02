@@ -30,7 +30,6 @@ import java.util.List;
 @RequestMapping("/api/v1/km")
 @Slf4j
 @RequiredArgsConstructor
-@RequiresPermission("knowledgeBase")
 public class KmController {
 
     private final KmService service;
@@ -40,6 +39,7 @@ public class KmController {
      *
      * @return 文档树结构列表
      */
+    @RequiresPermission(value = "knowledgeBase", authtype = 0)
     @GetMapping("/resourceTreeListLeft")
     public RestResponse resourceTreeListLeft() {
         return service.resourceTreeListLeft();
@@ -52,6 +52,7 @@ public class KmController {
      * @return 子集列表
      */
     @PostMapping("/resourceListRight")
+    @RequiresPermission(value = "knowledgeBase", authtype = 0)
     public RestResponse resourceListRight(@RequestBody QueryDTO query) {
         try {
             RestResponse restResponse = service.resourceListRight(query);
@@ -111,6 +112,7 @@ public class KmController {
      * @return 结果集
      */
     @PostMapping("/saveFolder")
+    @RequiresPermission(value = "knowledgeBase", authtype = 1)
     public RestResponse saveFolder(@RequestBody @Validated(value = {ValidGroup.Insert.class, ValidGroup.Update.class}) BusResourceFolderDTO dto) {
         return service.saveFolder(dto);
     }
@@ -122,6 +124,7 @@ public class KmController {
      * @return 结果集
      */
     @PostMapping("/saveFile")
+    @RequiresPermission(value = "knowledgeBase", authtype = 1)
     public RestResponse saveFile(@RequestBody @Validated(value = {ValidGroup.Insert.class, ValidGroup.Update.class}) SaveFileParam dto) {
         return service.saveFile(dto);
     }
@@ -132,6 +135,7 @@ public class KmController {
      * @return 结果集
      */
     @PostMapping("/moveBachFile")
+    @RequiresPermission(value = "knowledgeBase", authtype = 1)
     public RestResponse moveBachFile(@RequestBody @Validated(value = {ValidGroup.Insert.class, ValidGroup.Update.class}) SaveFileParam dto) {
         return service.moveBachFile(dto);
     }
@@ -162,6 +166,7 @@ public class KmController {
      * @return 结果集
      */
     @PostMapping("/deleteFolder")
+    @RequiresPermission(value = "knowledgeBase", authtype = 1)
     public RestResponse deleteFolder(@RequestParam Integer id) {
         return service.deleteFolder(id);
     }
@@ -172,6 +177,7 @@ public class KmController {
      * @return 结果集
      */
     @PostMapping("/deleteFile")
+    @RequiresPermission(value = "knowledgeBase", authtype = 1)
     public RestResponse deleteFile(@RequestParam Integer id) {
         return service.deleteFile(id);
     }

@@ -243,63 +243,75 @@
         SELECT *
         from
         (
-        select
-        a.id,a.guid,a.name,
-        a.folder_id as parent_id,'' as parent_guid,a.sort,
-        a.embedding_config_code,a.embedding_config_name,false as open_view,
-        false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
-        a.version,a.is_deleted,2 as resource_type,
-        a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
-        a.file_type,a.file_year,a.join_query,
-        a.preview_file_id,a.level,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,b.progress
-        FROM
-        bus_resource_file a
-        LEFT JOIN rel_user_resource b ON a.id = b.resource_file_id
-        WHERE 1=1
-        <if test="fileIdList != null and fileIdList.size > 0">
-        and a.ID in
-        <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
-            #{fileId}
-        </foreach>
-        </if>
-        and a.folder_id in
-        <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
-            #{folderId}
-        </foreach>
+            select
+            a.id,a.guid,a.name,
+            a.folder_id as parent_id,'' as parent_guid,a.sort,
+            a.embedding_config_code,a.embedding_config_name,false as open_view,
+            false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
+            a.version,a.is_deleted,2 as resource_type,
+            a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
+            a.file_type,a.file_year,a.join_query,
+            a.preview_file_id,a.level,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,b.progress
+            FROM
+            bus_resource_file a
+            LEFT JOIN rel_user_resource b ON a.id = b.resource_file_id
+            WHERE 1=1
+            <if test="folderIdList != null and folderIdList.size > 0">
+                and (a.folder_id in
+                <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
+                    #{folderId}
+                </foreach>
+                <if test="!(fileIdList != null and fileIdList.size > 0)">
+                    )
+                </if>
+            </if>
+            <if test="fileIdList != null and fileIdList.size > 0">
+                <if test="folderIdList != null and folderIdList.size > 0">
+                    or
+                </if>
+                <if test="!(folderIdList != null and folderIdList.size > 0)">
+                    and(
+                </if>
+                a.ID in
+                    <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+                        #{fileId}
+                    </foreach>
+                )
+            </if>
 
-        <if test="notDelete == true">
-            AND a.is_deleted = 0
-        </if>
-        <if test="indexingStatus != null">
-            AND b.indexing_status = #{indexingStatus}
-        </if>
-        <if test="embeddingStatus != null and embeddingStatus != ''">
-            AND b.embed_status = #{embeddingStatus}
-        </if>
-        <if test="level != null and level != ''">
-            and a.level= #{level}
-        </if>
-        <if test="name != null and name != ''">
-            and a.name like concat('%', #{name}, '%')
-        </if>
-        <if test="fileYearList != null and fileYearList.size > 0">
-            and a.file_year IN
-            <foreach collection="fileYearList" item="fileYear" open="(" separator="," close=")">
-                #{fileYear}
-            </foreach>
-        </if>
-        <if test="startTime != null ">
-            and a.UPDATE_TIME >= TO_DATE(#{startTime}, 'YYYY-MM-DD HH24:MI:SS')
-        </if>
-        <if test="endTime != null ">
-            and a.UPDATE_TIME &lt; TO_DATE(#{endTime}, 'YYYY-MM-DD HH24:MI:SS')
-        </if>
-        <if test="embeddingConfigNameList != null and embeddingConfigNameList.size > 0">
-            and a.embedding_config_name IN
-            <foreach collection="embeddingConfigNameList" item="embeddingConfigName" open="(" separator="," close=")">
-                #{embeddingConfigName}
-            </foreach>
-        </if>
+            <if test="notDelete == true">
+                AND a.is_deleted = 0
+            </if>
+            <if test="indexingStatus != null">
+                AND b.indexing_status = #{indexingStatus}
+            </if>
+            <if test="embeddingStatus != null and embeddingStatus != ''">
+                AND b.embed_status = #{embeddingStatus}
+            </if>
+            <if test="level != null and level != ''">
+                and a.level= #{level}
+            </if>
+            <if test="name != null and name != ''">
+                and a.name like concat('%', #{name}, '%')
+            </if>
+            <if test="fileYearList != null and fileYearList.size > 0">
+                and a.file_year IN
+                <foreach collection="fileYearList" item="fileYear" open="(" separator="," close=")">
+                    #{fileYear}
+                </foreach>
+            </if>
+            <if test="startTime != null ">
+                and a.UPDATE_TIME >= TO_DATE(#{startTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="endTime != null ">
+                and a.UPDATE_TIME &lt; TO_DATE(#{endTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="embeddingConfigNameList != null and embeddingConfigNameList.size > 0">
+                and a.embedding_config_name IN
+                <foreach collection="embeddingConfigNameList" item="embeddingConfigName" open="(" separator="," close=")">
+                    #{embeddingConfigName}
+                </foreach>
+            </if>
         ) as subquery
         order by subquery.resource_type,
         <if test="timeSort != ''and timeSort != null">
@@ -318,16 +330,28 @@
         LEFT JOIN rel_user_resource b
             ON a.id = b.resource_file_id
         WHERE 1=1
-        <if test="fileIdList != null and fileIdList.size > 0">
-            and a.ID in
-            <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
-            #{fileId}
+        <if test="folderIdList != null and folderIdList.size > 0">
+            and (a.folder_id in
+            <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
+                #{folderId}
             </foreach>
+            <if test="!(fileIdList != null and fileIdList.size > 0)">
+                )
+            </if>
         </if>
-        and a.folder_id in
-        <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
-            #{folderId}
-        </foreach>
+        <if test="fileIdList != null and fileIdList.size > 0">
+            <if test="folderIdList != null and folderIdList.size > 0">
+                or
+            </if>
+            <if test="!(folderIdList != null and folderIdList.size > 0)">
+                and(
+            </if>
+            a.ID in
+            <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+                #{fileId}
+            </foreach>
+            )
+        </if>
 
         <if test="notDelete == true">
             AND a.is_deleted = 0

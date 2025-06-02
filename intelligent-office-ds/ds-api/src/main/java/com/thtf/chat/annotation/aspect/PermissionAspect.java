@@ -1,10 +1,13 @@
 package com.thtf.chat.annotation.aspect;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.thtf.chat.annotation.RequiresPermission;
 import com.thtf.chat.entity.BusUserInfoEntity;
 import com.thtf.chat.entity.SysMenuEntity;
 import com.thtf.chat.entity.SysRoleEntity;
+import com.thtf.chat.entity.SysRoleMenuEntity;
 import com.thtf.chat.repo.SysMenuRepo;
+import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.chat.utils.RedisUtil;
 import com.thtf.global.common.consts.AuthConstants;
@@ -42,6 +45,9 @@ public class PermissionAspect {
     private SysMenuRepo sysMenuRepo;
     @Autowired
     private SysRoleRepo sysRoleRepo;
+    @Autowired
+    private SysRoleMenuRepo sysRoleMenuRepo;
+
 
 
     @Around("@annotation(requiresPermission)||@within(requiresPermission)") // 拦截带有 @RequiresPermission 注解的方法
@@ -58,13 +64,15 @@ public class PermissionAspect {
             SystemUser systemUser = JsonUtil.fromJson(userInfoStr, SystemUser.class);
             //查询用户的角色和权限
             String requiredPermission = requiresPermission.value();
+            Integer authtype = requiresPermission.authtype();
             boolean hasPermission = false;
             List<SysRoleEntity> roleByUserId = sysRoleRepo.getRoleByUserId(Integer.valueOf(systemUser.getId()));
             //检查用户权限
             for (SysRoleEntity role : roleByUserId) {
                 List<SysMenuEntity> menuByRoleId = sysMenuRepo.getMenuByRoleId(role.getRoleId());
                 for (SysMenuEntity menu : menuByRoleId) {
-                    if (menu.getPerms().trim().equals(requiredPermission)) {
+                    SysRoleMenuEntity sysRoleMenu = sysRoleMenuRepo.getOne(new LambdaQueryWrapper<SysRoleMenuEntity>().eq(SysRoleMenuEntity::getRoleId, role.getRoleId()).eq(SysRoleMenuEntity::getMenuId, menu.getMenuId()));
+                    if (menu.getPerms().trim().equals(requiredPermission)&&sysRoleMenu.getManageAuth()>=authtype) {
                         hasPermission = true;
                         break;
                     }

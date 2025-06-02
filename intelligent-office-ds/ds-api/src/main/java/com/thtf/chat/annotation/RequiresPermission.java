@@ -9,5 +9,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME) // 注解在运行时可用
 public @interface RequiresPermission {
     String value(); // 需要的权限
+    int authtype();//权限类型，默认为1
 }
 

@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/access")
+@RequestMapping("/api/v1/approve")
 @Slf4j
 @RequiredArgsConstructor
 @Validated
@@ -55,9 +56,9 @@ public class ApprovalController {
     }
 
     //todo通过审批
-    @RequestMapping("/approve")
+    @PostMapping("/operate")
     @Transactional(rollbackFor = Exception.class)
-    public RestResponse approveDispose(ApproveDTO approveDTO){
+    public RestResponse approveDispose(@RequestBody ApproveDTO approveDTO){
         return sysAuthApprovalRepo.approveDispose(approveDTO);
 
     }

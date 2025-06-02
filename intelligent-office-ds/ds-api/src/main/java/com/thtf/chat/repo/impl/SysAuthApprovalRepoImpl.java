@@ -49,7 +49,7 @@ public class SysAuthApprovalRepoImpl extends ServiceImpl<SysAuthApprovalMapper, 
 
     @Override
     public RestResponse approveDispose(ApproveDTO approveDTO) {
-        SysAuthApprovalEntity sysAuthApproval = this.getById(approveDTO.getId());
+        SysAuthApprovalEntity sysAuthApproval = this.getById(Long.valueOf(approveDTO.getId()));
 
         List<ApprovalDetailEntity> folderAuths=approvalDetailRepo.getFolderAuthByApproveId(sysAuthApproval.getId());
         List<ApprovalDetailEntity> menuAuths=approvalDetailRepo.getMenuAuthByApproveId(sysAuthApproval.getId());

@@ -54,9 +54,9 @@ public interface BusResourceFileRepo extends IService<BusResourceFileEntity> {
      */
     BusResourceFileDTO getById(Integer id);
 
-    List<BusResourceManageListDTO> resourceListRight(List<Integer> folderIdList, Boolean viewFile,QueryDTO query, boolean notDelete);
+    List<BusResourceManageListDTO> resourceListRight(List<Integer> folderIdList,List<Integer> fileIdList, Boolean viewFile,QueryDTO query, boolean notDelete);
 
-    Integer resourceListRightCount(List<Integer> folderIdList, Boolean viewFile,QueryDTO query, boolean notDelete);
+    Integer resourceListRightCount(List<Integer> folderIdList,List<Integer> fildIdList, Boolean viewFile,QueryDTO query, boolean notDelete);
 
     List<BusResourceFileDTO> listByFolderIdList(List<Integer> idList);
 

@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
-@RequiresPermission("chat:history")
 @Tag(name = "历史会话接口", description = "历史会话相关操作")
 public class HistoryChatController {
 

@@ -24,7 +24,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
-@RequiresPermission("UserManage")
+@RequiresPermission(value="UserManage",authtype = 0)
 public class UserController {
 
     @Autowired

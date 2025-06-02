@@ -52,7 +52,7 @@
                    parent_id as folder_id,'' as file_id,0 as size ,'' as scopeRule,
                    '' as file_type,0 as file_year,false as join_query,
                    '' as preview_file_id,'' as indexingStatusName,'' as indexingStatus,'' as level,
-                   '' as progress
+                   NULL as progress
             from bus_resource_folder
             where parent_id=#{parentId}
 
@@ -68,8 +68,31 @@
                 #{folderId}
             </foreach>
         </if>
-        <if test="folderIdList != null and folderIdList.size > 0 and viewFile == true">
+        <if test="(folderIdList != null and folderIdList.size > 0) or viewFile == true">
             union
+        </if>
+        <if test="fileIdList != null and fileIdList.size > 0 and viewFile == false">
+            select
+            a.id,a.guid,a.name,
+            a.folder_id as parent_id,'' as parent_guid,a.sort,
+            a.embedding_config_code,a.embedding_config_name,false as open_view,
+            false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
+            a.version,a.is_deleted,2 as resource_type,
+            a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
+            a.file_type,a.file_year,a.join_query,
+            a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,a.level as level,
+            b.progress
+            FROM
+            bus_resource_file a
+            LEFT JOIN rel_user_resource as b ON a.id = b.resource_file_id
+            WHERE
+            a.folder_id = #{parentId}
+            <if test="fileIdList != null and fileIdList.size > 0">
+                and a.id IN
+                <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+                    #{fileId}
+                </foreach>
+            </if>
         </if>
         <if test="viewFile == true">
             select
@@ -129,9 +152,10 @@
             embedding_config_code,embedding_config_name,open_view,
             can_add_sub,create_user,create_user_id,create_time,update_user,update_user_id,update_time,
             version,is_deleted,1 as resource_type,
-            parent_id as folder_id,'' as file_id,0 as size,
+            parent_id as folder_id,'' as file_id,0 as size ,'' as scopeRule,
             '' as file_type,0 as file_year,false as join_query,
-            '' as preview_file_id,'' as indexingStatusName,'' as indexingStatus
+            '' as preview_file_id,'' as indexingStatusName,'' as indexingStatus,'' as level,
+            NULL as progress
             from bus_resource_folder
             where parent_id=#{parentId}
 
@@ -140,15 +164,38 @@
             </if>
 
             <if test="name != null and name != ''">
-                and `name` like concat('%', #{name}, '%')
+                and "name" like concat('%', #{name}, '%')
             </if>
             and id IN
             <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
                 #{folderId}
             </foreach>
         </if>
-        <if test="folderIdList != null and folderIdList.size > 0 and viewFile == true">
+        <if test="(folderIdList != null and folderIdList.size > 0) or viewFile == true">
             union
+        </if>
+        <if test="fileIdList != null and fileIdList.size > 0 and viewFile == false">
+            select
+            a.id,a.guid,a.name,
+            a.folder_id as parent_id,'' as parent_guid,a.sort,
+            a.embedding_config_code,a.embedding_config_name,false as open_view,
+            false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
+            a.version,a.is_deleted,2 as resource_type,
+            a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
+            a.file_type,a.file_year,a.join_query,
+            a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,a.level as level,
+            b.progress
+            FROM
+            bus_resource_file a
+            LEFT JOIN rel_user_resource as b ON a.id = b.resource_file_id
+            WHERE
+            a.folder_id = #{parentId}
+            <if test="fileIdList != null and fileIdList.size > 0">
+                and a.id IN
+                <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+                    #{fileId}
+                </foreach>
+            </if>
         </if>
         <if test="viewFile == true">
             select
@@ -157,12 +204,13 @@
             a.embedding_config_code,a.embedding_config_name,false as open_view,
             false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
             a.version,a.is_deleted,2 as resource_type,
-            a.folder_id,a.file_id,a.size,
+            a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
             a.file_type,a.file_year,a.join_query,
-            a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus
+            a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,a.level as level,
+            b.progress
             FROM
             bus_resource_file a
-            LEFT JOIN rel_user_resource b ON a.id = b.resource_file_id
+            LEFT JOIN rel_user_resource as b ON a.id = b.resource_file_id
             WHERE
             a.folder_id = #{parentId}
 
@@ -171,7 +219,7 @@
             </if>
 
             <if test="name != null and name != ''">
-                and a.`name` like concat('%', #{name}, '%')
+                and a."name" like concat('%', #{name}, '%')
             </if>
             <if test="fileYearList != null and fileYearList.size > 0">
                 and a.file_year IN
@@ -186,7 +234,7 @@
                 </foreach>
             </if>
         </if>
-        ) as sum
+        ) as subquery
     </select>
 
 

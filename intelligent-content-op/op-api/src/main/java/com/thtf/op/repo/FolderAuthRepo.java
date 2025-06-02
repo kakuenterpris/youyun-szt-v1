@@ -3,6 +3,8 @@ package com.thtf.op.repo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.thtf.op.entity.FolderAuthEntity;
 
+import java.util.List;
+
 /**
 * @author 86187
 * @description 针对表【FOLDER_AUTH(文件夹权限表)】的数据库操作Service
@@ -10,4 +12,5 @@ import com.thtf.op.entity.FolderAuthEntity;
 */
 public interface FolderAuthRepo extends IService<FolderAuthEntity> {
 
+    List<FolderAuthEntity> listByRoleId(Long roleId);
 }

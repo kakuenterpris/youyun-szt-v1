@@ -109,15 +109,15 @@ public class BusResourceFileRepoImpl extends ServiceImpl<BusResourceFileMapper, 
     }
 
     @Override
-    public List<BusResourceManageListDTO> resourceListRight(List<Integer> folderIdList, Boolean viewFile,QueryDTO query, boolean notDelete) {
-        return fileMapper.selectListForLeft(ContextUtil.getUserId(), query.getName(), query.getParentId() ,
+    public List<BusResourceManageListDTO> resourceListRight(List<Integer> folderIdList,List<Integer> fileIdList, Boolean viewFile,QueryDTO query, boolean notDelete) {
+        return fileMapper.selectListForLeft(ContextUtil.getUserId(),fileIdList, query.getName(), query.getParentId() ,
                 query.getFileYearList(), query.getEmbeddingConfigNameList(), folderIdList, viewFile,
                 (query.getPageNum() - 1) * query.getPageSize(), query.getPageSize(),query.getTimeSort(),query.getNameSort(), notDelete);
     }
 
     @Override
-    public Integer resourceListRightCount(List<Integer> folderIdList, Boolean viewFile, QueryDTO query, boolean notDelete) {
-        return fileMapper.selectCountForLeft(query.getName(), query.getParentId(),
+    public Integer resourceListRightCount(List<Integer> folderIdList,List<Integer> fileIdList, Boolean viewFile, QueryDTO query, boolean notDelete) {
+        return fileMapper.selectCountForLeft(fileIdList,query.getName(), query.getParentId(),
                 query.getFileYearList(), query.getEmbeddingConfigNameList(), folderIdList, viewFile, notDelete);
     }
 

@@ -86,6 +86,8 @@ public class KmServiceImpl implements KmService {
     private final FileEmbeddingConfigMapper fileEmbeddingConfigMapper;
     private final RagFlowProcessService ragFlowProcessService;
     private final FileAuthRepo fileAuthRepo;
+    private final SysRoleRepo sysRoleRepo;
+    private final BusResourceFolderRepo  busResourceFolderRepo;
 
 
     private final BusResourceDatasetRepo busResourceDatasetRepo;
@@ -136,16 +138,29 @@ public class KmServiceImpl implements KmService {
 //            用户角色
             Long roleId = sysUserRoleRepo.getOne(new LambdaQueryWrapper<SysUserRoleEntity>().eq(SysUserRoleEntity::getUserId, currentUser.getId())).getRoleId();
             List<Integer> adminFolderIds = Linq.select(folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, roleId)), FolderAuthEntity::getFolderId);
+
+            //文件夹包含的文件权限
+            List<Integer> folderOfFileIds = fileListByUserAuth(userId);
+            List<Integer> union= (List<Integer>) CollectionUtils.union(adminFolderIds, folderOfFileIds);
             //有权限的文件夹：向上 和 向下递归
-            List<BusResourceManageListDTO> adminFolderList = Linq.find(allList, x -> !x.getOpenView() && adminFolderIds.contains(x.getId()));
             //向上递归的文件夹ids
-            List<BusResourceManageListDTO> parentList = TreeNodeServiceImpl.getParentList(allList, adminFolderIds);
+            List<BusResourceManageListDTO> parentList = TreeNodeServiceImpl.getParentList(allList, union);
             result = parentList;
             //向下递归的文件夹ids
-            List<BusResourceManageListDTO> childrenList = TreeNodeServiceImpl.getChildrenList(allList, adminFolderIds);
+            List<BusResourceManageListDTO> childrenList = TreeNodeServiceImpl.getChildrenList(allList, union);
+
+            //有权限的文件夹
+            List<BusResourceManageListDTO> authChildrenList = TreeNodeServiceImpl.getChildrenList(allList, adminFolderIds);
             result.addAll(childrenList);
             result = result.stream().distinct().sorted(Comparator.comparing(BusResourceManageListDTO::getId)).collect(Collectors.toList());
-            adminFolderList.addAll(childrenList);
+            for (BusResourceManageListDTO x : result) {
+                if (x.getId() != null && authChildrenList.contains(x)) {
+                    x.setEditAuth(true);
+                }else {
+                    x.setEditAuth(false);
+                }
+            }
+
         }
         return result;
     }
@@ -174,7 +189,9 @@ public class KmServiceImpl implements KmService {
         SystemUser currentUser = ContextUtil.currentUser();
         String userId = currentUser.getUserId();
         Integer parentId = query.getParentId();
-            List<Integer> folderIdList = new ArrayList<>();
+        List<SysRoleEntity> roleByUserId = sysRoleRepo.getRoleByUserId(Integer.valueOf(currentUser.getId()));
+        List<Long> roleList = Linq.select(roleByUserId, SysRoleEntity::getRoleId);
+        List<Integer> folderIdList = new ArrayList<>();
         Boolean viewFile = false;
         BusResourceFolderEntity entity = folderRepo.getById(parentId);
         if (null == entity) {
@@ -184,7 +201,8 @@ public class KmServiceImpl implements KmService {
         //本文件夹下的所有直接下级文件夹id
         folderIdList = Linq.select(folderRepo.listByParentId(parentId, notDelete), BusResourceFolderDTO::getId);
         List<BusResourceManageListDTO> allList = Linq.select(folderRepo.listAll(notDelete), folderMapping::dto2ListDto);
-        List<Integer> adminFolderIds = Linq.select(memberRepo.listAdminByUser(userId), BusResourceMemberDTO::getFolderId);
+        //查询创建的文件夹
+        List<Integer> adminFolderIds = Linq.select(busResourceFolderRepo.list(new LambdaQueryWrapper<BusResourceFolderEntity>().eq(BusResourceFolderEntity::getCreateUserId, userId)), BusResourceFolderEntity::getId).stream().map(Long::intValue).collect(Collectors.toList());;
         List<BusResourceManageListDTO> result = new ArrayList<>();
         Integer count = 0;
 
@@ -195,7 +213,6 @@ public class KmServiceImpl implements KmService {
             List<Integer> memberFolderIds = Linq.select(memberRepo.listMemberAndViewAuthByUser(userId), BusResourceMemberDTO::getFolderId);
             List<Integer> canViewFolderIds = memberFolderIds;
             canViewFolderIds.addAll(adminFolderIds);
-            canViewFolderIds.addAll(Linq.select(Linq.find(childList, BusResourceManageListDTO::getOpenView), BusResourceManageListDTO::getId));
             //要查看的文件夹下的所有层级的有权限查看的文件夹
             List<Integer> canViewfiles = Linq.select(fileAuthRepo.listFileIdByUser(userId), FileAuthEntity::getFileId);
             //要查看的文件夹下的所有层级的有权限查看的
@@ -222,25 +239,37 @@ public class KmServiceImpl implements KmService {
 
 
         } else {
-            if (systemAdminAuth || this.checkFolderAdminAuth(parentId, userId) ||
-                    this.checkUpFolderAdminAuth(parentId, userId, notDelete)) {
+            List<Integer> fileList=null;
+            Boolean aBoolean = this.checkUpFolderAdminAuth(parentId, roleList, notDelete);
+            if (systemAdminAuth||aBoolean) {
                 viewFile = true;
             } else if (CollUtil.isNotEmpty(folderIdList)) {
-                //要查看的文件夹下的所有层级的子文件夹
                 List<BusResourceManageListDTO> childList = TreeNodeServiceImpl.getChildrenList(allList, parentId);
                 List<Integer> childIds = Linq.select(childList, BusResourceManageListDTO::getId);
-                List<Integer> memberFolderIds = Linq.select(memberRepo.listMemberByUser(userId), BusResourceMemberDTO::getFolderId);
-                List<Integer> canViewIds = memberFolderIds;
+                List<Integer> folderAuthlist = new ArrayList<>();
+                //有权限的文件夹
+                for (Long roleId : roleList) {
+                    List<Integer> list = Linq.select(folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, roleId)), FolderAuthEntity::getFolderId);
+                    folderAuthlist.addAll(list);
+                }
+                List<Integer> canViewIds = folderAuthlist;
                 canViewIds.addAll(adminFolderIds);
-                canViewIds.addAll(Linq.select(Linq.find(childList, BusResourceManageListDTO::getOpenView), BusResourceManageListDTO::getId));
                 //要查看的文件夹下的所有层级的有权限查看的文件夹
+               //todo 有权限的文件
+                List<Integer> integers = fileListByUserAuth(userId);
                 List<Integer> canViewList = (List<Integer>) CollectionUtils.intersection(childIds, canViewIds);
-
+                canViewList.addAll(integers);
                 //要查看的文件夹下的所有层级的有权限查看的文件夹，向上递归，找到 要查看的文件夹下的所有层级的有权限查看的文件夹的所有上级文件夹
                 List<BusResourceManageListDTO> parentList = TreeNodeServiceImpl.getParentList(childList, canViewList);
                 List<Integer> parentIds = Linq.select(parentList, BusResourceManageListDTO::getId);
                 //要查看的文件夹下的所有层级的有权限查看的文件夹的所有上级文件夹  和  本文件夹下的所有直接下级文件夹id  作交集
                 folderIdList = (List<Integer>) CollectionUtils.intersection(folderIdList, parentIds);
+            }
+            //判断是否有权限查看本文件夹下的文件
+            if (viewFile==false){
+                List<Integer> parentIdFilelist = Linq.select(fileRepo.list(new LambdaQueryWrapper<BusResourceFileEntity>().eq(BusResourceFileEntity::getFolderId, parentId)),BusResourceFileEntity::getId).stream().map(Long::intValue).collect(Collectors.toList());;
+                List<Integer> haveAuthList = Linq.select(fileAuthRepo.list(new LambdaQueryWrapper<FileAuthEntity>().eq(FileAuthEntity::getUserId, userId)), FileAuthEntity::getFileId);
+                fileList=(List<Integer>)CollectionUtils.intersection(parentIdFilelist, haveAuthList);
             }
             if (entity.getOpenView() || checkMemberViewAuth(parentId, userId)) {
                 viewFile = true;
@@ -253,8 +282,8 @@ public class KmServiceImpl implements KmService {
                 return RestResponse.success(new ArrayList<>(), 0);
             }
 
-            result = fileRepo.resourceListRight(folderIdList, viewFile, query, notDelete);
-            count=fileRepo.resourceListRightCount(folderIdList, viewFile, query, notDelete);
+            result = fileRepo.resourceListRight(folderIdList,fileList,viewFile, query, notDelete);
+            count=fileRepo.resourceListRightCount(folderIdList,fileList, viewFile, query, notDelete);
             List<Integer> resultId = Linq.select(result, BusResourceManageListDTO::getId);
             List<FileAuthEntity> fileAuths= new ArrayList<>();
             if (resultId.size() > 0){
@@ -276,13 +305,9 @@ public class KmServiceImpl implements KmService {
         List<Integer> allAdminIds = Linq.select(allAdminList, BusResourceManageListDTO::getId);
         for( BusResourceManageListDTO dto : result){
             if (ResourceTypeEnum.RESOURCE_FILE.getCode().equals(dto.getResourceType())){
-                BusResourceMemberDTO auth = authMap.get(dto.getFolderId());
-                dto.setEditAuth(auth.getEditAuth());
-                dto.setDeleteAuth(auth.getDeleteAuth());
-                dto.setViewAuth(auth.getViewAuth());
-                dto.setDownloadAuth(auth.getDownloadAuth());
-                dto.setShareAuth(auth.getShareAuth());
-            } else {
+                List<FileAuthEntity> list = fileAuthRepo.list(new LambdaQueryWrapper<FileAuthEntity>().eq(FileAuthEntity::getFileId, dto.getId()));
+                dto.setScope(Linq.select(list, FileAuthEntity::getUserId));
+            }else {
                 dto.setViewLogAuth(ResourceTypeEnum.RESOURCE_FOLDER.getCode().equals(dto.getResourceType()) && dto.getCreateUserId().equals(userId));
                 dto.setEditAuth(ResourceTypeEnum.RESOURCE_FOLDER.getCode().equals(dto.getResourceType()) && (systemAdminAuth || allAdminIds.contains(dto.getId())));
             }
@@ -298,6 +323,15 @@ public class KmServiceImpl implements KmService {
         String msg = ContextUtil.getUserName() + operateType + entity.getName() + resourceTypeEnum.getName();
         log.info("{}，操作结果：{}", msg, b ? "成功" : "失败");*/
         return RestResponse.success(result, count);
+    }
+
+    //文件夹包含有权限文件的文件夹
+    private List<Integer>  fileListByUserAuth(String userId) {
+        List<FileAuthEntity> fileAuthEntities = fileAuthRepo.listFileIdByUser(userId);
+        List<Integer> filIds = Linq.select(fileAuthEntities, FileAuthEntity::getFileId);
+        List<BusResourceFileEntity> busResourceFileEntities = fileRepo.listByIds(filIds);
+        List<Integer> folders = Linq.select(busResourceFileEntities, BusResourceFileEntity::getFolderId).stream().distinct().collect(Collectors.toList());
+        return folders;
     }
 
     private boolean checkFolderViewAuth(Integer parentId, String userId) {
@@ -421,6 +455,19 @@ public class KmServiceImpl implements KmService {
         }
         List<Integer> adminFolderIds = Linq.select(memberRepo.listAdminByUser(userId), BusResourceMemberDTO::getFolderId);
         return adminFolderIds.stream().anyMatch(Linq.select(parentList, BusResourceManageListDTO::getId)::contains);
+    }
+
+    private Boolean checkUpFolderAdminAuth(Integer folderId, List<Long>  roles, boolean notDelete) {
+        for (Long role : roles) {
+            List<BusResourceManageListDTO> allList = Linq.select(folderRepo.listAll(notDelete), folderMapping::dto2ListDto);
+            List<BusResourceManageListDTO> parentList = TreeNodeServiceImpl.getParentList(allList, folderId);
+            if (CollUtil.isEmpty(parentList)) {
+                return false;
+            }
+            List<Integer> adminFolderIds = Linq.select(folderAuthRepo.listByRoleId(role), FolderAuthEntity::getFolderId);
+            return adminFolderIds.stream().anyMatch(Linq.select(parentList, BusResourceManageListDTO::getId)::contains);
+        }
+        return false;
     }
 
     /**
@@ -670,9 +717,8 @@ public class KmServiceImpl implements KmService {
                 } else {
                     BusResourceFileEntity source = fileRepo.getById(resourceFileId);
                     //如果被修改或者是自定义
-                  if (!fileDTO.getScopeRule().equals(source.getScopeRule())||FileScopeTypeEnum.CUSTOM.getType().equals(fileDTO.getScopeRule())){
+                    if (!fileDTO.getScopeRule().equals(source.getScopeRule())||FileScopeTypeEnum.CUSTOM.getType().equals(fileDTO.getScopeRule())){
                       //                    删除原有的权限
-                      LambdaQueryWrapper<FileAuthEntity> deletequery = new LambdaQueryWrapper<FileAuthEntity>().eq(FileAuthEntity::getFileId, fileDTO.getId());
                       fileAuthRepo.remove(new LambdaQueryWrapper<FileAuthEntity>().eq(FileAuthEntity::getFileId, fileDTO.getId()));
                       //根据知悉规则设置知悉范围
                       String scopeRule = fileDTO.getScopeRule();
@@ -701,6 +747,7 @@ public class KmServiceImpl implements KmService {
                               fileAuthEntity.setUserId(x);
                               fileAuthEntities.add(fileAuthEntity);
                           });
+                          fileAuthRepo.saveBatch(fileAuthEntities);
                       }
 
                   }

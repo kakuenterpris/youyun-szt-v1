@@ -31,7 +31,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
-@RequiresPermission("RoleManage")
+@RequiresPermission(value="UserManage",authtype = 0)
 public class RoleController {
     @Autowired
     private SysRoleRepo sysRoleRepo;

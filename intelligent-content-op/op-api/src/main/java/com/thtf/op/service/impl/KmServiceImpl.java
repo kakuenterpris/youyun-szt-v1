@@ -301,8 +301,6 @@ public class KmServiceImpl implements KmService {
         }
         List<Integer> idList = result.stream().map(BusResourceManageListDTO::getFolderId).distinct().toList();
         List<BusResourceMemberDTO> authList = this.getFolderAuthList(idList);
-        Map<Integer, BusResourceMemberDTO> authMap = authList.stream().collect(Collectors.toMap(BusResourceMemberDTO::getFolderId,auth -> auth,(existing, replacement) -> existing));
-
         List<BusResourceManageListDTO> allAdminList = TreeNodeServiceImpl.getChildrenList(allList, adminFolderIds);
         List<Integer> allAdminIds = Linq.select(allAdminList, BusResourceManageListDTO::getId);
         for( BusResourceManageListDTO dto : result){

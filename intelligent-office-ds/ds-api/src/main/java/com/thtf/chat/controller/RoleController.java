@@ -31,7 +31,6 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
-@RequiresPermission(value="UserManage",authtype = 0)
 public class RoleController {
     @Autowired
     private SysRoleRepo sysRoleRepo;
@@ -44,6 +43,7 @@ public class RoleController {
 
 
     @PostMapping("/createRole")
+    @RequiresPermission(value="UserManage",authtype = 1)
     @Operation(summary = "创建角色接口")
     @Transactional(rollbackFor = Exception.class)
     public RestResponse createRole(@RequestBody SysRoleEntity role) {
@@ -75,6 +75,7 @@ public class RoleController {
     }
 
     @PostMapping("/deleteRole")
+    @RequiresPermission(value="UserManage",authtype = 1)
     @Operation(summary = "删除角色接口")
     public RestResponse deleteRole(@RequestBody SysRoleDto dto) {
         try {
@@ -88,6 +89,7 @@ public class RoleController {
 
 
     @GetMapping("/getRoleList")
+    @RequiresPermission(value="UserManage",authtype = 0)
     @Operation(summary = "获取角色列表接口")
     public RestResponse getRoleList(Page<SysRoleEntity> page, SysRoleDto vo) {
         return sysRoleRepo.pageList(page,vo);
@@ -109,6 +111,7 @@ public class RoleController {
 
 
     @GetMapping("/getRoleInfo")
+    @RequiresPermission(value="UserManage",authtype = 0)
     @Operation(summary = "获取角色信息接口")
     public RestResponse getRoleInfo(Integer roleId) {
         try {
@@ -120,6 +123,7 @@ public class RoleController {
     }
 
     @PostMapping("/updateRole")
+    @RequiresPermission(value="UserManage",authtype = 1)
     @Operation(summary = "更新角色信息接口")
     public RestResponse updateRole(@RequestBody UpdateRoleDto role) {
         try {
@@ -131,6 +135,7 @@ public class RoleController {
     }
 
     @GetMapping("/getRoleMenus")
+    @RequiresPermission(value="UserManage",authtype = 0)
     @Operation(summary = "获取角色菜单id接口")
     public RestResponse getRoleMenus(Integer roleId) {
         return sysRoleMenuRepo.getByRoleId(roleId);

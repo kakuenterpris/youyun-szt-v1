@@ -9,11 +9,13 @@ import com.thtf.chat.entity.SysRoleEntity;
 import com.thtf.chat.repo.FolderAuthRepo;
 import com.thtf.chat.repo.SysAuthApprovalRepo;
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.global.common.utils.Linq;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,22 +39,9 @@ public class ApprovalController {
 
 
 //    获取审批列表
-    @PostMapping("")
+    @GetMapping("list")
     public RestResponse approve(Page<SysAuthApprovalEntity> page){
-
-//        ArrayList<FolderAuthEntity> folderAuthEntities = new ArrayList<>();
-//        FolderAuthEntity folderAuthEntity = new FolderAuthEntity();
-//        folderAuthEntity.setFolderId(1);
-//        folderAuthEntity.setRoleId(1);
-//        folderAuthEntity.setAuthType(1);
-//        folderAuthEntities.add(folderAuthEntity);
-//        //json字符串转换成对象
-//        SysAuthApprovalEntity sysAuthApproval = new SysAuthApprovalEntity();
-//        sysAuthApproval.getFolderAuthList();
-//        sysAuthApproval.setFolderAuthList();
-//        boolean save = sysAuthApprovalRepo.save(sysAuthApproval);
-//        Page<SysAuthApprovalEntity> page1 = sysAuthApprovalRepo.page(page);
-        return RestResponse.success("page1");
+        return sysAuthApprovalRepo.approveList(page);
     }
 
     //todo通过审批

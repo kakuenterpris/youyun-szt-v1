@@ -40,4 +40,10 @@ public class SysAuthApprovalEntity extends BaseEntity {
     @TableField(value = "STATUS")
     private String status;
 
+    @TableField(exist = false)
+    private List<Integer> folderAuthList;
+
+    @TableField(exist = false)
+    private List<Integer> menuAuthList;
+
 }

@@ -1,5 +1,6 @@
 package com.thtf.chat.repo;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.thtf.chat.dto.ApproveDTO;
 import com.thtf.chat.entity.SysAuthApprovalEntity;
@@ -13,4 +14,7 @@ import com.thtf.global.common.rest.RestResponse;
 public interface SysAuthApprovalRepo extends IService<SysAuthApprovalEntity> {
 
     RestResponse approveDispose(ApproveDTO approveDTO);
+
+    RestResponse approveList(Page page);
+
 }

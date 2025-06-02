@@ -1,6 +1,7 @@
 package com.thtf.chat.repo.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.thtf.chat.dto.ApproveDTO;
 import com.thtf.chat.dto.AssignMenusDTO;
@@ -11,6 +12,7 @@ import com.thtf.chat.entity.FolderAuthEntity;
 import com.thtf.chat.entity.SysAuthApprovalEntity;
 import com.thtf.chat.entity.SysRoleEntity;
 import com.thtf.chat.entity.SysRoleMenuEntity;
+import com.thtf.chat.enums.ApprovalType;
 import com.thtf.chat.mapper.SysAuthApprovalMapper;
 import com.thtf.chat.repo.ApprovalDetailRepo;
 import com.thtf.chat.repo.FolderAuthRepo;
@@ -18,6 +20,7 @@ import com.thtf.chat.repo.SysAuthApprovalRepo;
 import com.thtf.chat.repo.SysRoleMenuRepo;
 import com.thtf.chat.repo.SysRoleRepo;
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.global.common.utils.Linq;
 import net.sf.jsqlparser.util.validation.metadata.NamedObject;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +74,27 @@ public class SysAuthApprovalRepoImpl extends ServiceImpl<SysAuthApprovalMapper, 
             // 状态这设置驳回
         }
         return RestResponse.success("审批成功");
+    }
+
+    @Override
+    public RestResponse approveList(Page page) {
+        try {
+            Page<SysAuthApprovalEntity> approveList = this.page(page, new LambdaQueryWrapper<SysAuthApprovalEntity>()
+                    .orderByDesc(SysAuthApprovalEntity::getCreateTime));
+            approveList.getRecords().forEach(approval -> {
+                // 查询审批详情
+                List<ApprovalDetailEntity> folderlist = approvalDetailRepo.list(new LambdaQueryWrapper<ApprovalDetailEntity>().eq(ApprovalDetailEntity::getApprovalId, approval.getId()).eq(ApprovalDetailEntity::getAuthType, ApprovalType.folder.getCode()));
+                List<ApprovalDetailEntity> menulist = approvalDetailRepo.list(new LambdaQueryWrapper<ApprovalDetailEntity>().eq(ApprovalDetailEntity::getApprovalId, approval.getId()).eq(ApprovalDetailEntity::getAuthType, ApprovalType.menu.getCode()));
+                List<Integer> folderids = Linq.select(folderlist, ApprovalDetailEntity::getFolderOrMenu);
+                List<Integer> menuids = Linq.select(menulist, ApprovalDetailEntity::getFolderOrMenu);
+                approval.setFolderAuthList(folderids);
+                approval.setMenuAuthList(menuids);
+            });
+            return RestResponse.success(approveList);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return RestResponse.fail(RestResponse.ERROR_CODE,"查询失败");
+        }
     }
 
     protected boolean assignMenus(List<ApprovalDetailEntity> menuAuths,Integer roleId) {

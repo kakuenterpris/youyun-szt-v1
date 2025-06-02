@@ -24,7 +24,6 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
-@RequiresPermission(value="UserManage",authtype = 0)
 public class UserController {
 
     @Autowired
@@ -41,6 +40,7 @@ public class UserController {
 
 
     @PostMapping("/deleteUser")
+    @RequiresPermission(value="UserManage",authtype = 1)
     @Operation(summary = "删除用户接口")
     public RestResponse deleteUser(@RequestBody Integer userId) {
         try {
@@ -54,6 +54,7 @@ public class UserController {
 
 
     @GetMapping("/getUserList")
+    @RequiresPermission(value="UserManage",authtype = 0)
     @Operation(summary = "获取用户列表接口")
     public RestResponse getUserList(Page<UserInfoDto> page,UserInfoVO vo) {
         Page<UserInfoVO> list=busUserInfoService.pageList(page,vo);
@@ -62,6 +63,7 @@ public class UserController {
 
 
     @GetMapping("/getAllUserList")
+    @RequiresPermission(value="UserManage",authtype = 0)
     @Operation(summary = "获取所有用户接口")
     public RestResponse getAllUserList() {
         List<BusUserInfoEntity> list = busUserInfoService.list();
@@ -70,6 +72,7 @@ public class UserController {
 
 
     @GetMapping("/getUserInfo")
+    @RequiresPermission(value="UserManage",authtype = 0)
     @Operation(summary = "获取用户信息接口")
     public RestResponse getUserInfo(Integer userId) {
         BusUserInfoEntity byId = busUserInfoService.getById(userId);
@@ -79,6 +82,7 @@ public class UserController {
 
 
     @PostMapping("/updateUser")
+    @RequiresPermission(value="UserManage",authtype = 1)
     @Operation(summary = "更新用户信息（包括角色）接口")
     public RestResponse updateUser(@RequestBody UpdateUserInfoDto user) {
         return busUserInfoService.updateByUserId(user);
@@ -86,6 +90,7 @@ public class UserController {
 
 
     @GetMapping("/getUserPermissions")
+    @RequiresPermission(value="UserManage",authtype = 0)
     @Operation(summary = "获取用户权限接口")
     public RestResponse getUserPermissions(Integer userId) {
       return sysUserRoleRepo.getUserPermissions(userId);
@@ -93,6 +98,7 @@ public class UserController {
 
 
     @PostMapping("/lockOrUnlockUser")
+    @RequiresPermission(value="UserManage",authtype = 0)
     @Operation(summary = "获取用户权限接口")
     public RestResponse unlockUser(@RequestBody UserInfoDto dto) {
 

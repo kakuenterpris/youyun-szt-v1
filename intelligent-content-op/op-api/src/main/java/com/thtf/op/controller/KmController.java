@@ -53,7 +53,14 @@ public class KmController {
      */
     @PostMapping("/resourceListRight")
     public RestResponse resourceListRight(@RequestBody QueryDTO query) {
-        return service.resourceListRight(query);
+        try {
+            RestResponse restResponse = service.resourceListRight(query);
+            return restResponse;
+        }catch (Exception e) {
+            log.error("资源管理-右侧列表查询失败", e);
+            return RestResponse.fail(RestResponse.ERROR_CODE,"资源管理-右侧列表查询失败");
+        }
+
     }
 
     /**

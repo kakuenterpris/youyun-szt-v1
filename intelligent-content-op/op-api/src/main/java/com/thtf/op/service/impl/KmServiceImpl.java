@@ -193,6 +193,7 @@ public class KmServiceImpl implements KmService {
         List<Long> roleList = Linq.select(roleByUserId, SysRoleEntity::getRoleId);
         List<Integer> folderIdList = new ArrayList<>();
         Boolean viewFile = false;
+        List<Integer> fileList=null;
         BusResourceFolderEntity entity = folderRepo.getById(parentId);
         if (null == entity) {
             return RestResponse.success(new ArrayList<>(), 0);
@@ -239,7 +240,6 @@ public class KmServiceImpl implements KmService {
 
 
         } else {
-            List<Integer> fileList=null;
             Boolean aBoolean = this.checkUpFolderAdminAuth(parentId, roleList, notDelete);
             if (systemAdminAuth||aBoolean) {
                 viewFile = true;
@@ -278,7 +278,7 @@ public class KmServiceImpl implements KmService {
             if (CollUtil.isNotEmpty(query.getFileYearList()) || CollUtil.isNotEmpty(query.getEmbeddingConfigNameList())){
                 folderIdList = new ArrayList<>();
             }
-            if (CollUtil.isEmpty(folderIdList) && !viewFile){
+            if (CollUtil.isEmpty(folderIdList) && !viewFile&&(fileList.size()==0)) {
                 return RestResponse.success(new ArrayList<>(), 0);
             }
 
@@ -307,6 +307,11 @@ public class KmServiceImpl implements KmService {
             if (ResourceTypeEnum.RESOURCE_FILE.getCode().equals(dto.getResourceType())){
                 List<FileAuthEntity> list = fileAuthRepo.list(new LambdaQueryWrapper<FileAuthEntity>().eq(FileAuthEntity::getFileId, dto.getId()));
                 dto.setScope(Linq.select(list, FileAuthEntity::getUserId));
+                if (viewFile==false&&null!=fileList&&fileList.contains(dto.getId())){
+                    dto.setEditAuth(false);
+                }else {
+                    dto.setEditAuth(true);
+                }
             }else {
                 dto.setViewLogAuth(ResourceTypeEnum.RESOURCE_FOLDER.getCode().equals(dto.getResourceType()) && dto.getCreateUserId().equals(userId));
                 dto.setEditAuth(ResourceTypeEnum.RESOURCE_FOLDER.getCode().equals(dto.getResourceType()) && (systemAdminAuth || allAdminIds.contains(dto.getId())));

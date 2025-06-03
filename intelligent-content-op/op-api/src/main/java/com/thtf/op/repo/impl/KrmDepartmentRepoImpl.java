@@ -1,6 +1,8 @@
 package com.thtf.op.repo.impl;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.thtf.op.entity.KrmDepartmentEntity;
@@ -13,19 +15,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
-* @author Lenovo
-* @description 针对表【KRM_DEPARTMENT(数聚平台部门体系)】的数据库操作Service实现
-* @createDate 2025-05-27 17:57:55
-*/
+ * @author Lenovo
+ * @description 针对表【KRM_DEPARTMENT(数聚平台部门体系)】的数据库操作Service实现
+ * @createDate 2025-05-27 17:57:55
+ */
 @Service
 public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmDepartmentEntity>
-    implements KrmDepartmentRepo {
+        implements KrmDepartmentRepo {
 
     @Value("${krm.api.url}")
     private String krmUrl;
@@ -33,15 +36,21 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
     @Autowired
     private OKHttpUtils okHttpUtil;
 
+    @Autowired
+    private KrmDepartmentMapper krmDepartmentMapper;
+
+
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json");
 
 
-
     @Override
-    public List<KrmDepartmentEntity> getKnowledgeType(String sysId) {
-        Map params = new HashMap();
+    public Map<String, Object> getKnowledgeType(String sysId) {
+        Map<String, Object> params = new HashMap<>();
+        if (sysId == null) {
+            return null;
+        }
         params.put("sysId", sysId);
-        String url = krmUrl+"/getKnowledgeType";
+        String url = krmUrl + "/getKnowledgeType";
         Gson gson = new Gson();
         String json = gson.toJson(params);
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
@@ -51,43 +60,44 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
                 .addHeader("Content-Type", "application/json")
                 .build();
 
-        Map map = okHttpUtil.doPost(request);
+        //删除全部数据
+        LambdaQueryWrapper<KrmDepartmentEntity> wrapper = Wrappers.lambdaQuery();
+        krmDepartmentMapper.delete(wrapper);
+
+        Map<String, Object> map = getKnowledgeType(sysId);
         if (map != null) {
             if (map.get("success") == null || !(Boolean) map.get("success")) {
                 return null;
             }
-            List<KrmDepartmentEntity> krmDepartmentEntityList = (List<KrmDepartmentEntity>) map.get("content");
-            if (krmDepartmentEntityList != null && !krmDepartmentEntityList.isEmpty()) {
+            String content = map.get("content").toString();
+            List<KrmDepartmentEntity> krmDepartmentEntityList = JSONUtil.toList(content, KrmDepartmentEntity.class);
+            if (!krmDepartmentEntityList.isEmpty()) {
+                List<KrmDepartmentEntity> krmDepartmentEntitys = new ArrayList<>();
                 // 新增保存逻辑
-                saveDepartmentTree(krmDepartmentEntityList);
-                return krmDepartmentEntityList;
+                saveDepartmentTree(krmDepartmentEntityList, krmDepartmentEntitys);
+                this.saveBatch(krmDepartmentEntitys);
             }
         }
-        return List.of();
+
+        return okHttpUtil.doPost(request);
     }
 
-    public void saveDepartmentTree(List<KrmDepartmentEntity> treeNodes) {
-        for (KrmDepartmentEntity node : treeNodes) {
-            // 转换布尔值为Integer类型（根据实体类定义）
-            node.setEnabled(node.getEnabled()== true ? true : false);
-            // 保存当前节点
-            int result = this.addKnowledgeType(
-                    node.getSysId(),
-                    node.getName(),
-                    node.getPId()
-            );
+    //删除
+    public void delete() {
+        LambdaQueryWrapper<KrmDepartmentEntity> wrapper = Wrappers.lambdaQuery();
+        krmDepartmentMapper.delete(wrapper);
+    }
 
-            // 递归保存子节点（需要处理字段转换）
-            if (result > 0 && node.getChildren() != null) {
-                node.getChildren().forEach(child -> {
-                    child.setPId(node.getId());    // 设置父节点ID
-                    child.setSysId(node.getSysId()); // 继承系统ID
-                    // 类型转换
-                    child.setEnabled(node.getEnabled()== true ? true : false);
-                    child.setIsSub(child.getIsSub() != null ? child.getIsSub() : 0);
-                });
-                saveDepartmentTree(node.getChildren());
-            }
+    public void saveDepartmentTree(List<KrmDepartmentEntity> treeNodes, List<KrmDepartmentEntity> krmDepartmentEntities) {
+        if (treeNodes == null) {
+            return;
+        }
+
+        for (KrmDepartmentEntity node : treeNodes) {
+            krmDepartmentEntities.add(node);
+            List<KrmDepartmentEntity> children = JSONUtil.toList(node.getNode(), KrmDepartmentEntity.class);
+            node.setChildren(children);
+            saveDepartmentTree(node.getChildren(), krmDepartmentEntities);
         }
     }
 
@@ -98,7 +108,7 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
         params.put("sysId", sysId);
         params.put("name", name);
         params.put("pId", pId);
-        String url = krmUrl+"/addKnowledgeType";
+        String url = krmUrl + "/addKnowledgeType";
         Gson gson = new Gson();
         String json = gson.toJson(params);
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
@@ -125,7 +135,7 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
         params.put("sysId", sysId);
         params.put("name", name);
         params.put("pId", pId);
-        String url = krmUrl+"/updateKnowledgeType";
+        String url = krmUrl + "/updateKnowledgeType";
         Gson gson = new Gson();
         String json = gson.toJson(params);
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
@@ -136,9 +146,9 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
                 .build();
 
         Map map = okHttpUtil.doPost(request);
-        if (map!= null) {
+        if (map != null) {
             Integer result = (Integer) map.get("data");
-            if (result!= null) {
+            if (result != null) {
                 return result;
             }
         }
@@ -154,12 +164,19 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
                 .writeTimeout(600, TimeUnit.SECONDS)
                 .build();
 
-        String url = krmUrl+"/delKnowledgeType";
-        url = String.format(url, sysId, id);
+        String url = krmUrl + "/delKnowledgeType";
+
+        Gson gson = new Gson();
+        Map<String, Object> params = new HashMap<>();
+        params.put("sysId", sysId);
+        params.put("id", id);
+        String json = gson.toJson(params);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, json);
+
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Content-type", "application/json")
-                .get()
+                .post(body)
                 .build();
         Response response = null;
         try {
@@ -173,7 +190,7 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }finally {
+        } finally {
             if (response != null) {
                 response.close();
             }

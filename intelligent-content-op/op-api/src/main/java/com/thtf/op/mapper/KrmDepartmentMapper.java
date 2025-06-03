@@ -1,13 +1,13 @@
 package com.thtf.op.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.thtf.op.entity.KrmDepartmentEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
-* @author Lenovo
+ * @author cheng
 * @description 针对表【KRM_DEPARTMENT(数聚平台部门体系)】的数据库操作Mapper
-* @createDate 2025-05-27 17:57:55
-* @Entity generator.entity.KrmDepartmentEntity
+ * @createDate 2025-05-30 15:31:57
+ * @Entity com.thtf.op.entity.KrmDepartmentEntity
 */
 public interface KrmDepartmentMapper extends BaseMapper<KrmDepartmentEntity> {
 

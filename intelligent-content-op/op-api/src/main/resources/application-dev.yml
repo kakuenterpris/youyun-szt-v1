@@ -225,4 +225,4 @@ file.base.path: /home/agentweb/web/intelligent-office/backend/content/data
 file.temp.path: /home/agentweb/web/intelligent-office/backend/content/data/temp
 
 # 需要将localhost改成数聚的ip
-krm.api.url: http://localhost/okmsApi/krm/api/knowledgetype
+krm.api.url: http://10.31.78.234/okmsApi/krm/api/knowledgetype

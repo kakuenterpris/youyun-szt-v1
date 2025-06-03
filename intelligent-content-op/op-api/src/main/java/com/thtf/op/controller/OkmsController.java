@@ -1,13 +1,12 @@
 package com.thtf.op.controller;
 
 import com.thtf.global.common.rest.RestResponse;
-import com.thtf.op.entity.KrmDepartmentEntity;
 import com.thtf.op.repo.KrmDepartmentRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/krm")
@@ -30,8 +29,8 @@ public class OkmsController {
     @PostMapping("/getKnowledgeType")
     public RestResponse getKnowledgeType(@RequestParam(value = "sysId") String sysId){
 
-        List<KrmDepartmentEntity> krmDepartmentEntityList = krmDepartmentRepo.getKnowledgeType(sysId);
-        return RestResponse.success(krmDepartmentEntityList);
+        Map<String, Object> knowledgeType = krmDepartmentRepo.getKnowledgeType(sysId);
+        return RestResponse.success(knowledgeType);
     }
 
 
@@ -49,7 +48,9 @@ public class OkmsController {
      *
      */
     @PostMapping("/addKnowledgeType")
-    public RestResponse addKnowledgeType(String sysId, String name, String pId){
+    public RestResponse addKnowledgeType(@RequestParam(value = "sysId") String sysId,
+                                         @RequestParam(value = "name") String name,
+                                         @RequestParam(value = "pId") String pId) {
         int result = krmDepartmentRepo.addKnowledgeType(sysId,name,pId);
         return RestResponse.success(result);
     }
@@ -90,5 +91,11 @@ public class OkmsController {
     public RestResponse deleteKnowledgeType(String sysId, String id){
         int result = krmDepartmentRepo.deleteKnowledgeType(sysId, id);
         return RestResponse.success(result);
+    }
+
+    @GetMapping("/delete")
+    public RestResponse delete() {
+        krmDepartmentRepo.delete();
+        return RestResponse.success("删除成功");
     }
 }

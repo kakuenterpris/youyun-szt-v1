@@ -3,7 +3,7 @@ package com.thtf.op.repo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.thtf.op.entity.KrmDepartmentEntity;
 
-import java.util.List;
+import java.util.Map;
 
 /**
 * @author Lenovo
@@ -12,7 +12,7 @@ import java.util.List;
 */
 public interface KrmDepartmentRepo extends IService<KrmDepartmentEntity> {
 
-    List<KrmDepartmentEntity> getKnowledgeType(String sysId);
+    Map<String, Object> getKnowledgeType(String sysId);
 
     int addKnowledgeType(String sysId, String name, String pId);
 
@@ -20,4 +20,5 @@ public interface KrmDepartmentRepo extends IService<KrmDepartmentEntity> {
 
     int deleteKnowledgeType(String sysId, String id);
 
+    void delete();
 }

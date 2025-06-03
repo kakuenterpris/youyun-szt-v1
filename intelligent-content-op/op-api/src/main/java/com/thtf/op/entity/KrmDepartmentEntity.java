@@ -1,13 +1,10 @@
 package com.thtf.op.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.util.List;
-
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * 数聚平台部门体系
@@ -15,13 +12,7 @@ import lombok.Data;
  */
 @TableName(value ="KRM_DEPARTMENT")
 @Data
-public class KrmDepartmentEntity implements Serializable {
-    /**
-     * 
-     */
-    @TableId(value = "UUID")
-    private String uuid;
-
+public class KrmDepartmentEntity {
     /**
      * 
      */
@@ -37,13 +28,13 @@ public class KrmDepartmentEntity implements Serializable {
     /**
      * 
      */
-    @TableField(value = "DEPARTMENTID")
+    @TableField(value = "DEPARTMENT_ID")
     private String departmentId;
 
     /**
      * 
      */
-    @TableField(value = "DEPTID")
+    @TableField(value = "DEPT_ID")
     private String deptId;
 
     /**
@@ -56,13 +47,12 @@ public class KrmDepartmentEntity implements Serializable {
      * 
      */
     @TableField(value = "ENABLED")
-    @TableLogic
-    private Boolean enabled;
+    private Integer enabled;
 
     /**
      * 
      */
-    @TableField(value = "ISSUB")
+    @TableField(value = "IS_SUB")
     private Integer isSub;
 
     /**
@@ -74,7 +64,7 @@ public class KrmDepartmentEntity implements Serializable {
     /**
      * 
      */
-    @TableField(value = "MAPPINGCODE")
+    @TableField(value = "MAPPING_CODE")
     private String mappingCode;
 
     /**
@@ -86,37 +76,32 @@ public class KrmDepartmentEntity implements Serializable {
     /**
      * 
      */
-    @TableField(value = "NODE")
-    private String node;
-
-    /**
-     * 
-     */
-    @TableField(value = "ORDERNUM")
+    @TableField(value = "ORDER_NUM")
     private Integer orderNum;
 
     /**
      * 
      */
-    @TableField(value = "PID")
+    @TableField(value = "P_ID")
     private String pId;
 
     /**
      * 
      */
-    @TableField(value = "SYSID")
+    @TableField(value = "SYS_ID")
     private String sysId;
 
     /**
      * 
      */
-    @TableField(value = "POSITIONCODE")
+    @TableField(value = "POSITION_CODE")
     private String positionCode;
 
     @TableField(exist = false)
     private List<KrmDepartmentEntity> children;
 
-
+    @TableField(exist = false)
+    private String node;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

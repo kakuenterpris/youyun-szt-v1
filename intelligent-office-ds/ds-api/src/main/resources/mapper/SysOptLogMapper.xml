@@ -33,25 +33,29 @@
     <select id="getAuditLogs" resultType="com.thtf.chat.dto.LogInfoDTO">
         (
             SELECT
-                ID,CREATE_USER,
-                ROLE_NAME,IPADDR,
-                LOGIN_LOCATION,'登录日志' AS logType,
-                '用户登录' AS content , loginInfor.create_time
+                loginInfor.ID,CREATE_USER as userName,
+                ROLE_NAME,IPADDR as IP,''as timeConsuming,
+                LOGIN_LOCATION as IPOrigin,'登录日志' AS logType,
+                '用户登录' AS content , loginInfor.create_time as creatTime
             FROM SYS_LOGININFOR loginInfor
-            LEFT JOIN sys_role role1 ON loginInfor.create_user_id = role1.role_id
-            ORDER BY LOGIN_TIME DESC
+            LEFT JOIN BUS_USER_INFO userInfo ON loginInfor.create_user_id = userInfo.user_id
+            LEFT JOIN SYS_USER_ROLE userRole ON userInfo.ID = userRole.USER_ID
+            LEFT JOIN SYS_ROLE sysRole  ON userRole.ROLE_ID = sysRole.ROLE_ID
+            ORDER BY creatTime DESC
         )
         UNION
         (
             SELECT
-                ID,CREATE_USER,
-                ROLE_NAME,'' as IPADDR,
-                '' as LOGIN_LOCATION,'操作日志' as logType,
-                '用户登录' as content ,opt.create_time
+                opt.ID,CREATE_USER as userName,
+                ROLE_NAME ,'' as IP,''as timeConsuming,
+                '' as IPOrigin,'操作日志' as logType,
+                opt.OPERATE_CONTENT as content ,opt.create_time as creatTime
             FROM SYS_OPT_LOG opt
-            LEFT JOIN sys_role role1 ON opt.create_user_id = role1.role_id
-            ORDER BY CREATE_TIME DESC
+            LEFT JOIN BUS_USER_INFO userInfo ON opt.create_user_id = userInfo.user_id
+            LEFT JOIN SYS_USER_ROLE userRole ON userInfo.ID = userRole.USER_ID
+            LEFT JOIN SYS_ROLE sysRole  ON userRole.ROLE_ID = sysRole.ROLE_ID
+            ORDER BY creatTime DESC
         )
-        ORDER BY CREATE_TIME DESC
+        ORDER BY creatTime DESC
     </select>
 </mapper>

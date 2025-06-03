@@ -68,7 +68,7 @@
                 #{folderId}
             </foreach>
         </if>
-        <if test="(folderIdList != null and folderIdList.size > 0) and (fileIdList != null and fileIdList.size > 0)">
+        <if test="(fileIdList != null and fileIdList.size > 0 and viewFile == false) or (viewFile == true)">
             union
         </if>
         <if test="fileIdList != null and fileIdList.size > 0 and viewFile == false">
@@ -171,7 +171,7 @@
                 #{folderId}
             </foreach>
         </if>
-        <if test="(folderIdList != null and folderIdList.size > 0) and (fileIdList != null and fileIdList.size > 0)">
+        <if test="(fileIdList != null and fileIdList.size > 0 and viewFile == false) or (viewFile == true)">
             union
         </if>
         <if test="fileIdList != null and fileIdList.size > 0 and viewFile == false">

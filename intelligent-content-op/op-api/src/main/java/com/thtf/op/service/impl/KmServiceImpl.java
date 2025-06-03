@@ -138,7 +138,8 @@ public class KmServiceImpl implements KmService {
 //            用户角色
             Long roleId = sysUserRoleRepo.getOne(new LambdaQueryWrapper<SysUserRoleEntity>().eq(SysUserRoleEntity::getUserId, currentUser.getId())).getRoleId();
             List<Integer> adminFolderIds = Linq.select(folderAuthRepo.list(new LambdaQueryWrapper<FolderAuthEntity>().eq(FolderAuthEntity::getRoleId, roleId)), FolderAuthEntity::getFolderId);
-
+            List<Integer> createFolderids = Linq.select(folderRepo.list(new LambdaQueryWrapper<BusResourceFolderEntity>().eq(BusResourceFolderEntity::getCreateUserId, userId)), BusResourceFolderEntity::getId).stream().map(Long::intValue).collect(Collectors.toList());
+            adminFolderIds.addAll(createFolderids);
             //文件夹包含的文件权限
             List<Integer> folderOfFileIds = fileListByUserAuth(userId);
             List<Integer> union= (List<Integer>) CollectionUtils.union(adminFolderIds, folderOfFileIds);

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.access.dto.UserInfoDto;
 import com.thtf.chat.dto.LogInfoDTO;
 import com.thtf.chat.entity.SysOptLogEntity;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author 86187
@@ -14,7 +15,7 @@ import com.thtf.chat.entity.SysOptLogEntity;
 */
 public interface SysOptLogMapper extends BaseMapper<SysOptLogEntity> {
 
-    Page<LogInfoDTO> getAuditLogs(Page<UserInfoDto> page);
+    Page<LogInfoDTO> getAuditLogs(Page<UserInfoDto> page,@Param("query") String query,@Param("type")String type);
 }
 
 

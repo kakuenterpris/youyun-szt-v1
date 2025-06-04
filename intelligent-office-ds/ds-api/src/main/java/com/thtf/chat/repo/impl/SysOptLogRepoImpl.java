@@ -21,8 +21,8 @@ public class SysOptLogRepoImpl extends ServiceImpl<SysOptLogMapper, SysOptLogEnt
 
 
     @Override
-    public RestResponse getAuditLogs(Page<UserInfoDto> page) {
-        Page<LogInfoDTO> auditLogs = baseMapper.getAuditLogs(page);
+    public RestResponse getAuditLogs(Page<UserInfoDto> page,String query,String type) {
+        Page<LogInfoDTO> auditLogs = baseMapper.getAuditLogs(page,query,type);
         return RestResponse.success(auditLogs);
     }
 }

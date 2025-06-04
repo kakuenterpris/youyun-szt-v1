@@ -29,6 +29,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Optional;
 
 
 @Aspect
@@ -65,8 +66,12 @@ public class PermissionAspect {
             //检查用户权限
             for (SysRoleEntity role : roleByUserId) {
                 List<SysMenuEntity> menuByRoleId = sysMenuRepo.getMenuByRoleId(role.getRoleId());
+                List<SysRoleMenuEntity> list = sysRoleMenuRepo.list(new LambdaQueryWrapper<SysRoleMenuEntity>().eq(SysRoleMenuEntity::getRoleId, role.getRoleId()));
                 for (SysMenuEntity menu : menuByRoleId) {
-                    SysRoleMenuEntity sysRoleMenu = sysRoleMenuRepo.getOne(new LambdaQueryWrapper<SysRoleMenuEntity>().eq(SysRoleMenuEntity::getRoleId, role.getRoleId()).eq(SysRoleMenuEntity::getMenuId, menu.getMenuId()));
+                    Optional<SysRoleMenuEntity> first = list.stream()
+                            .filter(sysRoleMenu -> sysRoleMenu.getMenuId().equals(menu.getMenuId()))
+                            .findFirst();
+                    SysRoleMenuEntity sysRoleMenu = first.get();
                     if (menu.getPerms().trim().equals(requiredPermission)&&sysRoleMenu.getManageAuth()>=authtype) {
                         hasPermission = true;
                         break;

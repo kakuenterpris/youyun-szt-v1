@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.thtf.access.dto.UserInfoDto;
 import com.thtf.access.vo.UserInfoVO;
 import com.thtf.annotation.Log;
+import com.thtf.chat.annotation.RequiresPermission;
 import com.thtf.chat.mapper.SysLogininforMapper;
 import com.thtf.chat.repo.ISysLogininforRepo;
 import com.thtf.chat.repo.SysOptLogRepo;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "审计日志", description = "登录日志相关操作")
+@Tag(name = "审计日志", description = "审计日志相关操作")
 public class SysLogininforController {
 
     @Autowired
@@ -38,6 +39,7 @@ public class SysLogininforController {
 
 
     @GetMapping("/auditLog")
+    @RequiresPermission(value="AuditLogs",authtype = 0)
     @Operation(summary = "审计日志列表接口")
     public RestResponse getAuditLogs(Page<UserInfoDto> page, UserInfoVO vo) {
         return sysOptLogRepo.getAuditLogs(page);

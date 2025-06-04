@@ -55,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Admin_14104
@@ -87,7 +88,6 @@ public class KmServiceImpl implements KmService {
     private final RagFlowProcessService ragFlowProcessService;
     private final FileAuthRepo fileAuthRepo;
     private final SysRoleRepo sysRoleRepo;
-    private final BusResourceFolderRepo  busResourceFolderRepo;
 
 
     private final BusResourceDatasetRepo busResourceDatasetRepo;
@@ -187,6 +187,7 @@ public class KmServiceImpl implements KmService {
 //            1.2：本文件夹非公开：文件夹管理员  上级文件夹的管理员  文件夹成员
 //        2.可以看本文件夹下的所有文件夹；但不能看本文件夹下的文件：不满1 且 是系统管理员
 //        3.可以看本文件夹下的某些文件夹，上述'本文件夹下的某些文件夹'是下面某一层级有查看权限的文件夹的上级文件夹；但不能看本文件夹下的文件：不满足1 且 不满足2
+        System.out.println("当前时间1  "+System.currentTimeMillis());
         SystemUser currentUser = ContextUtil.currentUser();
         String userId = currentUser.getUserId();
         Integer parentId = query.getParentId();
@@ -195,19 +196,23 @@ public class KmServiceImpl implements KmService {
         List<Integer> folderIdList = new ArrayList<>();
         Boolean viewFile = false;
         List<Integer> fileList=null;
-        BusResourceFolderEntity entity = folderRepo.getById(parentId);
+        List<BusResourceFolderDTO> busResourceFolderDTOS = folderRepo.listAll(notDelete);
+        BusResourceFolderDTO entity = busResourceFolderDTOS.stream().filter(x -> x.getId().equals(parentId)).findFirst().orElse(null);
+        List<BusResourceFolderDTO> collect1 = busResourceFolderDTOS.stream().filter(x -> x.getParentId().equals(parentId)).collect(Collectors.toList());
         if (null == entity) {
             return RestResponse.success(new ArrayList<>(), 0);
         }
         Boolean systemAdminAuth = this.checkSystemAdminAuth(userId);
         //本文件夹下的所有直接下级文件夹id
-        folderIdList = Linq.select(folderRepo.listByParentId(parentId, notDelete), BusResourceFolderDTO::getId);
-        List<BusResourceManageListDTO> allList = Linq.select(folderRepo.listAll(notDelete), folderMapping::dto2ListDto);
+        folderIdList = Linq.select(collect1, BusResourceFolderDTO::getId);
+        List<BusResourceManageListDTO> allList = Linq.select(busResourceFolderDTOS, folderMapping::dto2ListDto);
         //查询创建的文件夹
-        List<Integer> adminFolderIds = Linq.select(busResourceFolderRepo.list(new LambdaQueryWrapper<BusResourceFolderEntity>().eq(BusResourceFolderEntity::getCreateUserId, userId)), BusResourceFolderEntity::getId).stream().map(Long::intValue).collect(Collectors.toList());;
+        List<BusResourceFolderDTO> createFolder = busResourceFolderDTOS.stream().filter(x -> x.getCreateUserId().equals(userId)).collect(Collectors.toList());
+        List<BusResourceFolderEntity> createEntity = Linq.select(createFolder, folderMapping::dto2Entity);
+        List<Integer> adminFolderIds = Linq.select(createEntity, BusResourceFolderEntity::getId).stream().map(Long::intValue).collect(Collectors.toList());;
         List<BusResourceManageListDTO> result = new ArrayList<>();
         Integer count = 0;
-
+        System.out.println("当前时间2  "+System.currentTimeMillis());
         // 查询操作 查看父文件目录下左右匹配的文件夹和目录
         if (StringUtils.isNotEmpty(query.getName())||query.getIndexingStatus()!=null||query.getEmbeddingStatus()!=null||query.getLevel()!=null||query.getStartTime()!=null||query.getEndTime()!=null) {
             List<BusResourceManageListDTO> childList = TreeNodeServiceImpl.getChildrenList(allList, parentId);
@@ -238,7 +243,7 @@ public class KmServiceImpl implements KmService {
                 List<Integer> select = Linq.select(collect, FileAuthEntity::getId);
                 busResourceManageListDTO.setScope(select);
             }
-
+            System.out.println("当前时间3  "+System.currentTimeMillis());
             return RestResponse.success(result, count);
 
 
@@ -299,6 +304,7 @@ public class KmServiceImpl implements KmService {
                     busResourceManageListDTO.setScope(select);
                 }
             }
+            System.out.println("当前时间3.5  "+System.currentTimeMillis());
         }
         List<Integer> idList = result.stream().map(BusResourceManageListDTO::getFolderId).distinct().toList();
         List<BusResourceMemberDTO> authList = this.getFolderAuthList(idList);
@@ -321,6 +327,7 @@ public class KmServiceImpl implements KmService {
                 dto.setIndexingStatusName("--");
             }
         }
+        System.out.println("当前时间4  "+System.currentTimeMillis());
 
         /*//记录操作日志
         String operateType = OperateTypeEnum.GET.getName();

@@ -84,7 +84,6 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     BusUserInfoMapper busUserInfoMapper;
 
 
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RestResponse pushFile(PushFileDTO pushFileDTO) {
@@ -95,13 +94,13 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         for (WonderfulPenSyncDTO dto : dtoList) {
             String url = dto.getUrl();
             String[] split = url.split("\\?");
-            String Filetype = split[0].substring(split[0].lastIndexOf(".")+1);
-            if (StringUtil.isEmpty(url)){
+            String Filetype = split[0].substring(split[0].lastIndexOf(".") + 1);
+            if (StringUtil.isEmpty(url)) {
                 return RestResponse.error("请求路径为空!");
             }
             String fileName = dto.getFileName();
-    //        获取文件名（不包含后缀）
-            String subName= fileName;
+            //        获取文件名（不包含后缀）
+            String subName = fileName;
             Request request = new Request.Builder()
                     .url(url)
                     .addHeader("Content-Type", "application/json")
@@ -114,12 +113,12 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                     .build();
             Response response = null;
             try {
-    //            妙笔请求获取文件
+                //            妙笔请求获取文件
                 response = client.newCall(request).execute();
                 InputStream inputStream = new ByteArrayInputStream(response.body().bytes());
-                float size = ((float) response.body().contentLength())/1024;
-                MultipartFile file = new MockMultipartFile("file",fileName+"."+Filetype,ContentType.APPLICATION_OCTET_STREAM.toString(), inputStream);
-    //          上传文件
+                float size = ((float) response.body().contentLength()) / 1024;
+                MultipartFile file = new MockMultipartFile("file", fileName + "." + Filetype, ContentType.APPLICATION_OCTET_STREAM.toString(), inputStream);
+                //          上传文件
                 RestResponse updateResponse = fileApi.updateFile(file, null, null, null);
                 SaveFileParam saveFileParam = new SaveFileParam();
                 //响应数据
@@ -141,7 +140,7 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
                 saveFileParam.setFolderId(304);
                 // 保存文件
                 RestResponse saveResponse = kmService.saveFile(saveFileParam);
-                if (saveResponse.getCode() != 200||saveResponse.getCode() != 200) {
+                if (saveResponse.getCode() != 200 || saveResponse.getCode() != 200) {
                     return RestResponse.error("推送失败");
                 }
 
@@ -179,10 +178,6 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Override
     public RestResponse getKonwledgeByUserId(WonderfulPenSyncDTO dto) {
 
-//        String datasetId = busResourceDatasetMapper.listDatasetsIdByCreateUserId(userId);
-        //测试 写死
-        String datasetId = "51b9b08c361711f0a8f03e04d146f0ba";
-
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(600, TimeUnit.SECONDS)
                 .readTimeout(600, TimeUnit.SECONDS)
@@ -192,23 +187,19 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
         String apiKey = ragFlowApiConfigProperties.getApiKey();
 
         String url = ragFlowApiConfigProperties.getRagflowUrl();
-        if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url) || StrUtil.isEmpty(datasetId)) {
+        if (StrUtil.isEmpty(apiKey) || StrUtil.isEmpty(url)) {
             log.error("上传文档得url或key为空");
             return RestResponse.error("上传文档得url或key为空");
         }
 
         Gson gson = new Gson();
-
-
         HashMap<Object, Object> params = new HashMap<>();
-        List<String> list1 = new ArrayList<>();
-        list1.add(datasetId);
-        params.put("dataset_ids", list1);
         params.put("question", dto.getQuery()); //query
 
         //文件id集合
         List<String> list = new ArrayList<>();
 
+        ArrayList<String> folderIdList = new ArrayList<>();
         //通过folderId和type获取文件id
         List<String> fileIds = new ArrayList<>();
         for (Map<String, Object> map : dto.getFolderIds()) {
@@ -219,12 +210,16 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
             }
             String[] folderIds = folderIdStr.split(",");
             for (String folderId : folderIds) {
+                folderIdList.add(folderId);
                 fileIds.addAll(getSubFilesRecursively(Integer.valueOf(folderId), Integer.parseInt(type)));
             }
         }
 
+        List<String> datasetIds = busResourceDatasetMapper.listDatasetsIdByFolderIds(folderIdList);
+        params.put("dataset_ids", datasetIds);
+
         LambdaQueryWrapper<RelUserResourceEntity> queryWrapper = Wrappers.lambdaQuery();
-        if(!CollUtil.isEmpty(fileIds)){
+        if (!CollUtil.isEmpty(fileIds)) {
             queryWrapper.in(RelUserResourceEntity::getFileId, fileIds);
         }
         queryWrapper.eq(RelUserResourceEntity::getIndexingStatus, "2");

@@ -4,4 +4,11 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.thtf.op.mapper.BusResourceDatasetMapper">
 
+    <select id="listDatasetsIdByFolderIds" resultType="string">
+        SELECT datasets_id FROM bus_resource_dataset
+        WHERE FOLDER_ID IN
+        <foreach item="id" collection="folderIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 </mapper>

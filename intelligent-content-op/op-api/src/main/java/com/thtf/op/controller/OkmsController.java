@@ -27,7 +27,7 @@ public class OkmsController {
      * @return
      */
     @PostMapping("/getKnowledgeType")
-    public RestResponse getKnowledgeType(@RequestParam(value = "sysId") String sysId){
+    public RestResponse getKnowledgeType(@RequestBody String sysId) {
 
         Map<String, Object> knowledgeType = krmDepartmentRepo.getKnowledgeType(sysId);
         return RestResponse.success(knowledgeType);

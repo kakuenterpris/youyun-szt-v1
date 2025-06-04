@@ -60,11 +60,8 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
                 .addHeader("Content-Type", "application/json")
                 .build();
 
-        //删除全部数据
-        LambdaQueryWrapper<KrmDepartmentEntity> wrapper = Wrappers.lambdaQuery();
-        krmDepartmentMapper.delete(wrapper);
+        Map map = okHttpUtil.doPost(request);
 
-        Map<String, Object> map = getKnowledgeType(sysId);
         if (map != null) {
             if (map.get("success") == null || !(Boolean) map.get("success")) {
                 return null;
@@ -72,6 +69,9 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
             String content = map.get("content").toString();
             List<KrmDepartmentEntity> krmDepartmentEntityList = JSONUtil.toList(content, KrmDepartmentEntity.class);
             if (!krmDepartmentEntityList.isEmpty()) {
+                //删除全部数据
+                LambdaQueryWrapper<KrmDepartmentEntity> wrapper = Wrappers.lambdaQuery();
+                krmDepartmentMapper.delete(wrapper);
                 List<KrmDepartmentEntity> krmDepartmentEntitys = new ArrayList<>();
                 // 新增保存逻辑
                 saveDepartmentTree(krmDepartmentEntityList, krmDepartmentEntitys);

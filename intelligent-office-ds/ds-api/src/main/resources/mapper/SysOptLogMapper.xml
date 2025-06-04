@@ -51,6 +51,9 @@
                 OR '用户登录' like concat('%',#{query},'%')
                 OR loginInfor.create_time like concat('%',#{query},'%'))
             </if>
+            <if test="type != null and type != ''">
+                AND '登录日志' = #{type}
+            </if>
             ORDER BY creatTime DESC
         )
         UNION
@@ -73,6 +76,9 @@
                 OR '操作日志' like concat('%',#{query},'%')
                 OR opt.OPERATE_CONTENT like concat('%',#{query},'%')
                 OR opt.create_time like concat('%',#{query},'%'))
+            </if>
+            <if test="type != null and type != ''">
+                AND '操作日志' = #{type}
             </if>
             ORDER BY creatTime DESC
 

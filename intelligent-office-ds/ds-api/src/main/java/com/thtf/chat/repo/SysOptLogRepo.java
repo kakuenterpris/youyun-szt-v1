@@ -14,5 +14,5 @@ import com.thtf.global.common.rest.RestResponse;
 */
 public interface SysOptLogRepo extends IService<SysOptLogEntity> {
 
-    RestResponse getAuditLogs(Page<UserInfoDto> page, String query);
+    RestResponse getAuditLogs(Page<UserInfoDto> page, String query,String type);
 }

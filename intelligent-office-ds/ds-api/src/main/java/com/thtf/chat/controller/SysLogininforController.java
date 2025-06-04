@@ -43,9 +43,9 @@ public class SysLogininforController {
     @GetMapping("/auditLog")
     @RequiresPermission(value="AuditLogs",authtype = 0)
     @Operation(summary = "审计日志列表接口")
-    public RestResponse getAuditLogs(Page<UserInfoDto> page, @RequestParam(required = false) String query) {
+    public RestResponse getAuditLogs(Page<UserInfoDto> page, @RequestParam(required = false) String query,@RequestParam(required = false) String type) {
         try {
-            return sysOptLogRepo.getAuditLogs(page,query);
+            return sysOptLogRepo.getAuditLogs(page,query,type);
         }catch (Exception e) {
             log.error("获取审计日志失败: {}", e.getMessage());
             return RestResponse.fail(RestResponse.ERROR_CODE,"获取审计日志失败");

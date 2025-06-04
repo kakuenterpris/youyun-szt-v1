@@ -15,7 +15,7 @@ import org.apache.ibatis.annotations.Param;
 */
 public interface SysOptLogMapper extends BaseMapper<SysOptLogEntity> {
 
-    Page<LogInfoDTO> getAuditLogs(Page<UserInfoDto> page,@Param("query") String query);
+    Page<LogInfoDTO> getAuditLogs(Page<UserInfoDto> page,@Param("query") String query,@Param("type")String type);
 }
 
 

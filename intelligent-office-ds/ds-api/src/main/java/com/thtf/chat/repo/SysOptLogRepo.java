@@ -3,6 +3,7 @@ package com.thtf.chat.repo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.thtf.access.dto.UserInfoDto;
+import com.thtf.chat.dto.LogInfoDTO;
 import com.thtf.chat.entity.SysOptLogEntity;
 import com.thtf.global.common.rest.RestResponse;
 
@@ -13,5 +14,5 @@ import com.thtf.global.common.rest.RestResponse;
 */
 public interface SysOptLogRepo extends IService<SysOptLogEntity> {
 
-    RestResponse getAuditLogs(Page<UserInfoDto> page);
+    RestResponse getAuditLogs(Page<UserInfoDto> page, String query);
 }

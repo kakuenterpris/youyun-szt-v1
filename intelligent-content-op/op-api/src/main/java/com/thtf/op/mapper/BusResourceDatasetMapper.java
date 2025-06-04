@@ -16,9 +16,8 @@ import java.util.List;
 @Mapper
 public interface BusResourceDatasetMapper extends BaseMapper<BusResourceDatasetEntity> {
 
-    //通过create_user_id查询datasets_id
-    @Select("select datasets_id from bus_resource_dataset where create_user_id = ${userId}")
-    String listDatasetsIdByCreateUserId(String userId);
+    //通过create_user_id查询folder_id
+    List<String> listDatasetsIdByFolderIds(List<String> folderIds);
 
 
 }

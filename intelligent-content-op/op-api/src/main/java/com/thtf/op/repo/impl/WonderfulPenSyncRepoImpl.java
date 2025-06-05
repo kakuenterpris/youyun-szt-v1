@@ -83,6 +83,35 @@ public class WonderfulPenSyncRepoImpl extends ServiceImpl<BusResourceFolderMappe
     @Autowired
     BusUserInfoMapper busUserInfoMapper;
 
+    @Override
+    public RestResponse checkFile(PushFileDTO pushFileDTO) {
+
+        List<WonderfulPenSyncDTO> dtoList = pushFileDTO.getPushList();
+        // 向量化所需list
+        List<RagProcessDTO> fileIdList = new ArrayList<>();
+        List<String> fileNames = new ArrayList<>();
+
+        for (WonderfulPenSyncDTO dto : dtoList) {
+            String url = dto.getUrl();
+            String[] split = url.split("\\?");
+            String Filetype = split[0].substring(split[0].lastIndexOf(".") + 1);
+            if (StringUtil.isEmpty(url)) {
+                return RestResponse.error("请求路径为空!");
+            }
+            String fileName = dto.getFileName();
+            String userId = dto.getUserId();
+            LambdaQueryWrapper<BusResourceFileEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(BusResourceFileEntity::getDeleted, 0);
+            queryWrapper.eq(BusResourceFileEntity::getFileType, Filetype);
+            queryWrapper.eq(BusResourceFileEntity::getName, fileName);
+            queryWrapper.eq(BusResourceFileEntity::getCreateUserId, userId);
+            BusResourceFileEntity busResourceFileEntity = busResourceFileMapper.selectOne(queryWrapper);
+            if (busResourceFileEntity != null) {
+                fileNames.add(fileName);
+            }
+        }
+        return RestResponse.okWithMsg(fileNames, "检查文件总条目数");
+    }
 
 
     @Override

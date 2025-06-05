@@ -34,6 +34,12 @@ public class WonderfulPenSyncController {
     @Autowired
     private ResourceProcessService resourceProcessService;
 
+    @PostMapping("/checkFile")
+    @Operation(summary = "检查文件是否存在")
+    public RestResponse checkFile(@RequestBody @Validated PushFileDTO pushFileDTO) {
+        return wonderfulPenSyncRepo.checkFile(pushFileDTO);
+    }
+
 
     @PostMapping("/pushFile")
     @Operation(summary = "推送我的文档到知识库")

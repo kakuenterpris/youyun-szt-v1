@@ -1,9 +1,12 @@
 package com.thtf.op.repo;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.KrmDepartmentEntity;
+import com.thtf.resource.dto.KrmDepartmentDTO;
 
-import java.util.Map;
+import java.io.IOException;
+import java.util.List;
 
 /**
 * @author Lenovo
@@ -12,7 +15,7 @@ import java.util.Map;
 */
 public interface KrmDepartmentRepo extends IService<KrmDepartmentEntity> {
 
-    Map<String, Object> getKnowledgeType(String sysId);
+    List<KrmDepartmentEntity> getTreeList(KrmDepartmentDTO dto);
 
     int addKnowledgeType(String sysId, String name, String pId);
 
@@ -21,4 +24,6 @@ public interface KrmDepartmentRepo extends IService<KrmDepartmentEntity> {
     int deleteKnowledgeType(String sysId, String id);
 
     void delete();
+
+    RestResponse syncKnowledgeType(KrmDepartmentDTO dto) throws IOException;
 }

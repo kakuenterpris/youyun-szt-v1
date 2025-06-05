@@ -1,11 +1,15 @@
 package com.thtf.op.controller;
 
 import com.thtf.global.common.rest.RestResponse;
+import com.thtf.op.entity.KrmDepartmentEntity;
 import com.thtf.op.repo.KrmDepartmentRepo;
+import com.thtf.resource.dto.KrmDepartmentDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,10 +31,27 @@ public class OkmsController {
      * @return
      */
     @PostMapping("/getKnowledgeType")
-    public RestResponse getKnowledgeType(@RequestBody String sysId) {
+    public RestResponse getKnowledgeType(@RequestBody KrmDepartmentDTO dto) {
 
-        Map<String, Object> knowledgeType = krmDepartmentRepo.getKnowledgeType(sysId);
+        List<KrmDepartmentEntity> knowledgeType = krmDepartmentRepo.getTreeList(dto);
         return RestResponse.success(knowledgeType);
+    }
+
+    /**
+     * 同步体系接口
+     *
+     * @param sysId 体系分类编码   1：学科体系
+     *              2：技术体系
+     *              3：业务体系
+     *              4：部门体系
+     *              5：领域体系
+     * @return
+     */
+    @PostMapping("/syncKnowledgeType")
+    public RestResponse syncKnowledgeType(@RequestBody KrmDepartmentDTO dto) throws IOException {
+
+
+        return RestResponse.success(krmDepartmentRepo.syncKnowledgeType(dto));
     }
 
 

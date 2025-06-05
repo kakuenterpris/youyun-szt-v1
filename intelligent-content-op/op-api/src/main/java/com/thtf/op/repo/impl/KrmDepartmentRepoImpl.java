@@ -5,20 +5,19 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
+import com.thtf.global.common.rest.RestResponse;
 import com.thtf.op.entity.KrmDepartmentEntity;
 import com.thtf.op.mapper.KrmDepartmentMapper;
 import com.thtf.op.repo.KrmDepartmentRepo;
 import com.thtf.op.util.OKHttpUtils;
+import com.thtf.resource.dto.KrmDepartmentDTO;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,7 +43,71 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
 
 
     @Override
-    public Map<String, Object> getKnowledgeType(String sysId) {
+    public List<KrmDepartmentEntity> getTreeList(KrmDepartmentDTO dto) {
+        // 获取所有部门数据
+        LambdaQueryWrapper<KrmDepartmentEntity> wrapper = Wrappers.lambdaQuery();
+        wrapper.eq(KrmDepartmentEntity::getSysId, dto.getSysId());
+        List<KrmDepartmentEntity> allDepartments = list(wrapper);
+        // 构建树形结构
+        return buildTree(allDepartments);
+    }
+
+    private List<KrmDepartmentEntity> buildTree(List<KrmDepartmentEntity> nodes) {
+        Map<String, KrmDepartmentEntity> nodeMap = new HashMap<>();
+        List<KrmDepartmentEntity> rootNodes = new ArrayList<>();
+
+        // 第一次遍历：创建所有节点的映射并识别根节点
+        for (KrmDepartmentEntity node : nodes) {
+            // 添加空children列表初始化
+            if (node.getChildren() == null) {
+                node.setChildren(new ArrayList<>());
+            }
+            nodeMap.put(node.getId(), node);
+            if (node.getPId() == null || node.getPId().isEmpty()) {
+                rootNodes.add(node);
+            }
+        }
+
+        // 第二次遍历：建立父子关系
+        for (KrmDepartmentEntity node : nodes) {
+            if (node.getPId() != null && !node.getPId().isEmpty()) {
+                KrmDepartmentEntity parent = nodeMap.get(node.getPId());
+                if (parent != null) {
+                    // 检测循环引用
+                    if (isCircularReference(parent, node.getId(), nodeMap)) {
+                        log.warn("检测到循环引用: " + parent.getId() + " 不能作为" + node.getId() + " 的子节点");
+                        continue;
+                    }
+
+                    // 添加时按orderNum排序（升序）
+                    parent.getChildren().add(node);
+                    parent.getChildren().sort(Comparator.comparingInt(
+                            n -> n.getOrderNum() != null ? n.getOrderNum() : 0));
+                } else {
+                    log.warn("无效的父节点ID: " + node.getPId() + "，节点 " + node.getId() + " 将被置为根节点");
+                    rootNodes.add(node);
+                }
+            }
+        }
+
+        return rootNodes;
+    }
+
+    // 新增循环引用检测方法
+    private boolean isCircularReference(KrmDepartmentEntity parent, String childId, Map<String, KrmDepartmentEntity> nodeMap) {
+        while (parent != null) {
+            if (parent.getPId() != null && parent.getPId().equals(childId)) {
+                return true;
+            }
+            parent = nodeMap.get(parent.getPId());
+        }
+        return false;
+    }
+
+
+    @Override
+    public RestResponse syncKnowledgeType(KrmDepartmentDTO dto) {
+        String sysId = dto.getSysId();
         Map<String, Object> params = new HashMap<>();
         if (sysId == null) {
             return null;
@@ -78,8 +141,7 @@ public class KrmDepartmentRepoImpl extends ServiceImpl<KrmDepartmentMapper, KrmD
                 this.saveBatch(krmDepartmentEntitys);
             }
         }
-
-        return okHttpUtil.doPost(request);
+        return RestResponse.success("同步成功");
     }
 
     //删除

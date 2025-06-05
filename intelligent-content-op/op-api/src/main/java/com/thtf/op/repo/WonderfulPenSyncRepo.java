@@ -15,6 +15,8 @@ import java.util.List;
  */
 public interface WonderfulPenSyncRepo extends IService<BusResourceFolderEntity> {
 
+    RestResponse checkFile(PushFileDTO pushFileDTO);
+
     RestResponse pushFile(PushFileDTO pushFileDTO);
 
     RestResponse getFileByUserId(WonderfulPenSyncDTO dto);

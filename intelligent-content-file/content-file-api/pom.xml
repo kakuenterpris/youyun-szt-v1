@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.ustack</groupId>
+        <artifactId>intelligent-content-file</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+
+    <groupId>com.ustack</groupId>
+    <artifactId>content-file-api</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>content-file-api</name>
+
+    <description>content-file-api</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <mybatis-plus.version>3.5.10.1</mybatis-plus.version>
+        <mybatis-plus-jsqlparser.version>3.5.10.1</mybatis-plus-jsqlparser.version>
+        <mybatis-plus-join.version>1.5.2</mybatis-plus-join.version>
+        <mybatis-plus-generator.version>3.5.10.1</mybatis-plus-generator.version>
+        <lombok.version>1.18.36</lombok.version>
+    </properties>
+    <dependencies>
+
+        <dependency>
+            <groupId>com.ustack</groupId>
+            <artifactId>content-file-common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.ustack</groupId>
+            <artifactId>global-dep</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dameng</groupId>
+            <artifactId>DmJdbcDriver18</artifactId>
+            <version>8.1.1.193</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!--    自定义配置提示支持    -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!--    bootstrap.yml 支持    -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+        </dependency>
+        <!--    nacos 配置中心支持    -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+        <!--    nacos 服务发现支持    -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+        <!--    openfeign 声明式调用支持    -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <!--    客户端负载均衡支持    -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.30</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.1.20</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+
+    <profiles>
+        <profile>
+            <!--     本地开发环境       -->
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <env.name>env_dev</env.name>
+            </properties>
+        </profile>
+        <profile>
+            <!--     测试环境       -->
+            <id>test</id>
+            <properties>
+                <env.name>env_test</env.name>
+            </properties>
+        </profile>
+
+        <profile>
+            <!--     生产环境      -->
+            <id>prod</id>
+            <properties>
+                <env.name>env_prod</env.name>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <finalName>km-file-api</finalName>
+        <resources>
+            <!-- 先排除  -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>env_dev/*</exclude>
+                    <exclude>env_test/*</exclude>
+                    <exclude>env_prod/*</exclude>
+                </excludes>
+            </resource>
+
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>${env.name}/*.properties</include>
+                    <include>${env.name}/*.yml</include>
+                    <include>${env.name}/*.xml</include>
+                </includes>
+            </resource>
+
+            <!-- 包含当前环境下的logback.xml (需复制到CLASSPATH根下面) -->
+            <resource>
+                <directory>src/main/resources/${env.name}</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>*.xml</include>
+                    <include>*.yml</include>
+                    <include>*.properties</include>
+                </includes>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>

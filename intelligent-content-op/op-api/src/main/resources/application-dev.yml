@@ -1,0 +1,211 @@
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    dynamic:
+      primary: primary
+      strict: false
+      datasource:
+        primary:
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          url: jdbc:mysql://10.0.254.180:3306/szt-1?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
+          username: root
+          password: rootlocal
+
+  # nacos配置
+  cloud:
+    nacos:
+      discovery:
+        #        enabled: false
+        server-addr: 10.0.254.180:8848
+        #        #         gateway 与对应的后端服务应该在相同的namespace下
+        #        namespace: your_nacos_namespace
+        username: nacos
+        password: nacos
+
+  data:
+    redis:
+      host: 10.0.254.180
+      port: 6379
+      database: 0
+      timeout: 1800s # 使用时间格式化
+      password: szt-redis
+      lettuce:
+        pool:
+          max-active: 20  # 最大连接数
+          max-wait: -1    # 最大阻塞等待时间(负数表示没限制)
+          max-idle: 5     # 最大空闲
+          min-idle: 0     # 最小空闲
+  task:
+    execution:
+      shutdown:
+        await-termination: true
+        await-termination-period: 60s
+  main:
+    allow-bean-definition-overriding: true
+    jackson:
+      date-format: yyyy/MM/dd HH:mm:ss
+      time-zone: GMT+8
+
+cookie:
+  domain: 127.0.0.1
+  secure: false
+
+# 登录token拦截
+platform:
+  interceptor:
+    configs:
+      exclude-login-urls: # 非不需要登录接口
+        - /api/v1/op/login
+        - /api/v1/op/login/captcha
+        - /api/v1/op/login/verifyFromTfoa
+        - /api/v1/op/login/verifyFromTfoaPc
+        - /api/v1/op/login/verifyFromTfoaMobile
+        - /api/v1/op/login/getWeaverToken
+        - /swagger-ui/*
+        - /swagger-ui.html
+        - /v3/api-docs/**
+        - /webjars/**
+        - /doc.html
+
+      exclude-statistic-urls: # 不需要统计接口
+        - /static/**
+        - /icon/**
+        - /css/**
+
+  # 请求认证接口配置
+  auth:
+    configs:
+      enable: false
+      verify-url: https://example.com/api/auth/api/v1/authentication?token=   # token 验证接口
+
+ai:
+  answer-api: http://127.0.0.1:8090/v1/chat-messages
+  recommend-list-api: http://127.0.0.1:8090/v1/messages/%s/suggested
+  history-chat-api: http://127.0.0.1:8090/v1/messages
+  conversations-chat-api: http://127.0.0.1:8090/v1/conversations
+  delete-conversations-api: http://127.0.0.1:8090/v1/conversations
+  person-datasets-create-api: http://127.0.0.1:8090/v1/datasets
+  vector-query-api: http://127.0.0.1:8090/v1/datasets/%s/retrieve
+  cnki-vector-query-api: https://maas.cnki.net/maas-gateway/cnkisearch
+  upload-file-api: http://127.0.0.1:8090/v1/files/upload
+  datasets-document-list-api: http://127.0.0.1:8090/v1/datasets/%s/documents
+  datasets-document-segment-api: http://127.0.0.1:8090/v1/datasets/%s/documents/%s/segments
+  datasets-delete-document-api: http://127.0.0.1:8090/v1/datasets/%s/documents/%s
+  datasets-document-indexing-status-api: http://127.0.0.1:8090/v1/datasets/%s/documents/%s/indexing-status
+  rename-conversation-api: http://127.0.0.1:8090/v1/conversations/%s/name
+  stop-conversation-api: http://127.0.0.1:8090/v1/chat-messages/%s/stop
+  chat-net-search-api: http://127.0.0.1:8090/v1/workflows/run
+  data-center-chat-api: http://127.0.0.1:8090/v1/chat-messages
+  new-network-search-api: https://api.bochaai.com/v1/web-search
+  embedding-api: http://127.0.0.1:8001/v1-openai/embeddings
+  slice-api: http://127.0.0.1:8090/v1/workflows/run
+  slice-temp-api: http://127.0.0.1:8000/parse/document
+  embedding-temp-api: http://127.0.0.1:8000/parse/text_embed
+
+
+# api-key
+apikey:
+  # 智能助手
+  common: your_apikey
+  # 智能代码
+  intellcode: your_apikey
+  # ppt大纲
+  pptoutline: your_apikey
+  # 新闻稿
+  newsmanuscript: your_apikey
+  # 智能公文
+  intelldoc: your_apikey
+  # 智能审校
+  intellproofread: your_apikey
+  # 发言稿
+  speechscript: your_apikey
+  # 会议纪要
+  meetingsammary: your_apikey
+  # 数据挖掘处理
+  dm: your_apikey
+  # 智能研报
+  intellreport: your_apikey
+  # 个人知识库
+  customvector: your_apikey
+  # 联网搜索--暂不可用
+  netsearch: your_apikey
+  # 数据中台
+  dataCenter: your_apikey
+  # 推荐列表key
+  recommendList: your_apikey
+  # 意图识别
+  intent: your_apikey
+  # 新联网搜索  --doc没有
+  newNetSearch: your_apikey
+  #向量化k
+  vector: your_apikey
+  #切片
+  chunks: your_apikey
+
+ragflow:
+  login-url: http://127.0.0.1/v1
+  ragflow-url: http://127.0.0.1
+  api-host: http://127.0.0.1
+  #  upload-url: http://127.0.0.1:8000/api/v1/datasets/%s/documents
+  #  parse-url: http://127.0.0.1:8000/api/v1/datasets/%s/chunks
+  #  chunks-url: http://127.0.0.1:8000/api/v1/datasets/%s/documents/%s/chunks
+  #  chunks-status-url: http://127.0.0.1:8000/api/v1/datasets/%s/documents
+  #  delete-url: http://127.0.0.1:8000/api/v1/datasets/%s/documents
+  api-key: your_apikey
+#  dataset-id: 79b40f1015ba11f0838aaefd37d94fab
+
+feign:
+  client:
+    config:
+      kbase-api:
+        url: http://127.0.0.1:30002
+
+datasets:
+  unit-id: your_unit_id
+  dep-id: your_dep_id
+
+integration:
+  rsa:
+    public-key: your_public_key
+    private-key: your_private_key
+  thtf:
+    pc-redirect-url: http://127.0.0.1/km/authorization
+    h5-redirect-url: http://127.0.0.1/km/h5/authorization
+  # 泛微
+  weaver:
+    app-id: your_app_id
+    base-url: https://example.com
+    get-token-url: /api/ec/dev/auth/applytoken
+    register-url: /api/ec/dev/auth/regist
+    process-permissions-url: /api/intelligent/v1/processPermissions
+    route-url: /api/system/appmanage/route
+    user-info-url: /api/hrm/resful/getHrmUserInfoWithPage
+    job-info-url: /api/hrm/resful/getJobtitleInfoWithPage
+    dep-info-url: /api/hrm/resful/getHrmdepartmentWithPage
+    sub-company-info-url: /api/hrm/resful/getHrmsubcompanyWithPage
+
+
+# 必填项
+spring.ai.openai.api-key: you-apikey
+spring.ai.openai.base-url: https://api.deepseek.com
+# 模型选择（示例使用对话模型）
+spring.ai.openai.chat.options.model: deepseek-chat
+
+
+thtf:
+  ldap:
+    server: ldap://example.com:389
+    domain: example.com
+    enable: false
+
+springdoc:
+  swagger-ui:
+    enabled: true
+knife4j:
+  enable: true
+
+file.base.path: /data
+file.temp.path: /data/temp/
+
+# 需要将localhost改成数聚的ip
+krm.api.url: http://127.0.0.1/okmsApi/krm/api/knowledgetype

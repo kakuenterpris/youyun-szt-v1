@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.SysOptLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.SysOptLogEntity">
+            <id property="id" column="ID" jdbcType="BIGINT"/>
+            <result property="resourceId" column="RESOURCE_ID" jdbcType="BIGINT"/>
+            <result property="parentId" column="PARENT_ID" jdbcType="BIGINT"/>
+            <result property="fileType" column="FILE_TYPE" jdbcType="INTEGER"/>
+            <result property="operateType" column="OPERATE_TYPE" jdbcType="VARCHAR"/>
+            <result property="operateContent" column="OPERATE_CONTENT" jdbcType="VARCHAR"/>
+            <result property="createUser" column="CREATE_USER" jdbcType="VARCHAR"/>
+            <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+            <result property="createUserId" column="CREATE_USER_ID" jdbcType="VARCHAR"/>
+            <result property="updateUser" column="UPDATE_USER" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+            <result property="updateUserId" column="UPDATE_USER_ID" jdbcType="VARCHAR"/>
+            <result property="version" column="VERSION" jdbcType="INTEGER"/>
+            <result property="isDeleted" column="IS_DELETED" jdbcType="BIT"/>
+            <result property="guid" column="GUID" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID,RESOURCE_ID,PARENT_ID,
+        FILE_TYPE,OPERATE_TYPE,OPERATE_CONTENT,
+        CREATE_USER,CREATE_TIME,CREATE_USER_ID,
+        UPDATE_USER,UPDATE_TIME,UPDATE_USER_ID,
+        VERSION,IS_DELETED,GUID
+    </sql>
+
+    <select id="getAuditLogs" resultType="com.ustack.chat.dto.LogInfoDTO">
+        (
+            SELECT
+                loginInfor.ID,CREATE_USER as userName,
+                ROLE_NAME,IPADDR as IP,''as timeConsuming,
+                LOGIN_LOCATION as IPOrigin,'登录日志' AS logType,
+                '用户登录' AS content , loginInfor.create_time as creatTime
+            FROM SYS_LOGININFOR loginInfor
+            LEFT JOIN BUS_USER_INFO userInfo ON loginInfor.create_user_id = userInfo.user_id
+            LEFT JOIN SYS_USER_ROLE userRole ON userInfo.ID = userRole.USER_ID
+            LEFT JOIN SYS_ROLE sysRole  ON userRole.ROLE_ID = sysRole.ROLE_ID
+            where 1=1
+            <if test="query != null and query != ''">
+                AND( CREATE_USER like concat('%',#{query},'%')
+                OR ROLE_NAME like concat('%',#{query},'%')
+                OR IPADDR like concat('%',#{query},'%')
+                OR LOGIN_LOCATION like concat('%',#{query},'%')
+                OR '登录日志' like concat('%',#{query},'%')
+                OR '用户登录' like concat('%',#{query},'%')
+                OR loginInfor.create_time like concat('%',#{query},'%'))
+            </if>
+            <if test="type != null and type != ''">
+                AND '登录日志' = #{type}
+            </if>
+            ORDER BY creatTime DESC
+        )
+        UNION
+        (
+            SELECT
+                opt.ID,CREATE_USER as userName,
+                ROLE_NAME ,'' as IP,''as timeConsuming,
+                '' as IPOrigin,'操作日志' as logType,
+                opt.OPERATE_CONTENT as content ,opt.create_time as creatTime
+            FROM SYS_OPT_LOG opt
+            LEFT JOIN BUS_USER_INFO userInfo ON opt.create_user_id = userInfo.user_id
+            LEFT JOIN SYS_USER_ROLE userRole ON userInfo.ID = userRole.USER_ID
+            LEFT JOIN SYS_ROLE sysRole  ON userRole.ROLE_ID = sysRole.ROLE_ID
+            where 1=1
+            <if test="query != null and query != ''">
+                AND (CREATE_USER like concat('%',#{query},'%')
+                OR ROLE_NAME like concat('%',#{query},'%')
+                OR '' like concat('%',#{query},'%')
+                OR '' like concat('%',#{query},'%')
+                OR '操作日志' like concat('%',#{query},'%')
+                OR opt.OPERATE_CONTENT like concat('%',#{query},'%')
+                OR opt.create_time like concat('%',#{query},'%'))
+            </if>
+            <if test="type != null and type != ''">
+                AND '操作日志' = #{type}
+            </if>
+            ORDER BY creatTime DESC
+
+        )
+        ORDER BY creatTime DESC
+    </select>
+</mapper>

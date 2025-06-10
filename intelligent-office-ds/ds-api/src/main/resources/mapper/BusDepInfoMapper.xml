@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.BusDepInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.BusDepInfoEntity">
+            <id property="id" column="id" />
+            <result property="depId" column="dep_id" />
+            <result property="departmentcode" column="departmentcode" />
+            <result property="departmentmark" column="departmentmark" />
+            <result property="departmentname" column="departmentname" />
+            <result property="supdepid" column="supdepid" />
+            <result property="subcompanyid1" column="subcompanyid1" />
+            <result property="canceled" column="canceled" />
+            <result property="created" column="created" />
+            <result property="modified" column="modified" />
+            <result property="createTime" column="create_time" />
+            <result property="isDeleted" column="is_deleted" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,dep_id,departmentcode,departmentmark,departmentname,supdepid,
+        subcompanyid1,canceled,created,modified,create_time,
+        is_deleted
+    </sql>
+</mapper>

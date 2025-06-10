@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.op.mapper.RelUserResourceMapper">
+    <update id="updateDocumentId">
+        update rel_user_resource
+        set document_id          = #{documentId},
+            indexing_status      = #{indexStatus},
+            indexing_status_name = #{indexStatusName}
+        where file_id = #{fileId}
+          and resource_file_id = #{resourceId}
+    </update>
+    <update id="updateIndexStatus">
+        update rel_user_resource
+        set indexing_status = #{indexStatus},
+        indexing_status_name = #{indexStatusName}
+        where file_id = #{fileId} and resource_file_id = #{resourceId}
+    </update>
+
+    <update id="updateProgress">
+        update rel_user_resource
+        set progress = #{progress}
+        where file_id = #{fileId} and resource_file_id = #{resourceId}
+    </update>
+
+    <update id="updateIndexStatusByFolderId">
+        update rel_user_resource
+        set indexing_status = #{indexStatus},
+        indexing_status_name = #{indexStatusName}
+        where file_id in (
+            select file_id from bus_resource_file where folder_id = #{folderId}
+            )
+    </update>
+    <update id="updateIndexStatusByFileIds">
+        update rel_user_resource
+        set indexing_status = #{indexStatus},
+        indexing_status_name = #{indexStatusName}
+        where file_id in
+        <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+            #{fileId}
+        </foreach>
+    </update>
+    <select id="selectUnCompleteIndexing" resultType="com.ustack.emdedding.dto.ResourceDTO">
+        SELECT rur.resource_file_id as resourceId,
+               rur.document_id,
+               rur.file_id,
+               rur.user_id,
+               brm.name AS file_name,
+               brm.size,
+               brm.embedding_config_name,
+               brm.embedding_config_code,
+               brm.file_type,
+               brm.create_user,
+               brm.create_user_id,
+               brm.create_time,
+               bui.dep_num,
+               bui.dep_name,
+               brm.join_query,
+               brm.folder_id,
+               fec.rag_dataset_id
+        FROM rel_user_resource rur
+        LEFT JOIN bus_resource_file brm ON rur.resource_file_id = brm.id
+        left join file_embedding_config fec on fec.config_code =  brm.embedding_config_code
+        left join bus_user_info bui on bui.user_id = rur.user_id
+        WHERE (rur.indexing_status = 'parsing')
+          AND rur.is_deleted = 0 LIMIT 30
+    </select>
+    <select id="getIndexingList" resultType="com.ustack.resource.dto.RelUserResourceDTO">
+        select datasets_id,batch
+        from rel_user_resource
+        where indexing_status != 'completed' and indexing_status != 'error'
+            and datasets_id != '' and batch != '' and is_deleted=0
+        group by datasets_id,batch
+    </select>
+    <select id="selectFileIdListByUserId" resultType="java.util.Map">
+        SELECT DISTINCT
+            brf.file_id
+        FROM
+            bus_resource_file brf
+        WHERE
+            folder_id IN ( SELECT folder_id FROM bus_resource_member brm WHERE brm.member_id = #{userId} AND brm.view_auth = 1 )
+          AND brf.file_id IS NOT NULL
+    </select>
+    <select id="selectFolderIdListByUserId" resultType="java.util.Map">
+        SELECT DISTINCT
+            brf.folder_id
+        FROM
+            bus_resource_file brf
+        WHERE
+            folder_id IN ( SELECT folder_id FROM bus_resource_member brm WHERE brm.member_id = #{userId} AND brm.view_auth = 1 )
+          AND brf.folder_id IS NOT NULL
+        union
+        SELECT DISTINCT
+            brf.id as folder_id
+        FROM
+            bus_resource_folder brf
+        WHERE
+            brf.open_view = 1
+    </select>
+    <select id="getDocumentIdListByFolderId" resultType="java.util.Map">
+        SELECT DISTINCT
+            rur.document_id
+        FROM
+            rel_user_resource rur
+        WHERE
+            file_id IN ( SELECT DISTINCT brf.file_id FROM bus_resource_file brf WHERE brf.folder_id = #{folderId} AND brf.is_deleted = 0 )
+          AND rur.document_id IS NOT NULL
+          AND ( rur.indexing_status != 'parsing' AND rur.indexing_status != 'chunksEmpty' AND rur.indexing_status != 'embeddingError' )
+          AND rur.is_deleted = 0
+    </select>
+</mapper>

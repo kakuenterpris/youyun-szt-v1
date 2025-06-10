@@ -1,0 +1,7 @@
+com.ustack.global.common.feign.FeignConfiguration
+com.ustack.global.common.mybatis.BatchInsertSqlInjector
+com.ustack.global.common.http.clients.OkHttpConfiguration
+com.ustack.global.common.cache.RedisConfig
+com.ustack.global.common.http.WebMvcConfiguration
+com.ustack.global.common.mybatis.MybatisPlusConfig
+com.ustack.global.common.serialize.JacksonConfiguration

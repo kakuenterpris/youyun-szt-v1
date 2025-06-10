@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.ApprovalDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.ApprovalDetailEntity">
+            <id property="id" column="ID" jdbcType="BIGINT"/>
+            <result property="roleId" column="ROLE_ID" jdbcType="VARCHAR"/>
+            <result property="approvalId" column="APPROVAL_ID" jdbcType="VARCHAR"/>
+            <result property="folderOrMenu" column="FOLDER_OR_MENU" jdbcType="VARCHAR"/>
+            <result property="authManage" column="AUTH_MANAGE" jdbcType="CHAR"/>
+            <result property="authType" column="AUTH_TYPE" jdbcType="CHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID,ROLE_ID,APPROVAL_ID,
+        FOLDER_OR_MENU,AUTH_MANAGE,AUTH_TYPE
+    </sql>
+</mapper>

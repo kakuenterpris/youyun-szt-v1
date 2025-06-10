@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.op.mapper.FileAuthMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.op.entity.FileAuthEntity">
+            <id property="id" column="ID" jdbcType="INTEGER"/>
+            <result property="fileId" column="FILE_ID" jdbcType="INTEGER"/>
+            <result property="userId" column="USER_ID" jdbcType="INTEGER"/>
+            <result property="authType" column="AUTH_TYPE" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID,FILE_ID,USER_ID,
+        AUTH_TYPE
+    </sql>
+</mapper>

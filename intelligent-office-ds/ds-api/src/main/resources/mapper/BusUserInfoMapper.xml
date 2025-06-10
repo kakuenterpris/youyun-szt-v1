@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.BusUserInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.BusUserInfoEntity">
+            <id property="id" column="id" />
+            <result property="userId" column="user_id" />
+            <result property="userNum" column="user_num" />
+            <result property="loginId" column="log_in_id" />
+            <result property="userName" column="user_name" />
+            <result property="depNum" column="dep_num" />
+            <result property="depName" column="dep_name" />
+            <result property="postNum" column="post_num" />
+            <result property="post" column="post" />
+            <result property="mobilePhone" column="mobile_phone" />
+            <result property="phone" column="phone" />
+            <result property="email" column="email" />
+            <result property="createTime" column="create_time" />
+            <result property="lastLogInTime" column="last_log_in_time" />
+            <result property="deleted" column="is_deleted" />
+            <result property="secretLevel" column="secret_level" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_id,user_num,log_in_id,user_name,dep_num,
+        dep_name,post_num,post,mobile_phone,phone,
+        email,create_time,last_log_in_time,is_deleted,secret_level
+    </sql>
+    <select id="selectPageByVO" resultType="com.ustack.chat.entity.BusUserInfoEntity">
+        SELECT u.* , r.role_id FROM bus_user_info u
+        LEFT JOIN sys_user_role r ON u.id = r.user_id
+        WHERE u.is_deleted = 0
+        <if test="vo != null">
+            <if test="vo.roleId != null">
+                AND r.role_id=#{vo.roleId}
+            </if>
+            <if test="vo.userName != null">
+                AND u.user_name LIKE CONCAT(CONCAT('%',#{vo.userName}),'%')
+            </if>
+            <if test="vo.loginId != null">
+                AND  u.login_id LIKE CONCAT(CONCAT('%',#{vo.loginId}),'%')
+            </if>
+            <if test="vo.userDepName != null">
+                AND u.dep_name LIKE CONCAT(CONCAT('%',#{vo.userDepName}),'%')
+            </if>
+        </if>
+        ORDER BY u.create_time DESC
+    </select>
+</mapper>

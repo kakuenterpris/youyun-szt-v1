@@ -1,0 +1,92 @@
+# 服务端口
+server.port: 30002
+# 应用名称
+spring.application.name: km-file-api
+# 启动环境
+spring.profiles.active: dev
+
+
+
+# mybatis plus
+mybatis-plus:
+  type-aliases-package: com.ustack.entity
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    jdbc-type-for-null: null
+    #打印 sql
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    call-setters-on-nulls: true
+    typeEnumsPackage: com.ustack.file.enums
+  global-config:
+    default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
+    banner: false
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+#server:
+#  servlet:
+#    context-path: /file-api
+---
+spring:
+  datasource:
+    druid:
+      # 下面为连接池的补充设置，应用到上面所有数据源中
+      # 初始化大小，最小，最大
+      initial-size: 10
+      min-idle: 10
+      max-active: 200
+      # 配置获取连接等待超时的时间
+      max-wait: 60000
+      # 每60秒运行一次空闲连接回收器
+      time-between-eviction-runs-millis: 60000
+      # 配置一个连接在池中最小生存的时间，单位是毫秒
+      min-evictable-idle-time-millis: 300000
+      # 指明连接是否被空闲连接回收器(如果有)进行检验.如果检测失败,则连接将被从池中去除.
+      test-while-idle: true
+      # 建议配置为false。获取连接时执行validationQuery检测连接是否有效，这个配置会降低性能。
+      test-on-borrow: false
+      # 建议配置为false。获取连接时执行validationQuery检测连接是否有效，这个配置会降低性能。
+      test-on-return: false
+      # 打开PSCache，并且指定每个连接上PSCache的大小
+      pool-prepared-statements: true
+      # 验证连接是否可用，使用的SQL语句
+      validation-query: SELECT 1
+      #   配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall用于防火墙
+      max-pool-prepared-statement-per-connection-size: 20
+      # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
+      connect-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      # 合并多个DruidDataSource的监控数据
+      use-global-data-source-stat: true
+      # 监控过滤器  可视化页面地址:  http://localhost:8085/druid/login.html
+      webStatFilter:
+        #  是否开启监控
+        enabled: false
+      # 提供监控信息展示的html页面;提供监控信息的JSON API
+      statViewServlet:
+        enabled: false
+        # 设置白名单，不填则允许所有访问
+        allow:
+        #  监控路径
+        url-pattern: /management/druid/*
+        # 控制台管理用户名和密码
+        login-username: admin
+        login-password: your_password
+      # 慢sql记录
+      filter:
+        stat:
+          enabled: true # 开启DruidDataSource状态监控
+          log-slow-sql: true # 开启慢SQL记录功能,启用后如果遇到执行很慢的 SQL，便会输出到日志中，
+          slow-sql-millis: 5000  # 默认3000毫秒，这里超过5s，就是慢，记录到日志
+          merge-sql: true
+        # 防御SQL注入
+        wall:
+          config:
+            multi-statement-allow: true
+
+  # 限制上传文件最大不超过300MB
+  servlet:
+    multipart:
+      max-file-size: 300MB
+      max-request-size: 300MB

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.SysRuleExtractMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.SysRuleExtractEntity">
+            <id property="id" column="ID" jdbcType="BIGINT"/>
+            <result property="name" column="NAME" jdbcType="VARCHAR"/>
+            <result property="code" column="CODE" jdbcType="VARCHAR"/>
+            <result property="creator" column="CREATOR" jdbcType="VARCHAR"/>
+            <result property="createTime" column="CREATE_TIME" jdbcType="DATE"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID,NAME,CODE,CREATOR,CREATE_TIME
+    </sql>
+
+    <select id="countRuleTagByRuleExtractId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM SYS_RULE_TAG
+        WHERE RULE_EXTRACT_ID = #{ruleExtractId}
+    </select>
+
+</mapper>

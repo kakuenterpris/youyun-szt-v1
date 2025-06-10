@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.SysRuleTagMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.SysRuleTagEntity">
+            <id property="id" column="ID" jdbcType="BIGINT"/>
+            <result property="tagName" column="TAG_NAME" jdbcType="VARCHAR"/>
+            <result property="tagCode" column="TAG_CODE" jdbcType="VARCHAR"/>
+            <result property="tagType" column="TAG_TYPE" jdbcType="VARCHAR"/>
+            <result property="tagLength" column="TAG_LENGTH" jdbcType="INTEGER"/>
+            <result property="tagRemark" column="TAG_REMARK" jdbcType="VARCHAR"/>
+            <result property="createTime" column="CREATE_TIME" jdbcType="DATE"/>
+            <result property="creator" column="CREATOR" jdbcType="VARCHAR"/>
+            <result property="ruleExtractId" column="RULE_EXTRACT_ID" jdbcType="BIGINT"/>
+        <result property="sort" column="SORT" jdbcType="INTEGER"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="DATE"/>
+        <result property="updateUser" column="UPDATE_USER" jdbcType="VARCHAR"/>
+        <result property="updateUserId" column="UPDATE_USER_ID" jdbcType="VARCHAR"/>
+        <result property="mustFill" column="MUST_FILL" jdbcType="BIT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID,TAG_NAME,TAG_CODE,TAG_TYPE,TAG_LENGTH,TAG_REMARK,
+        CREATE_TIME,CREATOR,RULE_EXTRACT_ID,SORT,UPDATE_TIME,UPDATE_USER,UPDATE_USER_ID
+    </sql>
+</mapper>

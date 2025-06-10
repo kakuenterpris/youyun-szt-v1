@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.BusUserMeetingContentMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.BusUserMeetingContentEntity">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="audioId" column="audio_id" jdbcType="INTEGER"/>
+            <result property="userId" column="user_id" jdbcType="INTEGER"/>
+            <result property="fileId" column="file_id" jdbcType="VARCHAR"/>
+            <result property="content" column="content" jdbcType="VARCHAR"/>
+            <result property="createUser" column="create_user" jdbcType="VARCHAR"/>
+            <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateUser" column="update_user" jdbcType="VARCHAR"/>
+            <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="version" column="version" jdbcType="INTEGER"/>
+            <result property="isDeleted" column="is_deleted" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,user_id,audio_id,file_id,
+        content,create_user,create_user_id,
+        create_time,update_user,update_user_id,
+        update_time,version,is_deleted
+    </sql>
+
+    <delete id="completelyDelete" >
+        delete
+        from bus_user_meeting_content
+        where `id` = #{id}
+    </delete>
+
+    <update id="restore" parameterType="java.lang.Long">
+        UPDATE bus_user_meeting_content
+        SET is_deleted = false
+        WHERE id = #{id}
+    </update>
+
+    <select id="getByOrderId" resultType="com.ustack.chat.entity.BusUserMeetingContentEntity">
+        select *
+        from bus_user_meeting_content
+        where order_id = #{orderId} and is_deleted = 0;
+    </select>
+</mapper>

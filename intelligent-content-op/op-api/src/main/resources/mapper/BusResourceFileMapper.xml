@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.op.mapper.BusResourceFileMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.op.entity.BusResourceFileEntity">
+            <id property="id" column="id" />
+            <result property="guid" column="guid" />
+            <result property="name" column="name" />
+            <result property="folderId" column="folder_id" />
+            <result property="fileId" column="file_id" />
+            <result property="size" column="size" />
+            <result property="fileType" column="file_type" />
+            <result property="sort" column="sort" />
+            <result property="embeddingConfigCode" column="embedding_config_code" />
+            <result property="embeddingConfigName" column="embedding_config_name" />
+            <result property="fileYear" column="file_year" />
+            <result property="joinQuery" column="join_query" />
+            <result property="previewFileId" column="preview_file_id" />
+            <result property="createUser" column="create_user" />
+            <result property="createUserId" column="create_user_id" />
+            <result property="createTime" column="create_time" />
+            <result property="updateUser" column="update_user" />
+            <result property="updateUserId" column="update_user_id" />
+            <result property="updateTime" column="update_time" />
+            <result property="version" column="version" />
+            <result property="deleted" column="is_deleted" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,guid,name,folder_id,file_id,size,
+        file_type,sort,embedding_config_code,embedding_config_name,file_year,
+        join_query,preview_file_id,create_user,create_user_id,create_time,
+        update_user,update_user_id,update_time,version,is_deleted
+
+--         id,guid,name,parent_id,parent_guid,sort,
+--         embedding_config_code,embedding_config_name,open_view,can_add_sub,create_user,
+--         create_user_id,create_time,update_user,update_user_id,update_time,
+--         version,is_deleted
+    </sql>
+    <select id="selectListForLeft" resultType="com.ustack.resource.dto.BusResourceManageListDTO">
+        SELECT *
+        from
+        (
+        <if test="folderIdList != null and folderIdList.size > 0">
+            select id,guid,name,
+                   parent_id,parent_guid,sort,
+                   embedding_config_code,embedding_config_name,open_view,
+                   can_add_sub,create_user,create_user_id,create_time,update_user,update_user_id,update_time,
+                   version,is_deleted,1 as resource_type,
+                   parent_id as folder_id,'' as file_id,0 as size ,'' as scopeRule,
+                   '' as file_type,0 as file_year,false as join_query,
+                   '' as preview_file_id,'' as indexingStatusName,'' as indexingStatus,'' as level,
+                   NULL as progress
+            from bus_resource_folder
+            where parent_id=#{parentId}
+
+            <if test="notDelete == true">
+                AND is_deleted = 0
+            </if>
+
+            <if test="name != null and name != ''">
+                and "name" like concat('%', #{name}, '%')
+            </if>
+            and id IN
+            <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
+                #{folderId}
+            </foreach>
+        </if>
+        <if test="(folderIdList != null and folderIdList.size > 0)and((fileIdList != null and fileIdList.size > 0 and viewFile == false) or (viewFile == true))">
+            union
+        </if>
+        <if test="fileIdList != null and fileIdList.size > 0 and viewFile == false">
+            select
+            a.id,a.guid,a.name,
+            a.folder_id as parent_id,'' as parent_guid,a.sort,
+            a.embedding_config_code,a.embedding_config_name,false as open_view,
+            false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
+            a.version,a.is_deleted,2 as resource_type,
+            a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
+            a.file_type,a.file_year,a.join_query,
+            a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,a.level as level,
+            b.progress
+            FROM
+            bus_resource_file a
+            LEFT JOIN rel_user_resource as b ON a.id = b.resource_file_id
+            WHERE
+            a.folder_id = #{parentId}
+            <if test="fileIdList != null and fileIdList.size > 0">
+                and a.id IN
+                <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+                    #{fileId}
+                </foreach>
+            </if>
+        </if>
+        <if test="viewFile == true">
+            select
+                a.id,a.guid,a.name,
+                a.folder_id as parent_id,'' as parent_guid,a.sort,
+                a.embedding_config_code,a.embedding_config_name,false as open_view,
+                false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
+                a.version,a.is_deleted,2 as resource_type,
+                a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
+                a.file_type,a.file_year,a.join_query,
+                a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,a.level as level,
+                b.progress
+            FROM
+            bus_resource_file a
+            LEFT JOIN rel_user_resource as b ON a.id = b.resource_file_id
+            WHERE
+            a.folder_id = #{parentId}
+
+            <if test="notDelete == true">
+                AND a.is_deleted = 0
+            </if>
+
+            <if test="name != null and name != ''">
+                and a."name" like concat('%', #{name}, '%')
+            </if>
+            <if test="fileYearList != null and fileYearList.size > 0">
+                and a.file_year IN
+                <foreach collection="fileYearList" item="fileYear" open="(" separator="," close=")">
+                    #{fileYear}
+                </foreach>
+            </if>
+            <if test="embeddingConfigNameList != null and embeddingConfigNameList.size > 0">
+                and a.embedding_config_name IN
+                <foreach collection="embeddingConfigNameList" item="embeddingConfigName" open="(" separator="," close=")">
+                    #{embeddingConfigName}
+                </foreach>
+            </if>
+        </if>
+        ) as subquery
+        order by subquery.resource_type,
+        <if test="timeSort != ''and timeSort != null">
+            subquery.update_time ${timeSort},
+        </if>
+        <if test="nameSort != ''and nameSort != null">
+            subquery.name ${nameSort},
+        </if>
+        subquery.sort
+        LIMIT #{begin}, #{end}
+    </select>
+
+    <select id="selectCountForLeft" resultType="java.lang.Integer">
+        SELECT count(*) from
+        (
+        <if test="folderIdList != null and folderIdList.size > 0">
+            select id,guid,name,
+            parent_id,parent_guid,sort,
+            embedding_config_code,embedding_config_name,open_view,
+            can_add_sub,create_user,create_user_id,create_time,update_user,update_user_id,update_time,
+            version,is_deleted,1 as resource_type,
+            parent_id as folder_id,'' as file_id,0 as size ,'' as scopeRule,
+            '' as file_type,0 as file_year,false as join_query,
+            '' as preview_file_id,'' as indexingStatusName,'' as indexingStatus,'' as level,
+            NULL as progress
+            from bus_resource_folder
+            where parent_id=#{parentId}
+
+            <if test="notDelete == true">
+                AND is_deleted = 0
+            </if>
+
+            <if test="name != null and name != ''">
+                and "name" like concat('%', #{name}, '%')
+            </if>
+            and id IN
+            <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
+                #{folderId}
+            </foreach>
+        </if>
+        <if test="(folderIdList != null and folderIdList.size > 0)and((fileIdList != null and fileIdList.size > 0 and viewFile == false) or (viewFile == true))">
+        union
+        </if>
+        <if test="fileIdList != null and fileIdList.size > 0 and viewFile == false">
+            select
+            a.id,a.guid,a.name,
+            a.folder_id as parent_id,'' as parent_guid,a.sort,
+            a.embedding_config_code,a.embedding_config_name,false as open_view,
+            false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
+            a.version,a.is_deleted,2 as resource_type,
+            a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
+            a.file_type,a.file_year,a.join_query,
+            a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,a.level as level,
+            b.progress
+            FROM
+            bus_resource_file a
+            LEFT JOIN rel_user_resource as b ON a.id = b.resource_file_id
+            WHERE
+            a.folder_id = #{parentId}
+            <if test="fileIdList != null and fileIdList.size > 0">
+                and a.id IN
+                <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+                    #{fileId}
+                </foreach>
+            </if>
+        </if>
+        <if test="viewFile == true">
+            select
+            a.id,a.guid,a.name,
+            a.folder_id as parent_id,'' as parent_guid,a.sort,
+            a.embedding_config_code,a.embedding_config_name,false as open_view,
+            false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
+            a.version,a.is_deleted,2 as resource_type,
+            a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
+            a.file_type,a.file_year,a.join_query,
+            a.preview_file_id,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,a.level as level,
+            b.progress
+            FROM
+            bus_resource_file a
+            LEFT JOIN rel_user_resource as b ON a.id = b.resource_file_id
+            WHERE
+            a.folder_id = #{parentId}
+
+            <if test="notDelete == true">
+                AND a.is_deleted = 0
+            </if>
+
+            <if test="name != null and name != ''">
+                and a."name" like concat('%', #{name}, '%')
+            </if>
+            <if test="fileYearList != null and fileYearList.size > 0">
+                and a.file_year IN
+                <foreach collection="fileYearList" item="fileYear" open="(" separator="," close=")">
+                    #{fileYear}
+                </foreach>
+            </if>
+            <if test="embeddingConfigNameList != null and embeddingConfigNameList.size > 0">
+                and a.embedding_config_name IN
+                <foreach collection="embeddingConfigNameList" item="embeddingConfigName" open="(" separator="," close=")">
+                    #{embeddingConfigName}
+                </foreach>
+            </if>
+        </if>
+        ) as subquery
+    </select>
+
+
+    <!--    搜索-->
+    <select id="selectFileList" resultType="com.ustack.resource.dto.BusResourceManageListDTO">
+        SELECT *
+        from
+        (
+            select
+            a.id,a.guid,a.name,
+            a.folder_id as parent_id,'' as parent_guid,a.sort,
+            a.embedding_config_code,a.embedding_config_name,false as open_view,
+            false as can_add_sub,a.create_user,a.create_user_id,a.create_time,a.update_user,a.update_user_id,a.update_time,
+            a.version,a.is_deleted,2 as resource_type,
+            a.folder_id,a.file_id,a.size,a.scope_rule as scopeRule,
+            a.file_type,a.file_year,a.join_query,
+            a.preview_file_id,a.level,b.indexing_status_name indexingStatusName,b.indexing_status indexingStatus,b.progress
+            FROM
+            bus_resource_file a
+            LEFT JOIN rel_user_resource b ON a.id = b.resource_file_id
+            WHERE 1=1
+            <if test="folderIdList != null and folderIdList.size > 0">
+                and (a.folder_id in
+                <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
+                    #{folderId}
+                </foreach>
+                <if test="!(fileIdList != null and fileIdList.size > 0)">
+                    )
+                </if>
+            </if>
+            <if test="fileIdList != null and fileIdList.size > 0">
+                <if test="folderIdList != null and folderIdList.size > 0">
+                    or
+                </if>
+                <if test="!(folderIdList != null and folderIdList.size > 0)">
+                    and(
+                </if>
+                a.ID in
+                    <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+                        #{fileId}
+                    </foreach>
+                )
+            </if>
+
+            <if test="notDelete == true">
+                AND a.is_deleted = 0
+            </if>
+            <if test="indexingStatus != null">
+                AND b.indexing_status = #{indexingStatus}
+            </if>
+            <if test="embeddingStatus != null and embeddingStatus != ''">
+                AND b.embed_status = #{embeddingStatus}
+            </if>
+            <if test="level != null and level != ''">
+                and a.level= #{level}
+            </if>
+            <if test="name != null and name != ''">
+                and a.name like concat('%', #{name}, '%')
+            </if>
+            <if test="fileYearList != null and fileYearList.size > 0">
+                and a.file_year IN
+                <foreach collection="fileYearList" item="fileYear" open="(" separator="," close=")">
+                    #{fileYear}
+                </foreach>
+            </if>
+            <if test="startTime != null ">
+                and a.UPDATE_TIME >= TO_DATE(#{startTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="endTime != null ">
+                and a.UPDATE_TIME &lt; TO_DATE(#{endTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="embeddingConfigNameList != null and embeddingConfigNameList.size > 0">
+                and a.embedding_config_name IN
+                <foreach collection="embeddingConfigNameList" item="embeddingConfigName" open="(" separator="," close=")">
+                    #{embeddingConfigName}
+                </foreach>
+            </if>
+        ) as subquery
+        order by subquery.resource_type,
+        <if test="timeSort != ''and timeSort != null">
+            subquery.update_time ${timeSort},
+        </if>
+        <if test="nameSort != ''and nameSort != null">
+            subquery.name ${nameSort},
+        </if>
+        subquery.sort
+        LIMIT #{begin}, #{end}
+    </select>
+
+    <select id="selectFileListCount" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM bus_resource_file a
+        LEFT JOIN rel_user_resource b
+            ON a.id = b.resource_file_id
+        WHERE 1=1
+        <if test="folderIdList != null and folderIdList.size > 0">
+            and (a.folder_id in
+            <foreach collection="folderIdList" item="folderId" open="(" separator="," close=")">
+                #{folderId}
+            </foreach>
+            <if test="!(fileIdList != null and fileIdList.size > 0)">
+                )
+            </if>
+        </if>
+        <if test="fileIdList != null and fileIdList.size > 0">
+            <if test="folderIdList != null and folderIdList.size > 0">
+                or
+            </if>
+            <if test="!(folderIdList != null and folderIdList.size > 0)">
+                and(
+            </if>
+            a.ID in
+            <foreach collection="fileIdList" item="fileId" open="(" separator="," close=")">
+                #{fileId}
+            </foreach>
+            )
+        </if>
+
+        <if test="notDelete == true">
+            AND a.is_deleted = 0
+        </if>
+        <if test="indexingStatus != null">
+            AND b.indexing_status = #{indexingStatus}
+        </if>
+        <if test="embeddingStatus != null and embeddingStatus != ''">
+            AND b.embed_status = #{embeddingStatus}
+        </if>
+        <if test="level != null and level != ''">
+            and a.level= #{level}
+        </if>
+        <if test="name != null and name != ''">
+            and a.name like concat('%', #{name}, '%')
+        </if>
+        <if test="fileYearList != null and fileYearList.size > 0">
+            and a.file_year IN
+            <foreach collection="fileYearList" item="fileYear" open="(" separator="," close=")">
+                #{fileYear}
+            </foreach>
+        </if>
+        <if test="startTime != null ">
+            and a.UPDATE_TIME >= TO_DATE(#{startTime}, 'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="endTime != null ">
+            and a.UPDATE_TIME &lt; TO_DATE(#{endTime}, 'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="embeddingConfigNameList != null and embeddingConfigNameList.size > 0">
+            and a.embedding_config_name IN
+            <foreach collection="embeddingConfigNameList" item="embeddingConfigName" open="(" separator="," close=")">
+                #{embeddingConfigName}
+            </foreach>
+        </if>
+    </select>
+
+
+    <select id="selectFileByIds" resultType="com.ustack.op.entity.BusResourceFileEntity">
+        select
+        file_id, name, level
+        FROM
+        bus_resource_file
+        WHERE 1=1
+        and file_id in
+        <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
+            #{fileId}
+        </foreach>
+    </select>
+</mapper>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.BusUserMeetingAudioMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.BusUserMeetingAudioEntity">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="userId" column="user_id" jdbcType="INTEGER"/>
+            <result property="fileId" column="file_id" jdbcType="VARCHAR"/>
+            <result property="size" column="size" jdbcType="VARCHAR"/>
+            <result property="sort" column="sort" jdbcType="INTEGER"/>
+            <result property="fileType" column="file_type" jdbcType="VARCHAR"/>
+            <result property="fileOriginName" column="file_origin_name" jdbcType="VARCHAR"/>
+            <result property="createUser" column="create_user" jdbcType="VARCHAR"/>
+            <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateUser" column="update_user" jdbcType="VARCHAR"/>
+            <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="version" column="version" jdbcType="INTEGER"/>
+            <result property="isDeleted" column="is_deleted" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_id,file_id,
+        size,sort,file_type,file_origin_name,
+        create_user,create_user_id,create_time,
+        update_user,update_user_id,update_time,
+        version,is_deleted
+    </sql>
+
+    <select id="getAudioList" resultType="com.ustack.meeting.dto.UserMeetingAudioContentDTO">
+        SELECT a.*,
+        b.id as contentId,
+        b.real_duration as realDuration,
+        b.audio_id as audioId
+        FROM bus_user_meeting_audio a
+        LEFT JOIN bus_user_meeting_content b ON a.user_id = b.user_id
+        and a.file_id = b.file_id
+        WHERE a.is_deleted = 0
+        AND b.is_deleted = 0
+        AND a.user_id = #{userId}
+        <if test="queryParam != null and queryParam != ''">
+            and
+            ( a.file_origin_name like concat('%',#{queryParam},'%')
+            or
+            b.content like concat('%',#{queryParam},'%')
+            )
+        </if>
+        order by a.update_time desc
+        limit #{start},#{size}
+    </select>
+
+    <select id="getAudioRecycleList" parameterType="java.lang.String" resultType="com.ustack.meeting.dto.UserMeetingAudioContentDTO">
+        SELECT a.*,
+               b.content,
+               b.id            as contentId,
+               b.real_duration as realDuration,
+               b.audio_id      as audioId
+        FROM bus_user_meeting_audio a
+                 LEFT JOIN bus_user_meeting_content b ON a.user_id = b.user_id
+            and a.file_id = b.file_id
+        WHERE a.is_deleted = 1
+          AND b.is_deleted = 1
+          AND a.user_id = #{userId}
+        <if test="queryParam != null and queryParam != ''">
+            and
+            ( a.file_origin_name like concat('%',#{queryParam},'%')
+            or
+            b.content like concat('%',#{queryParam},'%')
+            )
+        </if>
+        order by a.update_time desc
+        limit #{start},#{size}
+    </select>
+
+    <select id="getEntity" parameterType="java.lang.Long" resultType="com.ustack.meeting.dto.UserMeetingAudioContentDTO">
+        SELECT a.*,
+               b.content,
+               b.id            as contentId,
+               b.real_duration as realDuration,
+               b.audio_id      as audioId
+        FROM bus_user_meeting_audio a
+                 LEFT JOIN bus_user_meeting_content b ON a.user_id = b.user_id
+            and a.file_id = b.file_id and a.id = b.audio_id and b.is_deleted = 0
+        WHERE a.id = #{id} and a.is_deleted = 0
+    </select>
+
+    <select id="getDeletedEntity" resultType="com.ustack.meeting.dto.UserMeetingAudioContentDTO">
+        SELECT a.*,
+               b.content,
+               b.id            as contentId,
+               b.real_duration as realDuration,
+               b.audio_id      as audioId
+        FROM bus_user_meeting_audio a
+                 LEFT JOIN bus_user_meeting_content b ON a.user_id = b.user_id
+            and a.file_id = b.file_id and a.id = b.audio_id and b.is_deleted = 1
+        WHERE a.id = #{id} and a.is_deleted = 1
+    </select>
+
+    <delete id="completelyDelete">
+        delete
+        from bus_user_meeting_audio
+        where id = #{id}
+    </delete>
+
+    <delete id="clearRecycle" parameterType="java.lang.String">
+        DELETE
+        bus_user_meeting_audio,bus_user_meeting_content
+        FROM
+            bus_user_meeting_audio
+            JOIN bus_user_meeting_content ON bus_user_meeting_audio.id = bus_user_meeting_content.audio_id
+        WHERE
+	        bus_user_meeting_audio.user_id = #{userId}
+	        and bus_user_meeting_audio.is_deleted = 1
+    </delete>
+
+    <update id="restore" parameterType="java.lang.Long">
+        UPDATE bus_user_meeting_audio
+        SET is_deleted = false
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateByIsTrans" parameterType="java.lang.Long">
+        UPDATE bus_user_meeting_audio
+        SET is_trans = null
+        WHERE id = #{id}
+    </update>
+
+    <select id="getByOrderId" resultType="com.ustack.chat.entity.BusUserMeetingAudioEntity">
+        SELECT *
+        FROM bus_user_meeting_audio
+        WHERE order_id = #{orderId} and is_deleted = 0
+    </select>
+
+    <select id="getByFileId" resultType="com.ustack.chat.entity.BusUserMeetingAudioEntity">
+        SELECT *
+        FROM bus_user_meeting_audio
+        WHERE file_id = #{fileId}
+          and user_id = #{userId}
+          and is_deleted = 0
+    </select>
+</mapper>

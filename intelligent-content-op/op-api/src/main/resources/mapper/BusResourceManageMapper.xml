@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.op.mapper.BusResourceManageMapper">
+
+
+    <select id="selectListByCondition" resultType="com.ustack.resource.dto.BusResourceManageDTO">
+        SELECT
+        a.*,a.is_fixed as fixed,
+        b.indexing_status_name indexingStatusName,
+        b.indexing_status indexingStatus
+        FROM
+        bus_resource_manage a
+        LEFT JOIN rel_user_resource b ON a.id = b.resource_id
+        WHERE
+        a.parent_id = #{parentId}
+        AND a.is_deleted = 0
+        <if test="category != null and category != '' and category=='个人'">
+            AND a.create_user_id = #{userId}
+        </if>
+        <if test="name != null and name != ''">
+            and a.`name` like concat('%', #{name}, '%')
+        </if>
+        <if test="fileYearList != null and fileYearList.size > 0">
+            and a.file_year IN
+            <foreach collection="fileYearList" item="fileYear" open="(" separator="," close=")">
+                #{fileYear}
+            </foreach>
+        </if>
+        <if test="embeddingConfigNameList != null and embeddingConfigNameList.size > 0">
+            and a.embedding_config_name IN
+            <foreach collection="embeddingConfigNameList" item="embeddingConfigName" open="(" separator="," close=")">
+                #{embeddingConfigName}
+            </foreach>
+        </if>
+        <if test="authDepNumList != null and authDepNumList.size > 0">
+            and a.dep_num IN
+            <foreach collection="authDepNumList" item="authDepNum" open="(" separator="," close=")">
+                #{authDepNum}
+            </foreach>
+        </if>
+        order by a.resource_type,a.sort, a.create_time desc
+        LIMIT #{begin}, #{end}
+    </select>
+    <select id="selectCountByCondition" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        bus_resource_manage a
+        WHERE
+        a.parent_id = #{parentId}
+        AND a.is_deleted = 0
+        <if test="category != null and category != '' and category=='个人'">
+            AND a.create_user_id = #{userId}
+        </if>
+        <if test="name != null and name != ''">
+            and a.`name` like concat('%', #{name}, '%')
+        </if>
+        <if test="fileYearList != null and fileYearList.size > 0">
+            and a.file_year IN
+            <foreach collection="fileYearList" item="fileYear" open="(" separator="," close=")">
+                #{fileYear}
+            </foreach>
+        </if>
+        <if test="embeddingConfigNameList != null and embeddingConfigNameList.size > 0">
+            and a.embedding_config_name IN
+            <foreach collection="embeddingConfigNameList" item="embeddingConfigName" open="(" separator="," close=")">
+                #{embeddingConfigName}
+            </foreach>
+        </if>
+        <if test="authDepNumList != null and authDepNumList.size > 0">
+            and a.dep_num IN
+            <foreach collection="authDepNumList" item="authDepNum" open="(" separator="," close=")">
+                #{authDepNum}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectListByUser" resultType="com.ustack.resource.dto.BusResourceManageDTO" parameterType="java.lang.String">
+        SELECT a.*,
+               b.indexing_status_name indexingStatusName,
+               b.indexing_status      indexingStatus
+        FROM bus_resource_manage a
+                 LEFT JOIN rel_user_resource b ON a.id = b.resource_id
+        WHERE a.create_user_id = #{userId}
+          AND a.resource_type = 1
+          AND a.is_fixed = 0
+          AND a.category='个人'
+          AND a.is_deleted = 0
+        order by a.sort
+    </select>
+</mapper>

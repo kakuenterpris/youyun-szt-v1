@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.op.mapper.KrmDepartmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.op.entity.KrmDepartmentEntity">
+        <result property="id" column="ID"/>
+        <result property="code" column="CODE"/>
+        <result property="departmentId" column="DEPARTMENT_ID"/>
+        <result property="deptId" column="DEPT_ID"/>
+        <result property="description" column="DESCRIPTION"/>
+        <result property="enabled" column="ENABLED"/>
+        <result property="isSub" column="IS_SUB"/>
+        <result property="level" column="LEVEL"/>
+        <result property="mappingCode" column="MAPPING_CODE"/>
+        <result property="name" column="NAME"/>
+        <result property="orderNum" column="ORDER_NUM"/>
+        <result property="pId" column="P_ID"/>
+        <result property="sysId" column="SYS_ID"/>
+        <result property="positionCode" column="POSITION_CODE"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID
+        ,CODE,DEPARTMENT_ID,DEPT_ID,DESCRIPTION,ENABLED,
+        IS_SUB,LEVEL,MAPPING_CODE,NAME,ORDER_NUM,
+        P_ID,SYS_ID,POSITION_CODE
+    </sql>
+
+</mapper>

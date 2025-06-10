@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.RelUserResourceMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.RelUserResourceEntity">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="resourceId" column="resource_id" jdbcType="INTEGER"/>
+            <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,resource_id,user_name
+    </sql>
+    <select id="getIndexingList" resultType="com.ustack.resource.dto.RelUserResourceDTO">
+        select datasets_id,batch
+        from rel_user_resource
+        where indexing_status != 'completed' and indexing_status != 'error'
+            and datasets_id != '' and batch != '' and is_deleted=0
+        group by datasets_id,batch
+    </select>
+</mapper>

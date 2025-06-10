@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.PhrasesUseLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.PhrasesUseLogEntity">
+            <id property="id" column="id" />
+            <result property="phraseId" column="phrase_id" />
+            <result property="source" column="source" />
+            <result property="useTime" column="use_time" />
+            <result property="createUser" column="create_user" />
+            <result property="createUserId" column="create_user_id" />
+            <result property="createTime" column="create_time" />
+            <result property="updateUser" column="update_user" />
+            <result property="updateUserId" column="update_user_id" />
+            <result property="updateTime" column="update_time" />
+            <result property="version" column="version" />
+            <result property="isDeleted" column="is_deleted" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,phrase_id,source,use_time,create_user,create_user_id,
+        create_time,update_user,update_user_id,update_time,version,
+        is_deleted
+    </sql>
+</mapper>

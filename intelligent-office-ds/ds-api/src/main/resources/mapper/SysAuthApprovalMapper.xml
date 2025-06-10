@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ustack.chat.mapper.SysAuthApprovalMapper">
+
+    <resultMap id="BaseResultMap" type="com.ustack.chat.entity.SysAuthApprovalEntity">
+            <result property="id" column="ID" jdbcType="CHAR"/>
+            <result property="role" column="ROLE" jdbcType="CHAR"/>
+            <result property="type" column="TYPE" jdbcType="CHAR"/>
+            <result property="authColl" column="AUTH_COLL" jdbcType="CHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID,ROLE,TYPE,
+        AUTH_COLL
+    </sql>
+</mapper>

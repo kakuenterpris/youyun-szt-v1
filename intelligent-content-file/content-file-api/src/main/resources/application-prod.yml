@@ -1,0 +1,74 @@
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    dynamic:
+      primary: primary
+      strict: false
+      datasource:
+        primary:
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          url: jdbc:mysql://10.0.254.180:3306/intelligent_content?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&autoReconnect=true&serverTimezone=Asia/Shanghai
+          username: root
+          password: rootlocal
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 10.0.254.180:8848
+        # gateway 与对应的后端服务应该在相同的namespace下
+        namespace: your_nacos_namespace
+        username: nacos
+        password: nacos
+      config:
+        server-addr: 10.0.254.180:8848
+        file-extension: yaml
+        namespace: your_nacos_namespace
+        username: nacos
+        password: nacos
+  data:
+    redis:
+      host: 10.0.254.180
+      port: 6379
+      database: 0
+      timeout: 1800s # 使用时间格式化
+      password: szt-redis
+      lettuce:
+        pool:
+          max-active: 20  # 最大连接数
+          max-wait: -1    # 最大阻塞等待时间(负数表示没限制)
+          max-idle: 5     # 最大空闲
+          min-idle: 0     # 最小空闲
+  main:
+    allow-bean-definition-overriding: true
+    jackson:
+      date-format: yyyy/MM/dd HH:mm:ss
+      time-zone: GMT+8
+
+# 登录token拦截
+platform:
+  interceptor:
+    configs:
+      exclude-login-urls:  # 非不需要登录接口
+#        - /api/v1/demo/**
+#        - /api/v1/file/**
+
+      exclude-statistic-urls: # 不需要统计接口
+        - /static/**
+        - /icon/**
+        - /css/**
+  # 请求token认证接口配置
+  auth:
+    configs:
+      enable: false
+      verify-url: https://example.com/api/auth/api/v1/authentication?token=   # token 验证接口
+
+# 必填项
+spring.ai.openai.api-key: you-apikey
+spring.ai.openai.base-url: https://api.deepseek.com
+# 模型选择（示例使用对话模型）
+spring.ai.openai.chat.options.model: deepseek-chat
+file.base.path: /data
+file.temp.path: /data/temp/
+
+youyun.doc.apikey: your_apikey
+youyun.doc.create: http://127.0.0.1:8090/v1/datasets/%s/document/create-by-file   # datasetsId
+youyun.doc.delete: http://127.0.0.1:8090/v1/datasets/%s/documents/%s

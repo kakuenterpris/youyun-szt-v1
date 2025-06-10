@@ -1,0 +1,65 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 10.0.254.180:8848
+        # gateway 与对应的后端服务应该在相同的namespace下
+        namespace: your_nacos_namespace
+        username: nacos
+        password: nacos
+        config:
+          server-addr: 10.0.254.180:8848
+          file-extension: yaml
+          namespace: your_nacos_namespace
+          username: nacos
+          password: nacos
+  main:
+    allow-bean-definition-overriding: true
+    jackson:
+      date-format: yyyy/MM/dd HH:mm:ss
+      time-zone: GMT+8
+
+kbase:
+  template:
+    #    unicodeSupported: true #默认值：false
+    #    redMarkable: true #默认值：false
+    redMarkedPrefix: "<font color='red'>" #默认值：""
+    redMarkedSuffix: "</font>" #默认值：""
+  #    maxCountPerFetch: 20 #默认值：100
+  #    maxCountPerGroup: 10 #默认值：20
+  dynamic-datasource:
+    enabled: true
+    default-key: CDAP
+    druid-router:
+      - key: CDAP
+        jdbc-url: jdbc:kbase://127.0.0.1:4567
+        jdbc-username: your_kbase_username
+        jdbc-password: your_kbase_password
+        max-active: 1000
+        min-idle: 30
+        initial-size: 20
+        connection-error-retry-attempts: 2
+        break-after-acquire-failure: true
+        max-wait: 10000
+        keep-alive: true
+
+# 登录token拦截
+platform:
+  interceptor:
+    configs:
+      exclude-login-urls: # 非不需要登录接口
+        - /api/v1/kbase/insert
+        - /api/v1/kbase/insertCompany
+        - /api/v1/kbase/insertDepartment
+        - /api/v1/kbase/insertPersonal
+
+kbaseDataSource:
+  ip: 127.0.0.1
+  username: your_kbase_username
+  password: your_kbase_password
+
+springdoc:
+  swagger-ui:
+  enabled: false
+  knife4j:
+    enable: false

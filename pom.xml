@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.2</version>
+    </parent>
+
+    <groupId>com.ustack</groupId>
+    <artifactId>intelligent-office-platform</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>intelligent-office-platform</name>
+    <description>intelligent-office-platform</description>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>global-dep</module>
+        <module>intelligent-office-ds</module>
+        <module>intelligent-office-file</module>
+        <module>intelligent-content-file</module>
+        <module>intelligent-content-kbase</module>
+        <module>intelligent-content-op</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <spring-ai.version>1.0.0-M6</spring-ai.version>
+        <spring-cloud.version>2024.0.0</spring-cloud.version>
+
+        <!--        <.version>6.2.2</.version>-->
+        <!--        <spring-web.version>6.2.2</spring-web.version>-->
+
+        <!--    utils     -->
+        <lombok.version>1.18.36</lombok.version>
+        <guava.version>30.1-jre</guava.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
+        <commons-pool.version>2.11.1</commons-pool.version>
+        <commons-io.version>2.18.0</commons-io.version>
+        <hutool-all.version>5.8.11</hutool-all.version>
+        <mapstruct.version>1.5.3.Final</mapstruct.version>
+        <ipregion.version>2.7.0</ipregion.version>
+        <netty-all.version>4.1.77.Final</netty-all.version>
+        <ulid.version>5.2.3</ulid.version>
+        <alittl.version>2.14.2</alittl.version>
+        <okhttp.version>4.12.0</okhttp.version>
+
+        <!--    数据库    -->
+        <mysql-driver.version>8.0.30</mysql-driver.version>
+        <druid-pool.version>1.2.8</druid-pool.version>
+
+        <!--    mybatis plus     -->
+        <mybatis-plus-starter.version>3.5.5</mybatis-plus-starter.version>
+        <pagehelper.version>1.4.6</pagehelper.version>
+
+        <!--    db driver     -->
+        <mysql-driver.version>8.0.30</mysql-driver.version>
+        <druid-pool.version>1.2.8</druid-pool.version>
+
+        <!--    redisson     -->
+        <redisson.version>3.19.3</redisson.version>
+
+        <!--     nacos   -->
+        <spring-cloud-alibaba.version>2023.0.3.2</spring-cloud-alibaba.version>
+
+        <!--    日志    -->
+        <logback.version>1.5.16</logback.version>
+        <perf4j.version>0.9.16</perf4j.version>
+        <slf4j.version>2.0.16</slf4j.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+                <version>${spring-ai.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>${spring-cloud-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+
+            <!--    utils start    -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-pool2</artifactId>
+                <version>${commons-pool.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.18.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>transmittable-thread-local</artifactId>
+                <version>${alittl.version}</version>
+            </dependency>
+            <!--    utils end    -->
+
+            <!--    db drivers start    -->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysql-driver.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-starter</artifactId>
+                <version>${druid-pool.version}</version>
+            </dependency>
+
+            <!--    db drivers end    -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus-starter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
+                <version>4.3.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>3.5.3.2</version>
+            </dependency>
+            <!--<dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>3.5.9</version>
+            </dependency>-->
+
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis</artifactId>
+                <version>3.5.19</version> <!-- 或更高兼容版本 -->
+            </dependency>
+            <!--    mybatis plus end    -->
+
+            <!--   page helper start    -->
+            <dependency>
+                <groupId>com.github.pagehelper</groupId>
+                <artifactId>pagehelper-spring-boot-starter</artifactId>
+                <version>${pagehelper.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.sf.jsqlparser</groupId>
+                        <artifactId>jsqlparser</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!--   page helper end    -->
+
+            <!--    redisson start    -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+            <!--    redisson end    -->
+
+            <!--    json start    -->
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
+            </dependency>
+            <!--    json end    -->
+
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjrt</artifactId>
+                <version>${aspectjrt.version}</version>
+            </dependency>
+
+            <!--            <dependency>-->
+            <!--                <groupId>org.springframework</groupId>-->
+            <!--                <artifactId></artifactId>-->
+            <!--                <version>${spring-context.version}</version>-->
+            <!--            </dependency>-->
+            <!--            <dependency>-->
+            <!--                <groupId>org.springframework</groupId>-->
+            <!--                <artifactId>spring-web</artifactId>-->
+            <!--                <version>${spring-web.version}</version>-->
+            <!--            </dependency>-->
+
+
+            <!--     日志       -->
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.perf4j</groupId>
+                <artifactId>perf4j</artifactId>
+                <version>${perf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <!--     日志       -->
+
+            <!--     接口文档       -->
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-boot-starter</artifactId>
+                <version>3.0.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>1.6.2</version>
+            </dependency>
+            <!--     接口文档       -->
+
+            <dependency>
+                <groupId>io.github.openfeign</groupId>
+                <artifactId>feign-httpclient</artifactId>
+                <version>11.8</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty-all.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.f4b6a3</groupId>
+                <artifactId>ulid-creator</artifactId>
+                <version>${ulid.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.13</version>
+            </dependency>
+
+            <!-- SpringDoc OpenAPI (核心库) -->
+            <!--            <dependency>-->
+            <!--                <groupId>org.springdoc</groupId>-->
+            <!--                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>-->
+            <!--                <version>2.5.0</version> &lt;!&ndash; 当前最新版本 &ndash;&gt;-->
+            <!--            </dependency>-->
+
+            <!-- Knife4j 增强UI（可选） -->
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+                <version>4.5.0</version> <!-- 适配 Spring Boot 3.x -->
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <!--    <build>-->
+    <!--        <plugins>-->
+    <!--            <plugin>-->
+    <!--                <groupId>org.apache.maven.plugins</groupId>-->
+    <!--                <artifactId>maven-compiler-plugin</artifactId>-->
+    <!--                <configuration>-->
+    <!--                    <annotationProcessorPaths>-->
+    <!--                        <path>-->
+    <!--                            <groupId>org.springframework.boot</groupId>-->
+    <!--                            <artifactId>spring-boot-configuration-processor</artifactId>-->
+    <!--                        </path>-->
+    <!--                        <path>-->
+    <!--                            <groupId>org.projectlombok</groupId>-->
+    <!--                            <artifactId>lombok</artifactId>-->
+    <!--                        </path>-->
+    <!--                    </annotationProcessorPaths>-->
+    <!--                </configuration>-->
+    <!--            </plugin>-->
+    <!--            <plugin>-->
+    <!--                <groupId>org.springframework.boot</groupId>-->
+    <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
+    <!--                <configuration>-->
+    <!--                    <excludes>-->
+    <!--                        <exclude>-->
+    <!--                            <groupId>org.projectlombok</groupId>-->
+    <!--                            <artifactId>lombok</artifactId>-->
+    <!--                        </exclude>-->
+    <!--                    </excludes>-->
+    <!--                </configuration>-->
+    <!--            </plugin>-->
+    <!--        </plugins>-->
+    <!--    </build>-->
+
+</project>
